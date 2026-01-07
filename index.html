@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ProBox PDD订单协作 </title>
+    <title>ProBox 订单协作</title>
     
     <!-- 1. 样式库 -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -114,7 +114,7 @@
              <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">智能报价台</h2>
                 <button id="btnQuickSettings" class="text-xs font-bold text-slate-500 hover:text-blue-600 flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all">
-                    <i class="fas fa-cog"></i> <span>参数配置</span><span class="w-px h-3 bg-slate-300"></span><span id="displayPaperSize" class="font-mono text-slate-400">--</span>
+                    <i class="fas fa-cog"></i> <span>参数配置</span><span class="w-px h-3 bg-slate-300"></span><span id="displayPaperSize" class="font-mono text-slate-400">Loading...</span>
                 </button>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -365,83 +365,6 @@
         </div>
     </main>
 
-    <!-- Modal -->
-    <div id="orderDetailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden justify-center items-center p-4">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-4xl rounded-3xl shadow-2xl max-h-[90vh] flex flex-col animate-slide-up overflow-hidden ring-1 ring-white/20">
-            <div class="flex justify-between items-center px-8 py-6 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 sticky top-0 z-10">
-                <div>
-                    <h3 class="font-bold text-xl text-slate-900 dark:text-white flex items-center gap-3">订单详情 <span id="modalStatusBadge" class="status-pill pill-todo">...</span></h3>
-                    <div class="text-xs text-slate-400 font-mono mt-1.5 flex gap-3">
-                        <span id="modalOrderId">ID: ...</span>
-                        <span class="w-px h-3 bg-slate-300"></span>
-                        <span id="modalDate"></span>
-                    </div>
-                </div>
-                <div class="flex gap-3">
-                    <button onclick="editOrder()" class="btn btn-secondary text-xs h-9 px-4"><i class="fas fa-edit"></i> 编辑</button>
-                    <button onclick="closeDetailModal()" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors"><i class="fas fa-times text-lg"></i></button>
-                </div>
-            </div>
-            
-            <div class="p-8 overflow-y-auto flex-1 space-y-8 bg-slate-50/50 dark:bg-slate-900/50">
-                <div id="modalWorkflowAction" class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-blue-100 dark:border-slate-700 shadow-sm flex justify-between items-center"></div>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                    <div><div class="text-xs font-bold text-slate-400 uppercase mb-2">客户名称</div><div id="modalCustomer" class="font-bold text-slate-800 dark:text-white text-lg"></div></div>
-                    <div><div class="text-xs font-bold text-slate-400 uppercase mb-2">渠道流向</div><div id="modalSourceFlow" class="font-medium text-slate-600 dark:text-slate-300"></div></div>
-                    <div><div class="text-xs font-bold text-slate-400 uppercase mb-2">付款方式</div><div id="modalPayment" class="font-medium text-slate-600 dark:text-slate-300"></div></div>
-                    <div><div class="text-xs font-bold text-slate-400 uppercase mb-2">订单金额</div><div id="modalTotal" class="font-bold text-slate-900 dark:text-white text-2xl font-mono"></div></div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <div class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2"><i class="fas fa-map-marker-alt"></i> 收货地址</div>
-                        <div id="modalAddress" class="text-slate-700 dark:text-slate-200 text-sm leading-relaxed font-medium"></div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm">
-                        <div class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2"><i class="fas fa-link"></i> 文件链接 / 记录</div>
-                        <textarea id="modalFileLink" readonly class="w-full bg-transparent border-0 p-0 text-blue-600 text-xs font-mono resize-none focus:ring-0 leading-relaxed h-16"></textarea>
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-xs font-bold text-slate-500 uppercase tracking-wider">商品清单</div>
-                    <table class="w-full text-xs">
-                        <thead class="bg-white dark:bg-slate-900 text-slate-400"><tr><th class="p-5 text-left font-medium">品名</th><th class="p-5 font-medium">尺寸</th><th class="p-5 font-medium">数量</th><th class="p-5 text-right font-medium">小计</th></tr></thead>
-                        <tbody id="modalItemsBody" class="divide-y divide-slate-50 dark:divide-slate-800"></tbody>
-                    </table>
-                    <div class="p-5 bg-slate-50 dark:bg-slate-800/30 text-xs text-slate-500 border-t border-slate-100">
-                        <span class="font-bold text-slate-700 dark:text-slate-300">订单备注：</span> <span id="modalRemarks"></span>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <h4 class="text-xs font-bold text-slate-400 uppercase mb-4">参考图片</h4>
-                        <div id="modalRefImages" class="flex flex-wrap gap-3"></div>
-                    </div>
-                    <div id="modalFinalImageSection" class="hidden relative group">
-                        <h4 class="text-xs font-bold text-emerald-600 uppercase mb-4">定稿确认图 (支持Ctrl+V)</h4>
-                        <div class="relative rounded-2xl overflow-hidden border-2 border-emerald-100 dark:border-emerald-900 shadow-sm group-hover:shadow-md transition-all">
-                            <img id="modalFinalImage" class="w-full h-56 object-cover cursor-zoom-in hover:scale-105 transition-transform duration-500" onclick="showLightbox(this.src)">
-                        </div>
-                    </div>
-                </div>
-
-                <div id="modalTrackingSection" class="hidden bg-blue-50 dark:bg-blue-900/10 p-6 rounded-2xl border border-blue-100 dark:border-blue-800 flex items-center gap-5">
-                    <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl"><i class="fas fa-shipping-fast"></i></div>
-                    <div>
-                        <div class="text-xs text-blue-600 font-bold uppercase mb-1">物流单号</div>
-                        <div id="modalTrackingNum" class="text-xl font-mono font-bold text-slate-800 dark:text-white tracking-wide"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="p-5 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center sticky bottom-0 z-10">
-                <button class="text-xs text-slate-400 hover:text-red-500 transition-colors flex items-center gap-2 px-2" onclick="deleteOrderFromModal()"><i class="fas fa-trash-alt"></i> 删除订单</button>
-            </div>
-        </div>
-    </div>
-    
     <!-- Settings Modal -->
     <div id="settingsModal" class="fixed inset-0 z-[100] hidden">
         <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="document.getElementById('settingsModal').classList.add('hidden')"></div>
@@ -473,7 +396,7 @@
                         </div>
                         <div class="mt-2"><label class="text-xs text-slate-500 mb-1 block">后道附加费 (元/个)</label><input type="number" id="additionalFee" class="pro-input"></div>
                     </section>
-                    <button id="btnSaveSettings" class="btn btn-primary w-full mt-4 bg-slate-900 h-11">保存并生效</button>
+                    <button id="btnSaveSettings" class="btn btn-primary w-full mt-4 bg-slate-900 h-11">保存并同步</button>
                 </div>
             </div>
         </div>
@@ -482,7 +405,7 @@
     <input type="file" id="finalImageInput" accept="image/*" class="hidden">
 
     <script>
-        // ================= 配置区 =================
+        // ================= 配置区 (国际版) =================
         const AV_APP_ID = "P091S6hqTmOR0rw4PsPWZuAe-MdYXbMMI"; 
         const AV_APP_KEY = "fS2fVHKSfZUsNqvr340QKQsT";
         const AV_SERVER_URL = "https://api.dingdangl.xyz";
@@ -493,10 +416,14 @@
             document.getElementById('localFileAlert').classList.remove('hidden');
         }
 
-        const GLOBAL_CONFIG = {
+        // 默认配置（如果云端没有数据，用这个）
+        let GLOBAL_CONFIG = {
             defaults: { paperW: 950, paperH: 650, marginTB: 0, marginLR: 0 },
             prices: { unit: 100, discount: 0, lamination: 5, dieCut: 20, extra: 10 }
         };
+        
+        // 存储云端配置对象的ID，用于更新
+        let configObjectId = null;
 
         // 全局变量
         let currentItems = [];
@@ -630,10 +557,8 @@
                 const sel = document.getElementById('boxType');
                 Object.entries(BOX_TYPES).forEach(([k,v]) => sel.add(new Option(v.name, k)));
                 
-                ['paperW', 'paperH', 'marginTB', 'marginLR'].forEach(k => document.getElementById(k).value = GLOBAL_CONFIG.defaults[k]);
-                ['unitPrice', 'discount', 'laminationFee', 'dieCutFee', 'additionalFee'].forEach(k => {
-                   const key = k.replace('Fee', ''); document.getElementById(k).value = GLOBAL_CONFIG.prices[key] || GLOBAL_CONFIG.prices[k];
-                });
+                // 初始化时尝试从云端加载配置
+                this.loadCloudConfig();
 
                 this.renderHistory();
 
@@ -747,10 +672,113 @@
                 
                 document.getElementById('btnCopyQuote').onclick = () => this.copyQuote();
                 document.getElementById('btnQuickSettings').onclick = () => document.getElementById('settingsModal').classList.remove('hidden');
+                
+                // 修改保存按钮，连接到云端保存
                 document.getElementById('btnSaveSettings').onclick = () => {
+                    this.saveCloudConfig();
+                };
+            },
+            
+            // 加载云端配置
+            async loadCloudConfig() {
+                try {
+                    const query = new AV.Query('SystemConfig');
+                    // 获取最新的一条配置（或者你可以指定固定的一条）
+                    query.descending('createdAt');
+                    const config = await query.first();
+                    
+                    if (config) {
+                        configObjectId = config.id;
+                        const data = config.attributes;
+                        
+                        // 更新全局变量
+                        GLOBAL_CONFIG = data.config || GLOBAL_CONFIG;
+                        
+                        console.log("云端配置已加载:", GLOBAL_CONFIG);
+                        showToast("系统参数已同步", "success");
+                    } else {
+                        console.log("未找到云端配置，使用默认值");
+                    }
+                } catch (error) {
+                    console.error("加载配置失败:", error);
+                    // 失败也不影响使用，只是用默认值
+                } finally {
+                    // 无论成功失败，都刷新 UI
+                    this.updateUIWithConfig();
+                }
+            },
+
+            // 保存配置到云端
+            async saveCloudConfig() {
+                const btn = document.getElementById('btnSaveSettings');
+                const originalText = btn.innerText;
+                btn.innerText = "同步中...";
+                btn.disabled = true;
+
+                try {
+                    // 收集当前输入框的值
+                    const newConfig = {
+                        defaults: {
+                            paperW: parseFloat(document.getElementById('paperW').value) || 0,
+                            paperH: parseFloat(document.getElementById('paperH').value) || 0,
+                            marginTB: parseFloat(document.getElementById('marginTB').value) || 0,
+                            marginLR: parseFloat(document.getElementById('marginLR').value) || 0
+                        },
+                        prices: {
+                            unit: parseFloat(document.getElementById('unitPrice').value) || 0,
+                            discount: parseFloat(document.getElementById('discount').value) || 0,
+                            lamination: parseFloat(document.getElementById('laminationFee').value) || 0,
+                            dieCut: parseFloat(document.getElementById('dieCutFee').value) || 0,
+                            extra: parseFloat(document.getElementById('additionalFee').value) || 0
+                        }
+                    };
+
+                    // 创建或更新对象
+                    let configObj;
+                    if (configObjectId) {
+                        // 更新现有
+                        configObj = AV.Object.createWithoutData('SystemConfig', configObjectId);
+                    } else {
+                        // 新建
+                        const SystemConfig = AV.Object.extend('SystemConfig');
+                        configObj = new SystemConfig();
+                    }
+
+                    configObj.set('config', newConfig);
+                    const saved = await configObj.save();
+                    
+                    configObjectId = saved.id;
+                    GLOBAL_CONFIG = newConfig; // 更新本地内存
+                    
                     document.getElementById('settingsModal').classList.add('hidden');
                     this.updateStatusBar();
-                };
+                    showToast("参数已保存并同步给所有人", "success");
+
+                } catch (error) {
+                    console.error(error);
+                    Swal.fire("保存失败", error.message, "error");
+                } finally {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+            },
+
+            // 将配置填入输入框
+            updateUIWithConfig() {
+                // Paper
+                document.getElementById('paperW').value = GLOBAL_CONFIG.defaults.paperW;
+                document.getElementById('paperH').value = GLOBAL_CONFIG.defaults.paperH;
+                document.getElementById('marginTB').value = GLOBAL_CONFIG.defaults.marginTB;
+                document.getElementById('marginLR').value = GLOBAL_CONFIG.defaults.marginLR;
+                
+                // Prices
+                document.getElementById('unitPrice').value = GLOBAL_CONFIG.prices.unit;
+                document.getElementById('discount').value = GLOBAL_CONFIG.prices.discount;
+                document.getElementById('laminationFee').value = GLOBAL_CONFIG.prices.lamination;
+                document.getElementById('dieCutFee').value = GLOBAL_CONFIG.prices.dieCut;
+                document.getElementById('additionalFee').value = GLOBAL_CONFIG.prices.extra;
+
+                this.updateStatusBar();
             },
             
             copyQuote() {
@@ -1246,12 +1274,4 @@
         if(window.AV) loadCloudData();
     </script>
 </body>
-
 </html>
-
-
-
-
-
-
-
