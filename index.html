@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ProBox 订单协作 </title>
+    <title>ProBox PDD订单协作 (Pro)</title>
     
     <!-- 1. 样式库 -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,7 +33,7 @@
 
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f8fafc; color: #334155; }
-        .pro-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .pro-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: all 0.2s; }
         .pro-input { width: 100%; background: #f1f5f9; border: 1px solid transparent; border-radius: 10px; padding: 10px 14px; }
         .hidden { display: none !important; }
         
@@ -57,6 +57,17 @@
         .pill-shipping { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
         .pill-done { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
         
+        /* 异常状态样式 */
+        .pill-issue { background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; animation: pulse-red 2s infinite; }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+        /* 异常行样式 */
+        .row-issue { background-color: #fef2f2 !important; border-left: 4px solid #ef4444; }
+        .row-issue td { border-bottom-color: #fee2e2 !important; }
+        .row-issue .text-slate-500, .row-issue .text-slate-600, .row-issue .text-slate-700 { color: #7f1d1d !important; }
+        html.dark .row-issue { background-color: #450a0a !important; border-left-color: #ef4444; }
+        html.dark .row-issue td { border-bottom-color: #7f1d1d !important; }
+
         .modern-table thead th { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; padding: 16px; border-bottom: 1px solid #f1f5f9; }
         .modern-table tbody td { padding: 16px; vertical-align: middle; border-bottom: 1px solid #f8fafc; color: #475569; }
         
@@ -101,20 +112,12 @@
     </header>
 
     <main class="flex-grow max-w-7xl mx-auto px-4 py-8 w-full">
-        <div id="localFileAlert" class="mb-6 bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start gap-3 hidden">
-            <i class="fas fa-exclamation-triangle text-amber-500 mt-1"></i>
-            <div>
-                <h4 class="font-bold text-amber-800 text-sm">运行环境警告</h4>
-                <p class="text-xs text-amber-700 mt-1">检测到您直接双击打开了文件。建议使用 Live Server 或 Vercel 部署，否则部分云功能可能受限。</p>
-            </div>
-        </div>
-
         <!-- Calculator App -->
         <div id="app-calculator" class="animate-fade-in">
              <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">智能报价台</h2>
                 <button id="btnQuickSettings" class="text-xs font-bold text-slate-500 hover:text-blue-600 flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all">
-                    <i class="fas fa-cog"></i> <span>参数配置</span><span class="w-px h-3 bg-slate-300"></span><span id="displayPaperSize" class="font-mono text-slate-400">--</span>
+                    <i class="fas fa-cloud-download-alt"></i> <span>参数配置 (云端)</span><span class="w-px h-3 bg-slate-300"></span><span id="displayPaperSize" class="font-mono text-slate-400">读取中...</span>
                 </button>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -334,7 +337,11 @@
                         <option value="">全部流向</option><option value="新正方">新正方</option><option value="盛大">盛大</option><option value="公司">公司</option>
                     </select>
                     <select id="filterStatus" class="pro-input w-32 cursor-pointer h-11" onchange="applyFilters()">
-                        <option value="">全部状态</option><option value="待制作">🕒 待制作</option><option value="待发货">📦 待发货</option><option value="已完成">✅ 已完成</option>
+                        <option value="">全部状态</option>
+                        <option value="待制作">🕒 待制作</option>
+                        <option value="待发货">📦 待发货</option>
+                        <option value="已完成">✅ 已完成</option>
+                        <option value="issue">⚠️ 异常/待处理</option>
                     </select>
                 </div>
                 <button onclick="loadCloudData()" class="btn btn-secondary h-11 w-11 p-0 rounded-full shadow-sm hover:shadow transition-all" title="刷新"><i class="fas fa-sync-alt"></i></button>
@@ -384,6 +391,17 @@
             </div>
             
             <div class="p-8 overflow-y-auto flex-1 space-y-8 bg-slate-50/50 dark:bg-slate-900/50">
+                
+                <!-- 异常警告框 -->
+                <div id="issueAlertBox" class="hidden bg-red-50 border border-red-100 p-5 rounded-xl flex items-start gap-4 animate-pulse mb-4">
+                    <div class="w-8 h-8 rounded-full bg-red-100 text-red-500 flex items-center justify-center shrink-0"><i class="fas fa-bell"></i></div>
+                    <div class="flex-1">
+                        <h4 class="text-sm font-bold text-red-800">该订单有反馈/异常</h4>
+                        <p id="modalIssueText" class="text-xs text-red-600 mt-1"></p>
+                    </div>
+                    <button onclick="resolveIssue()" class="btn bg-red-600 text-white hover:bg-red-700 text-xs h-8 px-3 border-0">标记已解决</button>
+                </div>
+
                 <div id="modalWorkflowAction" class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-blue-100 dark:border-slate-700 shadow-sm flex justify-between items-center"></div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
                     <div><div class="text-xs font-bold text-slate-400 uppercase mb-2">客户名称</div><div id="modalCustomer" class="font-bold text-slate-800 dark:text-white text-lg"></div></div>
@@ -438,6 +456,7 @@
             
             <div class="p-5 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center sticky bottom-0 z-10">
                 <button class="text-xs text-slate-400 hover:text-red-500 transition-colors flex items-center gap-2 px-2" onclick="deleteOrderFromModal()"><i class="fas fa-trash-alt"></i> 删除订单</button>
+                <button id="btnReportIssue" class="text-xs text-slate-500 hover:text-orange-500 transition-colors flex items-center gap-2 px-2" onclick="reportIssue()"><i class="fas fa-exclamation-circle"></i> 反馈/报修</button>
             </div>
         </div>
     </div>
@@ -447,7 +466,10 @@
         <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="document.getElementById('settingsModal').classList.add('hidden')"></div>
         <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
             <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl p-8 pointer-events-auto transform transition-all">
-                <h3 class="font-bold text-lg mb-6 dark:text-white pb-4 border-b border-slate-100">系统参数配置</h3>
+                <h3 class="font-bold text-lg mb-6 dark:text-white pb-4 border-b border-slate-100 flex justify-between items-center">
+                    <span>系统参数配置 (云端)</span>
+                    <span class="text-[10px] bg-blue-100 text-blue-600 px-2 py-1 rounded">Auto-Sync</span>
+                </h3>
                 <div class="space-y-6">
                     <section>
                         <h4 class="text-xs font-bold text-slate-400 uppercase mb-3">纸张规格 (mm)</h4>
@@ -473,7 +495,7 @@
                         </div>
                         <div class="mt-2"><label class="text-xs text-slate-500 mb-1 block">后道附加费 (元/个)</label><input type="number" id="additionalFee" class="pro-input"></div>
                     </section>
-                    <button id="btnSaveSettings" class="btn btn-primary w-full mt-4 bg-slate-900 h-11">保存并生效</button>
+                    <button id="btnSaveSettings" class="btn btn-primary w-full mt-4 bg-slate-900 h-11" onclick="saveSystemSettings()">保存并上传</button>
                 </div>
             </div>
         </div>
@@ -489,14 +511,11 @@
 
         if(window.AV) AV.init({ appId: AV_APP_ID, appKey: AV_APP_KEY, serverURL: AV_SERVER_URL });
         
-        if (window.location.protocol === 'file:') {
-            document.getElementById('localFileAlert').classList.remove('hidden');
-        }
-
-        const GLOBAL_CONFIG = {
+        let GLOBAL_CONFIG = {
             defaults: { paperW: 950, paperH: 650, marginTB: 0, marginLR: 0 },
             prices: { unit: 100, discount: 0, lamination: 5, dieCut: 20, extra: 10 }
         };
+        let configObjectId = null; // 用于存储云端配置对象ID
 
         // 全局变量
         let currentItems = [];
@@ -564,10 +583,7 @@
             setTimeout(() => { document.getElementById('lightboxImg').src = ''; }, 300);
         }
         
-        // 监听 ESC 键关闭 Lightbox
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeLightbox();
-        });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
 
         function bridgeAddToOrder(newItems) {
             if(!newItems || !newItems.length) return;
@@ -590,6 +606,75 @@
             drawer: { name: "抽屉盒", calc: (L, W, H) => [{ name: "外封", l: (H + W) * 2 + 20, w: L }, { name: "内盒", l: L + H * 2 + 20, w: W + H * 2 + 20 }] }, 
             handle: { name: "手提盒", calc: (L, W, H) => [{ name: "主盒", l: 2 * L + 2 * W + 20, w: W + H + 80 }] } 
         };
+
+        // [Feature] 云端加载配置
+        async function loadSystemSettings() {
+            if(!window.AV) return;
+            const q = new AV.Query('SystemConfig');
+            try {
+                const config = await q.first();
+                if(config) {
+                    configObjectId = config.id;
+                    const d = config.attributes;
+                    GLOBAL_CONFIG.defaults.paperW = d.paperW || 950;
+                    GLOBAL_CONFIG.defaults.paperH = d.paperH || 650;
+                    GLOBAL_CONFIG.defaults.marginTB = d.marginTB || 0;
+                    GLOBAL_CONFIG.defaults.marginLR = d.marginLR || 0;
+                    GLOBAL_CONFIG.prices.unit = d.unitPrice || 100;
+                    GLOBAL_CONFIG.prices.discount = d.discount || 0;
+                    GLOBAL_CONFIG.prices.lamination = d.laminationFee || 5;
+                    GLOBAL_CONFIG.prices.dieCut = d.dieCutFee || 20;
+                    GLOBAL_CONFIG.prices.extra = d.additionalFee || 10;
+                    
+                    ['paperW', 'paperH', 'marginTB', 'marginLR'].forEach(k => 
+                        document.getElementById(k).value = GLOBAL_CONFIG.defaults[k]);
+                    document.getElementById('unitPrice').value = GLOBAL_CONFIG.prices.unit;
+                    document.getElementById('discount').value = GLOBAL_CONFIG.prices.discount;
+                    document.getElementById('laminationFee').value = GLOBAL_CONFIG.prices.lamination;
+                    document.getElementById('dieCutFee').value = GLOBAL_CONFIG.prices.dieCut;
+                    document.getElementById('additionalFee').value = GLOBAL_CONFIG.prices.extra;
+                    CalcUI.updateStatusBar();
+                } else {
+                    ['paperW', 'paperH', 'marginTB', 'marginLR'].forEach(k => document.getElementById(k).value = GLOBAL_CONFIG.defaults[k]);
+                    ['unitPrice', 'discount', 'laminationFee', 'dieCutFee', 'additionalFee'].forEach(k => {
+                        const key = k.replace('Fee', ''); document.getElementById(k).value = GLOBAL_CONFIG.prices[key] || GLOBAL_CONFIG.prices[k];
+                    });
+                }
+            } catch(e) { console.error("加载配置失败", e); }
+        }
+
+        // [Feature] 保存配置到云端
+        async function saveSystemSettings() {
+            if(!window.AV) return;
+            const btn = document.getElementById('btnSaveSettings');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
+            btn.disabled = true;
+            try {
+                let configObj;
+                if(configObjectId) {
+                    configObj = AV.Object.createWithoutData('SystemConfig', configObjectId);
+                } else {
+                    const ConfigClass = AV.Object.extend('SystemConfig');
+                    configObj = new ConfigClass();
+                }
+                configObj.set('paperW', parseFloat(document.getElementById('paperW').value));
+                configObj.set('paperH', parseFloat(document.getElementById('paperH').value));
+                configObj.set('marginTB', parseFloat(document.getElementById('marginTB').value));
+                configObj.set('marginLR', parseFloat(document.getElementById('marginLR').value));
+                configObj.set('unitPrice', parseFloat(document.getElementById('unitPrice').value));
+                configObj.set('discount', parseFloat(document.getElementById('discount').value));
+                configObj.set('laminationFee', parseFloat(document.getElementById('laminationFee').value));
+                configObj.set('dieCutFee', parseFloat(document.getElementById('dieCutFee').value));
+                configObj.set('additionalFee', parseFloat(document.getElementById('additionalFee').value));
+
+                await configObj.save();
+                if(!configObjectId) configObjectId = configObj.id;
+                await loadSystemSettings(); 
+                document.getElementById('settingsModal').classList.add('hidden');
+                showToast('配置已云端同步', 'success');
+            } catch(e) { showToast('保存配置失败: ' + e.message, 'error'); } 
+            finally { btn.innerHTML = '保存并上传'; btn.disabled = false; }
+        }
 
         const Calculator = {
             getEffectivePaper: () => { 
@@ -630,11 +715,7 @@
                 const sel = document.getElementById('boxType');
                 Object.entries(BOX_TYPES).forEach(([k,v]) => sel.add(new Option(v.name, k)));
                 
-                ['paperW', 'paperH', 'marginTB', 'marginLR'].forEach(k => document.getElementById(k).value = GLOBAL_CONFIG.defaults[k]);
-                ['unitPrice', 'discount', 'laminationFee', 'dieCutFee', 'additionalFee'].forEach(k => {
-                   const key = k.replace('Fee', ''); document.getElementById(k).value = GLOBAL_CONFIG.prices[key] || GLOBAL_CONFIG.prices[k];
-                });
-
+                loadSystemSettings(); // 初始化加载云端配置
                 this.renderHistory();
 
                 document.querySelectorAll('.tab-btn').forEach(b => b.onclick = (e) => {
@@ -747,10 +828,6 @@
                 
                 document.getElementById('btnCopyQuote').onclick = () => this.copyQuote();
                 document.getElementById('btnQuickSettings').onclick = () => document.getElementById('settingsModal').classList.remove('hidden');
-                document.getElementById('btnSaveSettings').onclick = () => {
-                    document.getElementById('settingsModal').classList.add('hidden');
-                    this.updateStatusBar();
-                };
             },
             
             copyQuote() {
@@ -832,20 +909,20 @@
                 c.innerHTML = `<svg width="100%" height="100%" viewBox="${vb}" style="padding:10px">${s}</svg>`;
             },
             updateStatusBar() {
-                document.getElementById('displayPaperSize').innerText = `${document.getElementById('paperW').value}x${document.getElementById('paperH').value}mm`;
+                const w = document.getElementById('paperW').value || GLOBAL_CONFIG.defaults.paperW;
+                const h = document.getElementById('paperH').value || GLOBAL_CONFIG.defaults.paperH;
+                document.getElementById('displayPaperSize').innerText = `${w}x${h}mm`;
             }
         };
 
-        // ================= 3. 下单页 (压缩+云存储) =================
+        // ================= 3. 下单页 =================
         const pasteArea = document.getElementById('pasteArea');
         pasteArea.addEventListener('click', (e) => { if(!e.target.closest('.img-remove')) document.getElementById('fileInput').click(); });
         
-        // 修复粘贴逻辑
         document.addEventListener('paste', (e) => {
             const modal = document.getElementById('orderDetailModal');
             const items = (e.clipboardData || e.originalEvent.clipboardData).items;
             
-            // 场景1: 下单页粘贴参考图
             if(!document.getElementById('app-order-form').classList.contains('hidden')) {
                 for (let item of items) {
                     if (item.kind === 'file' && item.type.startsWith('image/')) {
@@ -854,7 +931,6 @@
                     }
                 }
             }
-            // 场景2: 详情弹窗粘贴定稿图
             else if(modal && !modal.classList.contains('hidden') && modal.style.display !== 'none') {
                 for (let item of items) {
                     if (item.kind === 'file' && item.type.startsWith('image/')) {
@@ -867,10 +943,10 @@
         function handleFileSelect(input) { Array.from(input.files).forEach(f => processImageFile(f)); input.value = ''; }
         
         function processImageFile(file) {
-            pendingUploadFiles.push(file); // 存入待上传
+            pendingUploadFiles.push(file); 
             const reader = new FileReader();
             reader.onload = (e) => {
-                currentImages.push(e.target.result); // 仅本地预览
+                currentImages.push(e.target.result); 
                 renderImgGallery();
             };
             reader.readAsDataURL(file);
@@ -898,7 +974,6 @@
             document.getElementById('grandTotal').innerText = t.toFixed(2);
         }
 
-        // [核心升级] 提交订单：自动压缩+上传云端+失败自动转Base64
         async function submitCloudOrder() {
             if(!currentItems.length) return Swal.fire('提示', '请添加至少一个商品', 'warning');
             
@@ -910,27 +985,22 @@
             
             try {
                 let finalImagesToSave = [];
-                // 1. 保留旧图 (编辑模式下已经是URL的)
                 for (let img of currentImages) {
                     if (img.startsWith('http')) finalImagesToSave.push(img);
                 }
 
-                // 2. 上传新图 (压缩 -> 上传 -> 失败则转Base64)
                 if(pendingUploadFiles.length > 0) {
                     for(let i=0; i<pendingUploadFiles.length; i++) {
                         const file = pendingUploadFiles[i];
                         btn.innerHTML = `<i class="fas fa-circle-notch animate-spin"></i> 处理图片 (${i+1}/${pendingUploadFiles.length})`;
                         
                         try {
-                            // A. 压缩
                             const compressedFile = await compressImage(file);
-                            // B. 尝试上传云端
                             const avFile = new AV.File(file.name, compressedFile);
                             const savedFile = await avFile.save();
                             finalImagesToSave.push(savedFile.url());
                         } catch (err) {
                             console.warn("文件上传失败，转为本地编码存储", err);
-                            // C. 失败降级方案：转Base64存入
                             const base64 = await new Promise(resolve => {
                                 const reader = new FileReader();
                                 reader.onload = (e) => resolve(e.target.result);
@@ -1043,7 +1113,13 @@
                 const searchStr = ( (d.orderId||'') + (d.customerInfo||'') + (d.remarks||'') + (d.trackingNumber||'') ).toLowerCase();
                 const createDate = o.createdAt.toISOString().slice(0, 10); 
 
-                if(s && d.status!==s) return false;
+                // 异常筛选处理
+                if(s === 'issue') {
+                    if(!d.hasIssue) return false;
+                } else if(s && d.status!==s) {
+                    return false;
+                }
+
                 if(f && d.flowStatus !== f) return false;
                 if(k && !searchStr.includes(k)) return false;
                 if(dStart && createDate < dStart) return false;
@@ -1051,6 +1127,10 @@
                 
                 return true;
             });
+            
+            // 排序：有异常的放最前面
+            list.sort((a,b) => (b.attributes.hasIssue?1:0) - (a.attributes.hasIssue?1:0));
+
             const b = document.getElementById('historyBody'); b.innerHTML = '';
             
             if(list.length === 0) document.getElementById('emptyTip').classList.remove('hidden');
@@ -1060,9 +1140,20 @@
             list.forEach(o => {
                 const d = o.attributes;
                 let statusClass = 'pill-done';
-                if(d.status === '待制作') { statusClass = 'pill-todo'; }
-                else if(d.status === '待发货') { statusClass = 'pill-shipping'; }
+                let statusText = d.status || '已完成';
                 
+                if(d.hasIssue) {
+                    statusClass = 'pill-issue';
+                    statusText = '⚠️ 异常/待处理';
+                } else if(d.status === '待制作') { 
+                    statusClass = 'pill-todo'; 
+                } else if(d.status === '待发货') { 
+                    statusClass = 'pill-shipping'; 
+                }
+                
+                // 异常行高亮
+                let rowClass = d.hasIssue ? 'row-issue' : 'hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group';
+
                 let imgHTML = '';
                 if(d.finalImage) imgHTML += `<img src="${d.finalImage}" class="table-thumb thumb-final" onclick="showLightbox('${d.finalImage}')" title="已定稿">`;
                 else if(d.images && d.images.length > 0) imgHTML += `<img src="${d.images[0]}" class="table-thumb" onclick="showLightbox('${d.images[0]}')" title="参考图">`;
@@ -1076,9 +1167,8 @@
                 let linkHTML = '';
                 if(d.fileLink && d.fileLink.trim() !== '') linkHTML = `<div class="mt-2 flex items-center gap-1 text-[10px] text-blue-500 bg-blue-50 px-2 py-1 rounded w-fit max-w-[200px] truncate"><i class="fas fa-link"></i> ${d.fileLink}</div>`;
 
-                // [UI增强] 在内容摘要中显示尺寸
                 b.innerHTML += `
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group">
+                <tr class="${rowClass}">
                     <td class="p-6 font-mono font-bold text-slate-600 dark:text-slate-400 select-all">${d.orderId || 'No-ID'}</td>
                     <td class="p-6">${imgHTML}</td>
                     <td class="p-6">
@@ -1098,9 +1188,10 @@
                         `).join('')}
                         </div>
                         ${linkHTML}
+                        ${d.hasIssue ? `<div class="text-[10px] font-bold text-red-600 mt-2 bg-white/50 p-1 rounded">‼️ ${d.issueMsg || '有异常反馈'}</div>` : ''}
                     </td>
                     <td class="p-6 text-center">
-                        <span class="status-pill ${statusClass}"><span class="status-dot"></span>${d.status||'已完成'}</span>
+                        <span class="status-pill ${statusClass}"><span class="status-dot"></span>${statusText}</span>
                     </td>
                     <td class="p-6 font-mono font-bold text-slate-800 dark:text-white text-right">¥${d.totalAmount}</td>
                     <td class="p-6 text-center pr-8">
@@ -1126,12 +1217,29 @@
             document.getElementById('modalRemarks').innerText = d.remarks||'-';
             document.getElementById('modalFileLink').value = d.fileLink || ''; 
             
+            // 状态徽章处理
             const badge = document.getElementById('modalStatusBadge'); 
             badge.innerText = d.status||'已完成';
             badge.className = 'status-pill';
-            if(d.status === '待制作') badge.classList.add('pill-todo');
+            if(d.hasIssue) {
+                badge.innerText = '⚠️ 异常/待处理';
+                badge.classList.add('pill-issue');
+            } else if(d.status === '待制作') badge.classList.add('pill-todo');
             else if(d.status === '待发货') badge.classList.add('pill-shipping');
             else badge.classList.add('pill-done');
+
+            // 异常信息展示
+            const issueBox = document.getElementById('issueAlertBox');
+            if(d.hasIssue) {
+                issueBox.classList.remove('hidden');
+                issueBox.classList.add('flex');
+                document.getElementById('modalIssueText').innerText = d.issueMsg || '未填写具体原因';
+                document.getElementById('btnReportIssue').classList.add('hidden'); // 有异常时隐藏报告按钮
+            } else {
+                issueBox.classList.add('hidden');
+                issueBox.classList.remove('flex');
+                document.getElementById('btnReportIssue').classList.remove('hidden');
+            }
 
             const tb = document.getElementById('modalItemsBody'); tb.innerHTML='';
             (d.items||[]).forEach(i => tb.innerHTML+=`<tr><td class="p-4 font-medium text-slate-700">${i.name}</td><td class="p-4 text-slate-500">${i.size||'-'}</td><td class="p-4 text-slate-500">x${i.qty}</td><td class="p-4 text-right font-mono text-slate-700">¥${i.total}</td></tr>`);
@@ -1160,6 +1268,67 @@
         }
         function closeDetailModal() { document.getElementById('orderDetailModal').style.display='none'; }
         
+        // [Feature] 异常反馈逻辑
+        async function reportIssue() {
+            const { value: text } = await Swal.fire({
+                title: '反馈订单异常',
+                input: 'textarea',
+                inputLabel: '请描述遇到的问题',
+                inputPlaceholder: '例如：客户修改尺寸、物流破损等...',
+                showCancelButton: true,
+                confirmButtonText: '提交反馈',
+                confirmButtonColor: '#d33'
+            });
+
+            if (text) {
+                showLoading(true, "提交反馈...");
+                try {
+                    const o = AV.Object.createWithoutData('Order', currentViewingOrderId);
+                    o.set('hasIssue', true);
+                    o.set('issueMsg', text);
+                    await o.save();
+                    
+                    closeDetailModal();
+                    await loadCloudData();
+                    Swal.fire('反馈成功', '订单已标记为异常状态', 'success');
+                } catch(e) {
+                    Swal.fire('提交失败', e.message, 'error');
+                } finally {
+                    showLoading(false);
+                }
+            }
+        }
+
+        // [Feature] 解决异常逻辑
+        async function resolveIssue() {
+             Swal.fire({
+                title: '确定问题已解决?',
+                text: "订单状态将恢复正常显示",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '已解决',
+                confirmButtonColor: '#10b981'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    showLoading(true, "更新状态...");
+                    try {
+                        const o = AV.Object.createWithoutData('Order', currentViewingOrderId);
+                        o.set('hasIssue', false);
+                        o.set('issueMsg', '');
+                        await o.save();
+                        
+                        closeDetailModal();
+                        await loadCloudData();
+                        Swal.fire('已恢复', '订单异常标记已清除', 'success');
+                    } catch(e) {
+                        Swal.fire('操作失败', e.message, 'error');
+                    } finally {
+                        showLoading(false);
+                    }
+                }
+            });
+        }
+
         function editOrder() {
             const oObj = allCloudOrders.find(o => o.id === currentViewingOrderId);
             if(!oObj) return;
@@ -1214,7 +1383,6 @@
             });
         }
         
-        // [修复] 定稿图上传逻辑 (带压缩)
         function handleFinalImagePaste(file) {
             Swal.fire({
                 title: '上传定稿图', text: '确定上传这张图片作为定稿图并完成订单吗？',
@@ -1246,11 +1414,4 @@
         if(window.AV) loadCloudData();
     </script>
 </body>
-
 </html>
-
-
-
-
-
-
