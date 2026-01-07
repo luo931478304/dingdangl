@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ProBox PDD订单协作 (Pro)</title>
+    <title>ProBox 订单协作系统 (Pro)</title>
     
-    <!-- 1. 样式库 -->
+    <!-- 1. 样式库 (Tailwind) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- 2. 工具库 -->
@@ -13,19 +13,22 @@
     <script src="https://cdn.staticfile.org/compressorjs/1.2.1/compressor.min.js"></script>
     <link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.4.2/css/all.min.css">
     
-    <!-- 3. 数据库 -->
-    <script src="https://code.bdstatic.com/npm/leancloud-storage@4.12.0/dist/av-min.js"></script>
+    <!-- 3. 数据库 (使用稳定源) -->
+    <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.15.0/dist/av-min.js"></script>
 
     <script>
+        // 错误捕获
+        window.onerror = function(msg, url, line) {
+            console.error("系统报错:", msg, "Line:", line);
+        };
+
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: { 
-                        slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a' },
-                        primary: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a' }
-                    },
-                    boxShadow: { 'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)' }
+                        slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a' }
+                    }
                 }
             }
         }
@@ -36,12 +39,6 @@
         .pro-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: all 0.2s; }
         .pro-input { width: 100%; background: #f1f5f9; border: 1px solid transparent; border-radius: 10px; padding: 10px 14px; }
         .hidden { display: none !important; }
-        
-        :root { --bg-page: #f8fafc; --bg-surface: #ffffff; --svg-stroke: #334155; --svg-dim: #94a3b8; --svg-fill: none; }
-        html.dark { --bg-page: #0f172a; --bg-surface: #1e293b; --svg-stroke: #cbd5e1; --svg-dim: #475569; }
-        html.dark body { color: #e2e8f0; }
-        html.dark .pro-card { border-color: #334155; background: #1e293b; }
-        html.dark .pro-input { background: #0f172a; color: white; border-color: #334155; }
         
         .btn { padding: 9px 18px; border-radius: 10px; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: 0.2s; border: none; }
         .btn:active { transform: scale(0.98); }
@@ -323,20 +320,20 @@
                 <div class="flex flex-wrap gap-4 items-center flex-1">
                     <div class="relative w-64">
                         <i class="fas fa-search absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
-                        <input type="text" id="filterKeyword" placeholder="搜单号/客户 (回车云端搜索)" class="pro-input pl-10 h-11" onkeyup="if(event.key==='Enter') doCloudSearch()" oninput="applyFilters()">
+                        <input type="text" id="filterKeyword" placeholder="搜单号/客户 (回车云端搜索)" class="pro-input pl-10 h-9 text-xs" onkeyup="if(event.key==='Enter') doCloudSearch()" oninput="applyFilters()">
                     </div>
                     <div class="h-8 w-px bg-slate-200 mx-2 hidden md:block"></div>
                     
                     <div class="flex items-center gap-2">
-                         <input type="date" id="dateStart" class="pro-input h-11 w-36 text-xs" onchange="applyFilters()" title="开始日期">
+                         <input type="date" id="dateStart" class="pro-input h-9 w-32 text-xs" onchange="applyFilters()" title="开始日期">
                          <span class="text-slate-400">-</span>
-                         <input type="date" id="dateEnd" class="pro-input h-11 w-36 text-xs" onchange="applyFilters()" title="结束日期">
+                         <input type="date" id="dateEnd" class="pro-input h-9 w-32 text-xs" onchange="applyFilters()" title="结束日期">
                     </div>
                     
-                    <select id="filterFlow" class="pro-input w-32 cursor-pointer h-11" onchange="applyFilters()">
+                    <select id="filterFlow" class="pro-input w-28 h-9 text-xs cursor-pointer py-1" onchange="applyFilters()">
                         <option value="">全部流向</option><option value="新正方">新正方</option><option value="盛大">盛大</option><option value="公司">公司</option>
                     </select>
-                    <select id="filterStatus" class="pro-input w-32 cursor-pointer h-11" onchange="applyFilters()">
+                    <select id="filterStatus" class="pro-input w-28 h-9 text-xs cursor-pointer py-1" onchange="applyFilters()">
                         <option value="">全部状态</option>
                         <option value="待制作">🕒 待制作</option>
                         <option value="待发货">📦 待发货</option>
@@ -344,7 +341,7 @@
                         <option value="issue">⚠️ 异常/待处理</option>
                     </select>
                 </div>
-                <button onclick="loadCloudData()" class="btn btn-secondary h-11 w-11 p-0 rounded-full shadow-sm hover:shadow transition-all" title="刷新"><i class="fas fa-sync-alt"></i></button>
+                <button onclick="loadCloudData()" class="btn btn-secondary h-9 w-9 p-0 rounded-full shadow-sm hover:shadow transition-all" title="刷新"><i class="fas fa-sync-alt"></i></button>
             </div>
 
             <div class="pro-card overflow-hidden shadow-lg border-0">
@@ -355,7 +352,7 @@
                                 <th class="pl-8 w-40">订单编号</th>
                                 <th class="w-24">图示</th>
                                 <th class="w-64">客户 & 地址</th>
-                                <th>内容摘要</th>
+                                <th>内容摘要 (Top 2)</th>
                                 <th class="w-32 text-center">状态</th>
                                 <th class="w-32 text-right">金额</th>
                                 <th class="w-24 text-center pr-8">操作</th>
@@ -438,7 +435,7 @@
                         <div id="modalRefImages" class="flex flex-wrap gap-3"></div>
                     </div>
                     <div id="modalFinalImageSection" class="hidden relative group">
-                        <h4 class="text-xs font-bold text-emerald-600 uppercase mb-4">定稿确认图 </h4>
+                        <h4 class="text-xs font-bold text-emerald-600 uppercase mb-4">定稿确认图 (支持Ctrl+V)</h4>
                         <div class="relative rounded-2xl overflow-hidden border-2 border-emerald-100 dark:border-emerald-900 shadow-sm group-hover:shadow-md transition-all">
                             <img id="modalFinalImage" class="w-full h-56 object-cover cursor-zoom-in hover:scale-105 transition-transform duration-500" onclick="showLightbox(this.src)">
                         </div>
@@ -1074,7 +1071,7 @@
             document.getElementById('btnCancelEdit').classList.add('hidden');
         }
 
-        // ================= 4. 订单列表 & 详情 =================
+        // ================= 4. 订单列表 & 详情 & 反馈 =================
         async function loadCloudData() {
             showLoading(true, "同步数据中...");
             const q = new AV.Query('Order'); q.descending('createdAt'); q.limit(100);
@@ -1151,7 +1148,6 @@
                     statusClass = 'pill-shipping'; 
                 }
                 
-                // 异常行高亮
                 let rowClass = d.hasIssue ? 'row-issue' : 'hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group';
 
                 let imgHTML = '';
@@ -1167,6 +1163,34 @@
                 let linkHTML = '';
                 if(d.fileLink && d.fileLink.trim() !== '') linkHTML = `<div class="mt-2 flex items-center gap-1 text-[10px] text-blue-500 bg-blue-50 px-2 py-1 rounded w-fit max-w-[200px] truncate"><i class="fas fa-link"></i> ${d.fileLink}</div>`;
 
+                // Logic to limit items display
+                const items = d.items || [];
+                const displayLimit = 2; // Fixed limit
+                const visibleItems = items.slice(0, displayLimit);
+                const remainingCount = items.length - displayLimit;
+                
+                const itemsHTML = visibleItems.map(i => `
+                    <div class="flex justify-between items-start max-w-[240px] border-b border-dashed border-slate-100 pb-1 mb-1 last:border-0 last:mb-0">
+                        <div class="flex flex-col leading-tight">
+                            <span class="text-slate-700">${i.name}</span>
+                            ${i.size ? `<span class="text-[10px] text-slate-400 mt-0.5">${i.size}</span>` : ''}
+                        </div>
+                        <span class="text-slate-500 text-xs font-mono ml-2 whitespace-nowrap bg-slate-50 px-1 rounded">x${i.qty}</span>
+                    </div>
+                `).join('');
+
+                const moreHTML = remainingCount > 0 
+                    ? `<div class="text-[10px] text-slate-400 italic mt-1 pl-1 cursor-pointer hover:text-blue-500" onclick="openDetail('${o.id}')">+ 还有 ${remainingCount} 件商品...</div>` 
+                    : '';
+
+                // 快递单号显示逻辑
+                let trackingDisplay = '';
+                if(d.trackingNumber) {
+                    trackingDisplay = `<div class="mt-2 flex items-center justify-center gap-1 text-[10px] text-slate-500 font-mono bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 select-all cursor-pointer hover:text-blue-600 hover:border-blue-300 transition-colors" onclick="navigator.clipboard.writeText('${d.trackingNumber}'); showToast('单号已复制')">
+                        <i class="fas fa-truck-fast"></i> ${d.trackingNumber}
+                    </div>`;
+                }
+
                 b.innerHTML += `
                 <tr class="${rowClass}">
                     <td class="p-6 font-mono font-bold text-slate-600 dark:text-slate-400 select-all">${d.orderId || 'No-ID'}</td>
@@ -1177,21 +1201,15 @@
                     </td>
                     <td class="p-6 text-slate-500 text-xs">
                         <div class="space-y-1">
-                        ${(d.items||[]).map(i => `
-                            <div class="flex justify-between items-start max-w-[240px] border-b border-dashed border-slate-100 pb-1 mb-1 last:border-0 last:mb-0">
-                                <div class="flex flex-col leading-tight">
-                                    <span class="text-slate-700">${i.name}</span>
-                                    ${i.size ? `<span class="text-[10px] text-slate-400 mt-0.5">${i.size}</span>` : ''}
-                                </div>
-                                <span class="text-slate-500 text-xs font-mono ml-2 whitespace-nowrap bg-slate-50 px-1 rounded">x${i.qty}</span>
-                            </div>
-                        `).join('')}
+                            ${itemsHTML}
+                            ${moreHTML}
                         </div>
                         ${linkHTML}
                         ${d.hasIssue ? `<div class="text-[10px] font-bold text-red-600 mt-2 bg-white/50 p-1 rounded">‼️ ${d.issueMsg || '有异常反馈'}</div>` : ''}
                     </td>
                     <td class="p-6 text-center">
                         <span class="status-pill ${statusClass}"><span class="status-dot"></span>${statusText}</span>
+                        ${trackingDisplay}
                     </td>
                     <td class="p-6 font-mono font-bold text-slate-800 dark:text-white text-right">¥${d.totalAmount}</td>
                     <td class="p-6 text-center pr-8">
@@ -1314,7 +1332,7 @@
                     try {
                         const o = AV.Object.createWithoutData('Order', currentViewingOrderId);
                         o.set('hasIssue', false);
-                        o.set('issueMsg', '');
+                        o.set('issueMsg', ''); // 清空或保留记录看需求，这里清空
                         await o.save();
                         
                         closeDetailModal();
@@ -1415,4 +1433,3 @@
     </script>
 </body>
 </html>
-
