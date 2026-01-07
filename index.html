@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ProBox 订单协作系统 (Interactive)</title>
+    <title>ProBox 订单协作系统 (Final Stable)</title>
     
     <!-- 1. 样式库 -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -63,7 +63,6 @@
         .toast-msg { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); color: white; padding: 10px 24px; border-radius: 50px; font-size: 13px; margin-top: 10px; opacity: 0; transform: translateY(20px); transition: all 0.4s; display: flex; align-items: center; gap: 10px; }
         .toast-msg.show { opacity: 1; transform: translateY(0); }
         
-        /* Stats Card Hover Effect */
         .stat-card { cursor: pointer; transition: all 0.2s; }
         .stat-card:active { transform: scale(0.98); opacity: 0.8; }
     </style>
@@ -192,7 +191,8 @@
                     <div class="pro-card">
                         <div class="flex justify-between items-center p-5 border-b border-slate-100 dark:border-slate-800">
                             <h3 class="text-xs font-bold text-slate-700 dark:text-white flex items-center gap-2 uppercase tracking-wider"><i class="fas fa-history text-slate-400"></i> 最近计算</h3>
-                            <button onclick="CalcUI.clearHistory()" class="text-[10px] text-slate-400 hover:text-red-500 transition-colors">清空记录</button>
+                            <!-- Fixed: Added ID for JS binding -->
+                            <button id="btnClearHistory" class="text-[10px] text-slate-400 hover:text-red-500 transition-colors">清空记录</button>
                         </div>
                         <div id="calcHistoryList" class="max-h-64 overflow-y-auto"></div>
                         <div class="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
@@ -791,6 +791,10 @@
                 };
                 document.getElementById('btnCopyQuote').onclick = () => this.copyQuote();
                 document.getElementById('btnQuickSettings').onclick = () => document.getElementById('settingsModal').classList.remove('hidden');
+                
+                // Fixed History Clear Binding
+                const btnClear = document.getElementById('btnClearHistory');
+                if(btnClear) btnClear.onclick = () => this.clearHistory();
             },
             resetInputs() {
                 ['length', 'width', 'height', 'unfoldedL', 'unfoldedW'].forEach(id => document.getElementById(id).value = '');
@@ -908,6 +912,16 @@
                 chks.forEach(c => { items.push(this.history[c.dataset.idx]); c.checked = false; });
                 document.getElementById('checkAllHistory').checked = false;
                 OrderForm.bridgeAddToOrder(items);
+            },
+            clearHistory() {
+                Swal.fire({ title: '清空历史?', text: "此操作不可恢复", icon: 'warning', showCancelButton: true, confirmButtonText: '清空' })
+                    .then((r) => { 
+                        if(r.isConfirmed) { 
+                            this.history = []; 
+                            localStorage.removeItem('probox_history'); 
+                            this.renderHistory(); 
+                        } 
+                    });
             },
             updateStatusBar() {
                 const w = document.getElementById('paperW').value || OrderState.globalConfig.defaults.paperW;
