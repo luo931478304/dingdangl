@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ProBox 协作版 (ESC关闭图片版)</title>
+    <title>ProBox PDD订单协作 </title>
     
     <!-- 1. 样式库 -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -232,13 +232,13 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                     <div><label class="text-xs font-bold text-slate-500 mb-2 block">客户信息</label><input id="customerInfo" placeholder="公司名称 / 联系人" class="pro-input h-11"></div>
-                    <div><label class="text-xs font-bold text-slate-500 mb-2 block">订单来源</label><input id="source" list="sourceList" class="pro-input h-11"><datalist id="sourceList"><option value="淘宝"><option value="微信"><option value="线下"></datalist></div>
+                    <div><label class="text-xs font-bold text-slate-500 mb-2 block">订单来源</label><input id="source" list="sourceList" class="pro-input h-11"><datalist id="sourceList"><option value="拼多多"><option value="天猫"><option value="线下"></datalist></div>
                     <div>
                         <label class="text-xs font-bold text-slate-500 mb-2 block">订单流向</label>
                         <input id="flowStatus" list="flowList" class="pro-input h-11" placeholder="可自填">
                         <datalist id="flowList"><option value="新正方"><option value="盛大"><option value="公司"></datalist>
                     </div>
-                    <div><label class="text-xs font-bold text-slate-500 mb-2 block">结算方式</label><input id="paymentMethod" list="payList" class="pro-input h-11"><datalist id="payList"><option value="微信支付"><option value="对公转账"><option value="月结"></datalist></div>
+                    <div><label class="text-xs font-bold text-slate-500 mb-2 block">结算方式</label><input id="paymentMethod" list="payList" class="pro-input h-11"><datalist id="payList"><option value="平台支付"><option value="对公转账"><option value="月结"></datalist></div>
                 </div>
                 
                 <div class="mb-6">
@@ -494,7 +494,7 @@
         }
 
         const GLOBAL_CONFIG = {
-            defaults: { paperW: 950, paperH: 650, marginTB: 20, marginLR: 10 },
+            defaults: { paperW: 950, paperH: 650, marginTB: 0, marginLR: 0 },
             prices: { unit: 100, discount: 0, lamination: 5, dieCut: 20, extra: 10 }
         };
 
@@ -1246,4 +1246,11 @@
         if(window.AV) loadCloudData();
     </script>
 </body>
+
 </html>
+
+
+
+
+
+
