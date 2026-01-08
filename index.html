@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ProBox 订单协作系统 (Final Stable)</title>
+    <title>ProBox 订单协作系统 (Fixed Stable)</title>
     
     <!-- 1. 样式库 -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,6 +17,30 @@
     <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.15.0/dist/av-min.js"></script>
 
     <script>
+        // 核心切换逻辑 - 放在最前面防止被阻断
+        window.switchApp = function(app) {
+            try {
+                ['app-calculator', 'app-order-form', 'app-order-list'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) el.classList.add('hidden');
+                });
+                const target = document.getElementById('app-' + app);
+                if(target) target.classList.remove('hidden');
+
+                // 更新导航按钮状态
+                ['nav-calculator', 'nav-order-form', 'nav-order-list'].forEach(id => {
+                    const btn = document.getElementById(id);
+                    if(id === 'nav-' + app) {
+                        btn.classList.remove('text-slate-400', 'hover:bg-slate-800');
+                        btn.classList.add('bg-white', 'text-slate-900', 'shadow-sm', 'dark:bg-slate-700', 'dark:text-white');
+                    } else {
+                        btn.classList.add('text-slate-500', 'hover:text-slate-800', 'hover:bg-slate-200/50');
+                        btn.classList.remove('bg-white', 'text-slate-900', 'shadow-sm', 'dark:bg-slate-700', 'dark:text-white');
+                    }
+                });
+            } catch(e) { console.error("Switch App Error:", e); }
+        };
+
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -65,6 +89,21 @@
         
         .stat-card { cursor: pointer; transition: all 0.2s; }
         .stat-card:active { transform: scale(0.98); opacity: 0.8; }
+
+        /* Mobile Card View Optimization */
+        @media (max-width: 768px) {
+            .modern-table thead { display: none; }
+            .modern-table tr { display: block; margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+            .modern-table td { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border: none; font-size: 13px; }
+            .modern-table td::before { content: attr(data-label); font-weight: 700; color: #94a3b8; font-size: 11px; text-transform: uppercase; margin-right: 10px; }
+            .modern-table td:first-child { font-size: 16px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 8px; color: #0f172a; }
+            .modern-table td:last-child { justify-content: flex-end; padding-top: 12px; border-top: 1px dashed #f1f5f9; margin-top: 8px; }
+        }
+
+        /* Lightbox Navigation */
+        .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); color: white; background: rgba(0,0,0,0.3); padding: 20px 10px; cursor: pointer; transition: 0.2s; border-radius: 8px; z-index: 20; }
+        .lb-nav:hover { background: rgba(0,0,0,0.6); }
+        .lb-prev { left: 20px; } .lb-next { right: 20px; }
     </style>
 </head>
 <body class="pb-safe-area min-h-screen flex flex-col font-sans">
@@ -75,13 +114,38 @@
         <div id="loadingText" class="text-sm font-bold text-slate-500 uppercase tracking-widest">Processing...</div>
     </div>
     
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 z-[10002] bg-slate-900/90 backdrop-blur-sm flex justify-center items-center p-4 hidden">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-8 shadow-2xl">
+            <div class="text-center mb-8">
+                <div class="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center text-white text-xl mx-auto mb-4 shadow-lg"><i class="fas fa-user-shield"></i></div>
+                <h2 class="text-xl font-bold text-slate-900">ProBox 登录</h2>
+                <p class="text-xs text-slate-400 mt-2">请登录以管理订单，或以访客身份浏览</p>
+            </div>
+            <div class="space-y-4">
+                <input id="loginUser" class="pro-input h-12 text-center font-bold" placeholder="用户名">
+                <input id="loginPass" type="password" class="pro-input h-12 text-center" placeholder="密码">
+                <button onclick="Auth.login()" class="btn btn-primary w-full h-12 text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all">登 录</button>
+                <div class="flex justify-between items-center mt-4">
+                    <button onclick="Auth.guestLogin()" class="text-xs text-slate-400 hover:text-slate-600">我是访客 (只读)</button>
+                    <button onclick="Auth.register()" class="text-xs text-blue-500 hover:text-blue-600 font-bold">注册新账号</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div id="toastContainer"></div>
 
-    <!-- Lightbox -->
-    <div id="lightbox" class="fixed inset-0 z-[10001] bg-black/95 hidden flex items-center justify-center p-4 cursor-pointer" onclick="if(event.target === this) UI.closeLightbox()">
+    <!-- Lightbox with Navigation -->
+    <div id="lightbox" class="fixed inset-0 z-[10001] bg-black/95 hidden flex items-center justify-center p-4 cursor-pointer select-none" onclick="if(event.target === this) UI.closeLightbox()">
         <button onclick="UI.closeLightbox()" class="absolute top-6 right-6 text-white/60 hover:text-white z-10 p-2 transition-colors"><i class="fas fa-times text-3xl"></i></button>
+        
+        <div class="lb-nav lb-prev" onclick="UI.prevImage(); event.stopPropagation()"><i class="fas fa-chevron-left text-2xl"></i></div>
         <img id="lightboxImg" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl animate-fade-in cursor-default" onclick="event.stopPropagation()">
+        <div class="lb-nav lb-next" onclick="UI.nextImage(); event.stopPropagation()"><i class="fas fa-chevron-right text-2xl"></i></div>
+        
+        <div id="lightboxCounter" class="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/50 text-xs font-mono bg-black/50 px-3 py-1 rounded-full">1 / 1</div>
     </div>
 
     <!-- Header -->
@@ -94,11 +158,14 @@
                 </div>
             </div>
             <div class="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl gap-1">
-                <button onclick="switchApp('calculator')" id="nav-calculator" class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2"><i class="fas fa-calculator"></i> 打样</button>
-                <button onclick="switchApp('order-form')" id="nav-order-form" class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2"><i class="fas fa-plus-circle"></i> 下单</button>
-                <button onclick="switchApp('order-list')" id="nav-order-list" class="px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2"><i class="fas fa-tasks"></i> 记录</button>
+                <button onclick="switchApp('calculator')" id="nav-calculator" class="px-3 md:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2"><i class="fas fa-calculator"></i> <span class="hidden md:inline">打样</span></button>
+                <button onclick="switchApp('order-form')" id="nav-order-form" class="px-3 md:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2"><i class="fas fa-plus-circle"></i> <span class="hidden md:inline">下单</span></button>
+                <button onclick="switchApp('order-list')" id="nav-order-list" class="px-3 md:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2"><i class="fas fa-tasks"></i> <span class="hidden md:inline">记录</span></button>
             </div>
-            <button id="themeToggle" class="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors flex items-center justify-center"><i class="fas fa-moon"></i></button>
+            <div class="flex items-center gap-3">
+                <div id="currentUserDisplay" class="text-xs font-bold text-slate-500 hidden md:block">Guest</div>
+                <button onclick="Auth.logout()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors flex items-center justify-center" title="退出登录"><i class="fas fa-power-off"></i></button>
+            </div>
         </div>
     </header>
 
@@ -107,7 +174,7 @@
         <div id="app-calculator" class="animate-fade-in">
              <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">智能报价台</h2>
-                <button id="btnQuickSettings" class="text-xs font-bold text-slate-500 hover:text-blue-600 flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all">
+                <button id="btnQuickSettings" class="text-xs font-bold text-slate-500 hover:text-blue-600 flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition-all auth-guard-admin">
                     <i class="fas fa-cloud-download-alt"></i> <span>参数配置 (云端)</span><span class="w-px h-3 bg-slate-300"></span><span id="displayPaperSize" class="font-mono text-slate-400">读取中...</span>
                 </button>
             </div>
@@ -191,7 +258,6 @@
                     <div class="pro-card">
                         <div class="flex justify-between items-center p-5 border-b border-slate-100 dark:border-slate-800">
                             <h3 class="text-xs font-bold text-slate-700 dark:text-white flex items-center gap-2 uppercase tracking-wider"><i class="fas fa-history text-slate-400"></i> 最近计算</h3>
-                            <!-- Fixed: Added ID for JS binding -->
                             <button id="btnClearHistory" class="text-[10px] text-slate-400 hover:text-red-500 transition-colors">清空记录</button>
                         </div>
                         <div id="calcHistoryList" class="max-h-64 overflow-y-auto"></div>
@@ -294,7 +360,7 @@
                                 <span class="text-xs font-bold uppercase tracking-widest">Total Amount</span>
                             </div>
                             <div class="text-5xl font-bold mb-8 tracking-tighter">¥<span id="grandTotal">0.00</span></div>
-                            <button id="btnSubmitOrder" class="w-full py-4 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors flex justify-center items-center gap-3 shadow-lg" onclick="OrderForm.submit()">
+                            <button id="btnSubmitOrder" class="w-full py-4 bg-white text-slate-900 rounded-xl font-bold text-sm hover:bg-blue-50 transition-colors flex justify-center items-center gap-3 shadow-lg auth-guard-write" onclick="OrderForm.submit()">
                                 <span>确认下单</span>
                                 <i class="fas fa-arrow-right"></i>
                             </button>
@@ -399,7 +465,7 @@
                     </div>
                 </div>
                 <div class="flex gap-3">
-                    <button onclick="OrderList.editOrder()" class="btn btn-secondary text-xs h-9 px-4"><i class="fas fa-edit"></i> 编辑</button>
+                    <button onclick="OrderList.editOrder()" class="btn btn-secondary text-xs h-9 px-4 auth-guard-write"><i class="fas fa-edit"></i> 编辑</button>
                     <button onclick="UI.closeDetailModal()" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors"><i class="fas fa-times text-lg"></i></button>
                 </div>
             </div>
@@ -413,7 +479,7 @@
                         <h4 class="text-sm font-bold text-red-800">该订单有反馈/异常</h4>
                         <p id="modalIssueText" class="text-xs text-red-600 mt-1"></p>
                     </div>
-                    <button onclick="OrderList.resolveIssue()" class="btn bg-red-600 text-white hover:bg-red-700 text-xs h-8 px-3 border-0">标记已解决</button>
+                    <button onclick="OrderList.resolveIssue()" class="btn bg-red-600 text-white hover:bg-red-700 text-xs h-8 px-3 border-0 auth-guard-write">标记已解决</button>
                 </div>
 
                 <div id="modalWorkflowAction" class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-blue-100 dark:border-slate-700 shadow-sm flex justify-between items-center"></div>
@@ -454,7 +520,7 @@
                     <div id="modalFinalImageSection" class="hidden relative group">
                         <h4 class="text-xs font-bold text-emerald-600 uppercase mb-4">定稿确认图 (支持Ctrl+V)</h4>
                         <div class="relative rounded-2xl overflow-hidden border-2 border-emerald-100 dark:border-emerald-900 shadow-sm group-hover:shadow-md transition-all">
-                            <img id="modalFinalImage" class="w-full h-56 object-cover cursor-zoom-in hover:scale-105 transition-transform duration-500" onclick="UI.showLightbox(this.src)">
+                            <img id="modalFinalImage" class="w-full h-56 object-cover cursor-zoom-in hover:scale-105 transition-transform duration-500">
                         </div>
                     </div>
                 </div>
@@ -469,8 +535,8 @@
             </div>
             
             <div class="p-5 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center sticky bottom-0 z-10">
-                <button class="text-xs text-slate-400 hover:text-red-500 transition-colors flex items-center gap-2 px-2" onclick="OrderList.deleteOrderFromModal()"><i class="fas fa-trash-alt"></i> 删除订单</button>
-                <button id="btnReportIssue" class="text-xs text-slate-500 hover:text-orange-500 transition-colors flex items-center gap-2 px-2" onclick="OrderList.reportIssue()"><i class="fas fa-exclamation-circle"></i> 反馈/报修</button>
+                <button class="text-xs text-slate-400 hover:text-red-500 transition-colors flex items-center gap-2 px-2 auth-guard-admin" onclick="OrderList.deleteOrderFromModal()"><i class="fas fa-trash-alt"></i> 删除订单</button>
+                <button id="btnReportIssue" class="text-xs text-slate-500 hover:text-orange-500 transition-colors flex items-center gap-2 px-2 auth-guard-write" onclick="OrderList.reportIssue()"><i class="fas fa-exclamation-circle"></i> 反馈/报修</button>
             </div>
         </div>
     </div>
@@ -525,8 +591,95 @@
             SERVER: "https://api.dingdangl.xyz"
         };
         
+        // Auth Service
+        const Auth = {
+            currentUser: null,
+            
+            init() {
+                const user = AV.User.current();
+                if (user) {
+                    this.setCurrentUser(user);
+                } else {
+                    document.getElementById('loginModal').classList.remove('hidden');
+                }
+            },
+            
+            async login() {
+                const u = document.getElementById('loginUser').value;
+                const p = document.getElementById('loginPass').value;
+                if(!u || !p) return UI.showToast('请输入用户名和密码', 'error');
+                
+                try {
+                    const user = await AV.User.logIn(u, p);
+                    this.setCurrentUser(user);
+                    document.getElementById('loginModal').classList.add('hidden');
+                    UI.showToast('登录成功', 'success');
+                } catch(e) {
+                    UI.showToast('登录失败: ' + e.message, 'error');
+                }
+            },
+            
+            async register() {
+                const u = document.getElementById('loginUser').value;
+                const p = document.getElementById('loginPass').value;
+                if(!u || !p) return UI.showToast('请输入用户名和密码', 'error');
+                
+                try {
+                    const user = new AV.User();
+                    user.setUsername(u);
+                    user.setPassword(p);
+                    await user.signUp();
+                    this.setCurrentUser(user);
+                    document.getElementById('loginModal').classList.add('hidden');
+                    UI.showToast('注册并登录成功', 'success');
+                } catch(e) {
+                    UI.showToast('注册失败: ' + e.message, 'error');
+                }
+            },
+            
+            guestLogin() {
+                this.currentUser = { username: 'Guest', isGuest: true };
+                document.getElementById('currentUserDisplay').innerText = '访客模式';
+                document.getElementById('loginModal').classList.add('hidden');
+                this.applyGuards();
+                UI.showToast('已进入访客模式 (只读)');
+            },
+            
+            logout() {
+                AV.User.logOut();
+                window.location.reload();
+            },
+            
+            setCurrentUser(user) {
+                this.currentUser = user;
+                document.getElementById('currentUserDisplay').innerText = user.getUsername();
+                this.applyGuards();
+            },
+            
+            applyGuards() {
+                const isGuest = this.currentUser && this.currentUser.isGuest;
+                const isAdmin = this.currentUser && !isGuest && this.currentUser.getUsername() === 'admin';
+                const isUser = this.currentUser && !isGuest;
+
+                // Admin Guards
+                document.querySelectorAll('.auth-guard-admin').forEach(el => {
+                    if (!isAdmin) el.classList.add('hidden');
+                    else el.classList.remove('hidden');
+                });
+
+                // Write Guards (Guest can't do these)
+                document.querySelectorAll('.auth-guard-write').forEach(el => {
+                    if (isGuest) el.classList.add('hidden');
+                    else el.classList.remove('hidden');
+                });
+            }
+        };
+
         // 1. 工具与 UI 模块
         const UI = {
+            lightboxImages: [],
+            lightboxIndex: 0,
+
             showLoading(show, text="处理中...") {
                 document.getElementById('loadingText').innerText = text;
                 document.getElementById('loadingMask').style.display = show ? 'flex' : 'none';
@@ -543,11 +696,56 @@
                 requestAnimationFrame(() => toast.classList.add('show'));
                 setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 2500);
             },
-            showLightbox(src) {
+            
+            // Lightbox Logic Update
+            showLightbox(src, contextImages = null) {
                 if(!src) return;
-                document.getElementById('lightboxImg').src = src;
+                const img = document.getElementById('lightboxImg');
+                img.src = src;
+                
+                // Navigation Logic
+                if (contextImages && contextImages.length > 0) {
+                    this.lightboxImages = contextImages;
+                    this.lightboxIndex = contextImages.indexOf(src);
+                    if (this.lightboxIndex === -1) this.lightboxIndex = 0;
+                    this.updateLightboxNav();
+                } else {
+                    this.lightboxImages = [src];
+                    this.lightboxIndex = 0;
+                    this.updateLightboxNav();
+                }
+
                 document.getElementById('lightbox').classList.remove('hidden');
             },
+            
+            updateLightboxNav() {
+                const counter = document.getElementById('lightboxCounter');
+                if (this.lightboxImages.length > 1) {
+                    document.querySelector('.lb-prev').style.display = 'block';
+                    document.querySelector('.lb-next').style.display = 'block';
+                    counter.style.display = 'block';
+                    counter.innerText = `${this.lightboxIndex + 1} / ${this.lightboxImages.length}`;
+                } else {
+                    document.querySelector('.lb-prev').style.display = 'none';
+                    document.querySelector('.lb-next').style.display = 'none';
+                    counter.style.display = 'none';
+                }
+            },
+            
+            nextImage() {
+                if (this.lightboxImages.length <= 1) return;
+                this.lightboxIndex = (this.lightboxIndex + 1) % this.lightboxImages.length;
+                document.getElementById('lightboxImg').src = this.lightboxImages[this.lightboxIndex];
+                this.updateLightboxNav();
+            },
+            
+            prevImage() {
+                if (this.lightboxImages.length <= 1) return;
+                this.lightboxIndex = (this.lightboxIndex - 1 + this.lightboxImages.length) % this.lightboxImages.length;
+                document.getElementById('lightboxImg').src = this.lightboxImages[this.lightboxIndex];
+                this.updateLightboxNav();
+            },
+
             closeLightbox() {
                 document.getElementById('lightbox').classList.add('hidden');
                 setTimeout(() => { document.getElementById('lightboxImg').src = ''; }, 300);
@@ -589,17 +787,16 @@
             currentItems: [],
             currentImages: [], 
             pendingUploadFiles: [],
-            allCloudOrders: [], // 缓存当前页的数据，用于编辑/查看
+            allCloudOrders: [], 
             currentViewingOrderId: null,
             isEditingMode: false,
             editingOrderObjId: null,
             configObjectId: null,
-            // Pagination & Filter State
             pageSize: 20,
             currentPage: 0,
             isLoadingMore: false,
             hasMoreData: true,
-            filterStats: { todo:0, shipping:0, month:0, total:0 }, // Stats will be fetched separately
+            filterStats: { todo:0, shipping:0, month:0, total:0 },
             
             globalConfig: {
                 defaults: { paperW: 950, paperH: 650, marginTB: 0, marginLR: 0 },
@@ -689,7 +886,6 @@
                 return Promise.all(promises);
             },
             async fetchOrderStats() {
-                // Fetch simple counts
                 try {
                     const qTodo = new AV.Query('Order'); qTodo.equalTo('status', '待制作'); 
                     const cTodo = await qTodo.count();
@@ -697,12 +893,11 @@
                     const qShip = new AV.Query('Order'); qShip.equalTo('status', '待发货');
                     const cShip = await qShip.count();
 
-                    // For month stats, we need to query data. This might be heavy, limit to recently.
                     const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
                     const qMonth = new AV.Query('Order'); 
                     qMonth.greaterThanOrEqualTo('createdAt', startOfMonth);
                     qMonth.select(['totalAmount']);
-                    qMonth.limit(1000); // Reasonable limit for client side sum
+                    qMonth.limit(1000); 
                     const monthOrders = await qMonth.find();
                     const totalMonth = monthOrders.reduce((a,b) => a + (b.attributes.totalAmount||0), 0);
 
@@ -792,9 +987,15 @@
                 document.getElementById('btnCopyQuote').onclick = () => this.copyQuote();
                 document.getElementById('btnQuickSettings').onclick = () => document.getElementById('settingsModal').classList.remove('hidden');
                 
-                // Fixed History Clear Binding
                 const btnClear = document.getElementById('btnClearHistory');
                 if(btnClear) btnClear.onclick = () => this.clearHistory();
+                
+                // Keyboard Nav for Lightbox
+                document.addEventListener('keydown', (e) => {
+                    if (document.getElementById('lightbox').classList.contains('hidden')) return;
+                    if (e.key === 'ArrowLeft') UI.prevImage();
+                    if (e.key === 'ArrowRight') UI.nextImage();
+                });
             },
             resetInputs() {
                 ['length', 'width', 'height', 'unfoldedL', 'unfoldedW'].forEach(id => document.getElementById(id).value = '');
@@ -1118,6 +1319,9 @@
                     
                     await o.save();
                     
+                    // NEW: Update Stats on New Order
+                    CloudService.fetchOrderStats();
+
                     Swal.fire({ title: '成功', text: '订单已云端同步', icon: 'success', timer: 1500, showConfirmButton: false });
                     this.reset(); 
                     document.getElementById('filterKeyword').value = '';
@@ -1170,7 +1374,21 @@
                 this.refreshList();
             },
 
+            // FIXED: Helper to consistently find order from cache or loaded array
+            findOrder(id) {
+                return OrderState.allCloudOrders.find(o => {
+                    const oid = o.id || o.objectId; // Handle AV.Object or JSON
+                    return oid === id;
+                });
+            },
+
             refreshList() {
+                // Try load from local storage cache for instant render
+                const cached = localStorage.getItem('cached_orders');
+                if (cached && OrderState.currentPage === 0) {
+                    this.renderListToDOM(JSON.parse(cached));
+                }
+
                 OrderState.currentPage = 0;
                 OrderState.allCloudOrders = []; // Reset local cache for new query
                 this.fetchOrders(false);
@@ -1257,6 +1475,9 @@
                         this.appendListToDOM(results);
                     } else {
                         OrderState.allCloudOrders = results;
+                        // Cache first page (serialize AV.Objects to JSON)
+                        const jsonResults = results.map(r => r.toJSON());
+                        localStorage.setItem('cached_orders', JSON.stringify(jsonResults));
                         this.renderListToDOM(results);
                     }
 
@@ -1295,7 +1516,9 @@
 
             generateRowsHTML(list) {
                  return list.map(o => {
-                    const d = o.attributes;
+                    const d = o.attributes ? o.attributes : o; // Handle both LeanCloud Obj and cached JSON
+                    const objId = o.id || o.objectId;
+                    
                     let statusClass = 'pill-done', statusText = d.status || '已完成';
                     if(d.hasIssue) { statusClass = 'pill-issue'; statusText = '⚠️ 异常/待处理'; } 
                     else if(d.status === '待制作') { statusClass = 'pill-todo'; } 
@@ -1303,10 +1526,14 @@
                     
                     let rowClass = d.hasIssue ? 'row-issue' : 'hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group';
                     
+                    // Lightbox context preparation
+                    const refImgs = (d.images && Array.isArray(d.images)) ? d.images : (d.image ? [d.image] : []);
+                    const allImgs = d.finalImage ? [d.finalImage, ...refImgs] : refImgs;
+                    const contextStr = JSON.stringify(allImgs).replace(/"/g, '&quot;');
+
                     let imgHTML = '';
-                    if(d.finalImage) imgHTML = `<img src="${d.finalImage}" class="table-thumb thumb-final" onclick="UI.showLightbox('${d.finalImage}')" title="已定稿">`;
-                    else if(d.images && d.images.length > 0) imgHTML = `<img src="${d.images[0]}" class="table-thumb" onclick="UI.showLightbox('${d.images[0]}')" title="参考图">`;
-                    else if(d.image) imgHTML = `<img src="${d.image}" class="table-thumb" onclick="UI.showLightbox('${d.image}')" title="参考图">`;
+                    if(d.finalImage) imgHTML = `<img src="${d.finalImage}" class="table-thumb thumb-final" onclick="UI.showLightbox('${d.finalImage}', ${contextStr})" title="已定稿">`;
+                    else if(allImgs.length > 0) imgHTML = `<img src="${allImgs[0]}" class="table-thumb" onclick="UI.showLightbox('${allImgs[0]}', ${contextStr})" title="参考图">`;
                     else imgHTML = `<div class="w-10 h-10 rounded-md bg-slate-100 flex items-center justify-center text-slate-300 text-xs"><i class="fas fa-image"></i></div>`;
 
                     const fullAddr = d.customerAddress || '';
@@ -1317,30 +1544,30 @@
                     const items = d.items || [];
                     const visibleItems = items.slice(0, 2);
                     const itemsHTML = visibleItems.map(i => `<div class="flex justify-between items-start max-w-[240px] border-b border-dashed border-slate-100 pb-1 mb-1 last:border-0 last:mb-0"><div class="flex flex-col leading-tight"><span class="text-slate-700">${i.name}</span>${i.size ? `<span class="text-[10px] text-slate-400 mt-0.5">${i.size}</span>` : ''}</div><span class="text-slate-500 text-xs font-mono ml-2 whitespace-nowrap bg-slate-50 px-1 rounded">x${i.qty}</span></div>`).join('');
-                    const moreHTML = (items.length - 2) > 0 ? `<div class="text-[10px] text-slate-400 italic mt-1 pl-1 cursor-pointer hover:text-blue-500" onclick="OrderList.openDetail('${o.id}')">+ 还有 ${items.length - 2} 件商品...</div>` : '';
+                    const moreHTML = (items.length - 2) > 0 ? `<div class="text-[10px] text-slate-400 italic mt-1 pl-1 cursor-pointer hover:text-blue-500" onclick="OrderList.openDetail('${objId}')">+ 还有 ${items.length - 2} 件商品...</div>` : '';
 
                     let trackingDisplay = '';
                     if(d.trackingNumber) {
                         trackingDisplay = `<div class="mt-2 flex items-center justify-center gap-1 text-[10px] text-slate-500 font-mono bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 select-all cursor-pointer hover:text-blue-600 hover:border-blue-300 transition-colors" onclick="navigator.clipboard.writeText('${d.trackingNumber}'); UI.showToast('单号已复制')"><i class="fas fa-truck-fast"></i> ${d.trackingNumber}</div>`;
                     }
                     
-                    let actionBtn = `<button onclick="OrderList.openDetail('${o.id}')" class="w-8 h-8 rounded-full hover:bg-white hover:shadow-md text-slate-400 hover:text-blue-600 transition-all flex items-center justify-center"><i class="fas fa-ellipsis-h"></i></button>`;
+                    let actionBtn = `<button onclick="OrderList.openDetail('${objId}')" class="w-8 h-8 rounded-full hover:bg-white hover:shadow-md text-slate-400 hover:text-blue-600 transition-all flex items-center justify-center"><i class="fas fa-ellipsis-h"></i></button>`;
                     if(d.status === '待发货' && !d.hasIssue) {
                         actionBtn = `<div class="flex items-center gap-2 justify-end">
-                            <button onclick="OrderList.quickShip('${o.id}')" class="btn-action-ship"><i class="fas fa-truck"></i> 发货</button>
-                            <button onclick="OrderList.openDetail('${o.id}')" class="w-8 h-8 rounded-full hover:bg-white hover:shadow-md text-slate-400 hover:text-blue-600 transition-all flex items-center justify-center"><i class="fas fa-ellipsis-h"></i></button>
+                            <button onclick="OrderList.quickShip('${objId}')" class="btn-action-ship auth-guard-write"><i class="fas fa-truck"></i> 发货</button>
+                            <button onclick="OrderList.openDetail('${objId}')" class="w-8 h-8 rounded-full hover:bg-white hover:shadow-md text-slate-400 hover:text-blue-600 transition-all flex items-center justify-center"><i class="fas fa-ellipsis-h"></i></button>
                         </div>`;
                     }
 
                     return `
-                    <tr class="${rowClass}">
-                        <td class="p-6 font-mono font-bold text-slate-600 dark:text-slate-400 select-all">${d.orderId || 'No-ID'}</td>
-                        <td class="p-6">${imgHTML}</td>
-                        <td class="p-6"><div class="font-bold text-slate-800 dark:text-white text-sm">${d.customerInfo||'散客'}</div>${addressHTML}</td>
-                        <td class="p-6 text-slate-500 text-xs"><div class="space-y-1">${itemsHTML}${moreHTML}</div>${linkHTML}${d.hasIssue ? `<div class="text-[10px] font-bold text-red-600 mt-2 bg-white/50 p-1 rounded">‼️ ${d.issueMsg || '有异常反馈'}</div>` : ''}</td>
-                        <td class="p-6 text-center"><span class="status-pill ${statusClass}"><span class="status-dot"></span>${statusText}</span>${trackingDisplay}</td>
-                        <td class="p-6 font-mono font-bold text-slate-800 dark:text-white text-right">¥${d.totalAmount}</td>
-                        <td class="p-6 text-center pr-8">${actionBtn}</td>
+                    <tr class="${rowClass}" id="row-${objId}">
+                        <td class="p-6 font-mono font-bold text-slate-600 dark:text-slate-400 select-all" data-label="订单编号">${d.orderId || 'No-ID'}</td>
+                        <td class="p-6" data-label="图示">${imgHTML}</td>
+                        <td class="p-6" data-label="客户信息"><div class="font-bold text-slate-800 dark:text-white text-sm">${d.customerInfo||'散客'}</div>${addressHTML}</td>
+                        <td class="p-6 text-slate-500 text-xs" data-label="内容摘要"><div class="space-y-1">${itemsHTML}${moreHTML}</div>${linkHTML}${d.hasIssue ? `<div class="text-[10px] font-bold text-red-600 mt-2 bg-white/50 p-1 rounded">‼️ ${d.issueMsg || '有异常反馈'}</div>` : ''}</td>
+                        <td class="p-6 text-center" data-label="状态"><span class="status-pill ${statusClass}"><span class="status-dot"></span>${statusText}</span>${trackingDisplay}</td>
+                        <td class="p-6 font-mono font-bold text-slate-800 dark:text-white text-right" data-label="金额">¥${d.totalAmount}</td>
+                        <td class="p-6 text-center pr-8" data-label="操作">${actionBtn}</td>
                     </tr>`;
                 }).join('');
             },
@@ -1353,15 +1580,17 @@
                 document.getElementById('statMonth').innerText = s.month.toFixed(2);
             },
             openDetail(id) {
-                // ... same as before
+                // FIXED: Robust object finding using helper
                 OrderState.currentViewingOrderId = id; 
-                const oObj = OrderState.allCloudOrders.find(o=>o.id===id); 
+                const oObj = this.findOrder(id); 
+                
                 if(!oObj) {
                      return;
                 }
-                const d = oObj.attributes;
+                const d = oObj.attributes ? oObj.attributes : oObj;
+                
                 document.getElementById('modalOrderId').innerText = `ID: ${d.orderId || id}`;
-                document.getElementById('modalDate').innerText = oObj.createdAt.toLocaleString();
+                document.getElementById('modalDate').innerText = oObj.createdAt ? new Date(oObj.createdAt).toLocaleString() : new Date().toLocaleString();
                 document.getElementById('modalCustomer').innerText = d.customerInfo||'-';
                 document.getElementById('modalAddress').innerText = d.customerAddress || '未录入地址';
                 document.getElementById('modalSourceFlow').innerText = `${d.source||'-'} / ${d.flowStatus||'-'}`;
@@ -1391,19 +1620,40 @@
                 document.getElementById('modalItemsBody').innerHTML = (d.items||[]).map(i => `<tr><td class="p-4 font-medium text-slate-700">${i.name}</td><td class="p-4 text-slate-500">${i.size||'-'}</td><td class="p-4 text-slate-500">x${i.qty}</td><td class="p-4 text-right font-mono text-slate-700">¥${i.total}</td></tr>`).join('');
 
                 const ib = document.getElementById('modalRefImages'); ib.innerHTML='';
-                let imgs = []; if(d.images && Array.isArray(d.images)) imgs = d.images; else if(d.image) imgs = [d.image];
-                ib.innerHTML = imgs.map(s => `<img src="${s}" class="w-16 h-16 object-cover rounded-lg border border-slate-200 cursor-zoom-in hover:shadow-md transition-all" onclick="UI.showLightbox('${s}')">`).join('');
+                
+                // Construct Images for lightbox context
+                const refImgs = (d.images && Array.isArray(d.images)) ? d.images : (d.image ? [d.image] : []);
+                const allImgs = d.finalImage ? [d.finalImage, ...refImgs] : refImgs;
+                
+                // FIXED: Direct function assignment instead of setAttribute
+                ib.innerHTML = '';
+                refImgs.forEach(s => {
+                    const img = document.createElement('img');
+                    img.src = s;
+                    img.className = "w-16 h-16 object-cover rounded-lg border border-slate-200 cursor-zoom-in hover:shadow-md transition-all";
+                    img.onclick = () => UI.showLightbox(s, allImgs);
+                    ib.appendChild(img);
+                });
 
                 const finalSec = document.getElementById('modalFinalImageSection');
-                if(d.finalImage) { finalSec.classList.remove('hidden'); document.getElementById('modalFinalImage').src=d.finalImage; } else finalSec.classList.add('hidden');
+                const finalImgEl = document.getElementById('modalFinalImage');
+                if(d.finalImage) { 
+                    finalSec.classList.remove('hidden'); 
+                    finalImgEl.src=d.finalImage; 
+                    // FIXED: Direct onclick assignment
+                    finalImgEl.onclick = () => UI.showLightbox(d.finalImage, allImgs);
+                } else finalSec.classList.add('hidden');
 
                 const trackSec = document.getElementById('modalTrackingSection');
                 if(d.trackingNumber) { trackSec.classList.remove('hidden'); document.getElementById('modalTrackingNum').innerText=d.trackingNumber; } else trackSec.classList.add('hidden');
 
                 const act = document.getElementById('modalWorkflowAction'); 
-                if(d.status==='待制作') act.innerHTML = `<span class="text-xs font-bold text-orange-600 flex items-center gap-2"><i class="fas fa-clock"></i> 生产中...</span><button onclick="document.getElementById('finalImageInput').click()" class="btn btn-primary bg-orange-500 hover:bg-orange-600 shadow-md text-xs border-0">上传定稿图 (完成)</button>`;
-                else if(d.status==='待发货') act.innerHTML = `<span class="text-xs font-bold text-blue-600 flex items-center gap-2"><i class="fas fa-box-open"></i> 待发货</span><button onclick="OrderList.doShipping()" class="btn btn-primary bg-blue-600 hover:bg-blue-700 shadow-md text-xs border-0">填写单号 (发货)</button>`;
+                if(d.status==='待制作') act.innerHTML = `<span class="text-xs font-bold text-orange-600 flex items-center gap-2"><i class="fas fa-clock"></i> 生产中...</span><button onclick="document.getElementById('finalImageInput').click()" class="btn btn-primary bg-orange-500 hover:bg-orange-600 shadow-md text-xs border-0 auth-guard-write">上传定稿图 (完成)</button>`;
+                else if(d.status==='待发货') act.innerHTML = `<span class="text-xs font-bold text-blue-600 flex items-center gap-2"><i class="fas fa-box-open"></i> 待发货</span><button onclick="OrderList.doShipping()" class="btn btn-primary bg-blue-600 hover:bg-blue-700 shadow-md text-xs border-0 auth-guard-write">填写单号 (发货)</button>`;
                 else act.innerHTML = `<span class="text-xs font-bold text-emerald-600 flex items-center gap-2"><i class="fas fa-check-circle"></i> 订单已完成</span>`;
+
+                // Re-apply guards for modal content
+                Auth.applyGuards();
 
                 const modal = document.getElementById('orderDetailModal');
                 modal.classList.remove('hidden');
@@ -1416,7 +1666,17 @@
                     try {
                         const o = AV.Object.createWithoutData('Order', OrderState.currentViewingOrderId);
                         o.set('hasIssue', true); o.set('issueMsg', text);
-                        await o.save(); UI.closeDetailModal(); await this.refreshList();
+                        await o.save(); 
+                        
+                        // SYNC LOCAL CACHE & STATS
+                        const localOrder = this.findOrder(OrderState.currentViewingOrderId);
+                        if(localOrder) {
+                            if(localOrder.set) { localOrder.set('hasIssue', true); localOrder.set('issueMsg', text); }
+                            else { localOrder.hasIssue = true; localOrder.issueMsg = text; }
+                        }
+                        CloudService.fetchOrderStats();
+
+                        UI.closeDetailModal(); await this.refreshList();
                         Swal.fire('反馈成功', '订单已标记为异常状态', 'success');
                     } catch(e) { Swal.fire('提交失败', e.message, 'error'); } finally { UI.showLoading(false); }
                 }
@@ -1429,17 +1689,29 @@
                         try {
                             const o = AV.Object.createWithoutData('Order', OrderState.currentViewingOrderId);
                             o.set('hasIssue', false); o.set('issueMsg', '');
-                            await o.save(); UI.closeDetailModal(); await this.refreshList();
+                            await o.save(); 
+                            
+                            // SYNC LOCAL CACHE & STATS
+                            const localOrder = this.findOrder(OrderState.currentViewingOrderId);
+                            if(localOrder) {
+                                if(localOrder.set) { localOrder.set('hasIssue', false); localOrder.set('issueMsg', ''); }
+                                else { localOrder.hasIssue = false; localOrder.issueMsg = ''; }
+                            }
+                            CloudService.fetchOrderStats();
+
+                            UI.closeDetailModal(); await this.refreshList();
                             Swal.fire('已恢复', '订单异常标记已清除', 'success');
                         } catch(e) { Swal.fire('操作失败', e.message, 'error'); } finally { UI.showLoading(false); }
                     }
                 });
             },
             editOrder() {
-                const oObj = OrderState.allCloudOrders.find(o => o.id === OrderState.currentViewingOrderId);
+                const oObj = this.findOrder(OrderState.currentViewingOrderId);
                 if(!oObj) return;
-                const d = oObj.attributes;
-                OrderState.isEditingMode = true; OrderState.editingOrderObjId = oObj.id;
+                const d = oObj.attributes ? oObj.attributes : oObj;
+                const objId = oObj.id || oObj.objectId;
+
+                OrderState.isEditingMode = true; OrderState.editingOrderObjId = objId;
                 
                 document.getElementById('inputOrderId').value = d.orderId || '';
                 document.getElementById('customerInfo').value = d.customerInfo || '';
@@ -1479,8 +1751,32 @@
                         const o = AV.Object.createWithoutData('Order', orderId);
                         o.set('trackingNumber', n); o.set('status', '已完成');
                         await o.save(); 
+                        
+                        // SYNC LOCAL CACHE
+                        const localOrder = this.findOrder(orderId);
+                        if(localOrder) {
+                            if(localOrder.set) { // AV.Object
+                                localOrder.set('trackingNumber', n);
+                                localOrder.set('status', '已完成');
+                            } else { // JSON
+                                localOrder.trackingNumber = n;
+                                localOrder.status = '已完成';
+                            }
+                        }
+                        
+                        // NEW: Sync Stats
+                        CloudService.fetchOrderStats();
+
+                        // Instant Update UI
+                        const row = document.getElementById(`row-${orderId}`);
+                        if(row) {
+                            const statusCell = row.querySelector('[data-label="状态"]');
+                            statusCell.innerHTML = `<span class="status-pill pill-done"><span class="status-dot"></span>已完成</span><div class="mt-2 flex items-center justify-center gap-1 text-[10px] text-slate-500 font-mono bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 select-all"><i class="fas fa-truck-fast"></i> ${n}</div>`;
+                            const actionCell = row.querySelector('[data-label="操作"]');
+                            actionCell.innerHTML = `<button onclick="OrderList.openDetail('${orderId}')" class="w-8 h-8 rounded-full hover:bg-white hover:shadow-md text-slate-400 hover:text-blue-600 transition-all flex items-center justify-center"><i class="fas fa-ellipsis-h"></i></button>`;
+                        }
+
                         UI.closeDetailModal(); 
-                        await this.refreshList(); 
                         Swal.fire('已发货', '物流单号已保存', 'success');
                     } catch(e) {
                          Swal.fire('操作失败', e.message, 'error');
@@ -1494,7 +1790,12 @@
                     if (result.isConfirmed) {
                         UI.showLoading(true, "正在删除..."); 
                         const o = AV.Object.createWithoutData('Order', OrderState.currentViewingOrderId); 
-                        await o.destroy(); UI.closeDetailModal(); this.refreshList(); Swal.fire('已删除', '订单已移除', 'success');
+                        await o.destroy(); 
+                        
+                        // NEW: Update Stats
+                        CloudService.fetchOrderStats();
+                        
+                        UI.closeDetailModal(); this.refreshList(); Swal.fire('已删除', '订单已移除', 'success');
                     }
                 });
             },
@@ -1510,7 +1811,36 @@
                             const o = AV.Object.createWithoutData('Order', OrderState.currentViewingOrderId);
                             o.set('finalImage', savedFile.url()); o.set('status', '待发货');
                             await o.save(); 
-                            UI.closeDetailModal(); this.refreshList();
+                            
+                            // SYNC LOCAL CACHE
+                            const localOrder = this.findOrder(OrderState.currentViewingOrderId);
+                            if(localOrder) {
+                                if(localOrder.set) { // AV.Object
+                                    localOrder.set('finalImage', savedFile.url());
+                                    localOrder.set('status', '待发货');
+                                } else { // JSON
+                                    localOrder.finalImage = savedFile.url();
+                                    localOrder.status = '待发货';
+                                }
+                            }
+                            
+                            // NEW: Sync Stats
+                            CloudService.fetchOrderStats();
+
+                            // Instant Update
+                            const row = document.getElementById(`row-${OrderState.currentViewingOrderId}`);
+                            if(row) {
+                                const statusCell = row.querySelector('[data-label="状态"]');
+                                statusCell.innerHTML = `<span class="status-pill pill-shipping"><span class="status-dot"></span>待发货</span>`;
+                                const imgCell = row.querySelector('[data-label="图示"]');
+                                // Use simple onclick for list view is fine, detail view handles context
+                                const contextStr = JSON.stringify([savedFile.url()]).replace(/"/g, '&quot;');
+                                imgCell.innerHTML = `<img src="${savedFile.url()}" class="table-thumb thumb-final" onclick="UI.showLightbox('${savedFile.url()}', ${contextStr})" title="已定稿">`;
+                                const actionCell = row.querySelector('[data-label="操作"]');
+                                actionCell.innerHTML = `<div class="flex items-center gap-2 justify-end"><button onclick="OrderList.quickShip('${OrderState.currentViewingOrderId}')" class="btn-action-ship auth-guard-write"><i class="fas fa-truck"></i> 发货</button><button onclick="OrderList.openDetail('${OrderState.currentViewingOrderId}')" class="w-8 h-8 rounded-full hover:bg-white hover:shadow-md text-slate-400 hover:text-blue-600 transition-all flex items-center justify-center"><i class="fas fa-ellipsis-h"></i></button></div>`;
+                            }
+
+                            UI.closeDetailModal();
                             Swal.fire('成功', '定稿图已同步，状态更新：待发货', 'success');
                         } catch(e) { Swal.fire('失败', e.message, 'error'); } finally { UI.showLoading(false); }
                     }
@@ -1537,6 +1867,7 @@
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
             CloudService.init();
+            Auth.init(); // NEW: Auth Init
             CalcUI.init();
             OrderForm.init();
             if(window.AV) OrderList.refreshList();
