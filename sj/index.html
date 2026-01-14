@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audit Cloud | 云端协作版</title>
-    <!-- 引入 LeanCloud SDK -->
-    <script src="//code.bdstatic.com/npm/leancloud-storage@4.12.0/dist/av-min.js"></script>
+    <title>Audit System | Bmob云端版</title>
+    <!-- 引入 Bmob SDK (最新版) -->
+    <script src="https://unpkg.com/bmob-js-sdk-v3@3.1.3/dist/Bmob-3.1.3.min.js"></script>
     <style>
-        /* --- UI 样式保持不变 (Aurora 风格) --- */
+        /* --- 样式保持 Aurora 风格不变 --- */
         :root {
             --primary: #6366f1;
             --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
@@ -64,7 +64,6 @@
         .form-control { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: rgba(255,255,255,0.8); }
         .btn-main { width: 100%; padding: 16px; border: none; border-radius: 14px; background: var(--primary-gradient); color: white; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 20px -5px rgba(99, 102, 241, 0.4); transition: 0.2s; }
         .btn-main:hover { transform: translateY(-2px); }
-        .btn-main:disabled { opacity: 0.7; cursor: not-allowed; }
 
         /* 上传 */
         .upload-zone { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; background: rgba(248, 250, 252, 0.5); }
@@ -99,7 +98,6 @@
         .modal-btn { flex: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
         .btn-confirm { background: var(--primary); color: white; }
 
-        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
         .tag { background: #f1f5f9; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: default; }
         .tag span { color: #94a3b8; margin-left: 6px; cursor: pointer; font-weight: bold; }
@@ -110,10 +108,10 @@
 </head>
 <body>
 
-<!-- 全局 Loading -->
+<!-- Loading -->
 <div id="loadingMask">
     <div class="spinner"></div>
-    <div style="margin-top:15px; font-weight:600; color:#64748b;">数据云同步中...</div>
+    <div style="margin-top:15px; font-weight:600; color:#64748b;">数据同步中...</div>
 </div>
 
 <div class="container">
@@ -145,7 +143,7 @@
                     <textarea id="inputReason" class="form-control" placeholder="请输入..." required></textarea>
                 </div>
                 <div class="form-group" style="margin-bottom:30px;">
-                    <label>凭证上传 (自动同步云存储)</label>
+                    <label>凭证上传 (Bmob云存储)</label>
                     <input type="file" id="fileInput" multiple accept="image/*" style="display:none;" onchange="handleFiles(this.files)">
                     <div class="upload-zone" id="pasteArea" onclick="document.getElementById('fileInput').click()">
                         📸 点击上传 或 Ctrl+V 粘贴
@@ -190,23 +188,21 @@
 
     <!-- 3. 配置 -->
     <div id="page-settings" class="page-section">
-        <div class="settings-grid">
-            <div class="glass-card">
-                <h3>👥 审核人名单 (云同步)</h3>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="newAuditorInput" class="form-control" placeholder="姓名">
-                    <button class="btn-tool" style="background:black; color:white;" onclick="addSetting('auditor')">＋</button>
-                </div>
-                <div id="auditorList" class="tag-list"></div>
+        <div class="glass-card">
+            <h3>👥 审核人名单 (云同步)</h3>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="newAuditorInput" class="form-control" placeholder="姓名">
+                <button class="btn-tool" style="background:black; color:white;" onclick="addSetting('auditor')">＋</button>
             </div>
-            <div class="glass-card">
-                <h3>👤 责任人名单 (云同步)</h3>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="newResponsibleInput" class="form-control" placeholder="姓名">
-                    <button class="btn-tool" style="background:black; color:white;" onclick="addSetting('responsible')">＋</button>
-                </div>
-                <div id="responsibleList" class="tag-list"></div>
+            <div id="auditorList" class="tag-list"></div>
+        </div>
+        <div class="glass-card" style="margin-top:20px;">
+            <h3>👤 责任人名单 (云同步)</h3>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="newResponsibleInput" class="form-control" placeholder="姓名">
+                <button class="btn-tool" style="background:black; color:white;" onclick="addSetting('responsible')">＋</button>
             </div>
+            <div id="responsibleList" class="tag-list"></div>
         </div>
     </div>
 </div>
@@ -229,27 +225,28 @@
 <div id="toast"></div>
 
 <script>
-    /* ================= 配置区域 (请在此处填写 LeanCloud 信息) ================= */
-    const APP_ID = 'P091S6hqTmOR0rw4PsPWZuAe-MdYXbMMI';       // 替换为 LeanCloud App ID
-    const APP_KEY = 'fS2fVHKSfZUsNqvr340QKQsT';     // 替换为 LeanCloud App Key
-    const SERVER_URL = 'https://api.dingdangl.xyz'; // 替换为 API 域名 (如 https://xxx.avosapps.us)
+    /* ================= Bmob 配置区域 ================= */
+    // 注册地址：https://www.bmob.cn/
+    // 请替换下面的 Secret Key 和 API 安全码
+    const BMOB_SECRET_KEY = 'f34f9f8e83e3e122'; 
+    const BMOB_API_KEY  = 'shejiwentidingda';   
     const ADMIN_PASSWORD = "123456";  // 删除密码
 
     // 全局变量
-    let currentFiles = []; // 存储待上传的 File 对象
-    let localPreviewUrls = []; // 存储本地预览的 Blob URL
-    let cloudData = []; // 云端拉取的全部数据
-    let cloudSettings = { auditors: [], responsibles: [] }; // 云端配置
-    let settingsObjectId = null; // 配置对象在云端的 ID
+    let currentFiles = []; 
+    let localPreviewUrls = [];
+    let cloudData = [];
+    let cloudSettings = { auditors: [], responsibles: [] };
+    let settingsObjectId = null;
 
-    // 初始化
     document.addEventListener('DOMContentLoaded', async () => {
-        if (APP_ID === '你的AppID') {
-            alert('请先在代码中配置 LeanCloud 的 AppID 和 AppKey！');
+        if (BMOB_SECRET_KEY === 'f34f9f8e83e3e122') {
+            alert('请先在代码中填入 Bmob 的密钥！');
             return;
         }
         
-        AV.init({ appId: APP_ID, appKey: APP_KEY, serverURL: SERVER_URL });
+        // 初始化 Bmob
+        Bmob.initialize(BMOB_SECRET_KEY, BMOB_API_KEY);
         
         showLoading(true);
         await fetchSettings();
@@ -259,28 +256,29 @@
         showLoading(false);
     });
 
-    /* ================= 核心业务：云端交互 ================= */
+    /* ================= Bmob 核心逻辑 ================= */
 
-    // 1. 获取配置 (Settings)
+    // 1. 获取配置
     async function fetchSettings() {
-        const query = new AV.Query('AuditSettings');
+        const query = Bmob.Query("AuditSettings");
         try {
-            const result = await query.first();
-            if (result) {
+            // 获取第一条配置
+            const res = await query.find();
+            if (res && res.length > 0) {
+                const result = res[0];
                 cloudSettings = {
-                    auditors: result.get('auditors') || [],
-                    responsibles: result.get('responsibles') || []
+                    auditors: result.auditors || [],
+                    responsibles: result.responsibles || []
                 };
-                settingsObjectId = result.id;
+                settingsObjectId = result.objectId;
             } else {
-                // 如果云端没有配置，创建一个初始的
-                const SettingsClass = AV.Object.extend('AuditSettings');
-                const newSettings = new SettingsClass();
-                newSettings.set('auditors', ["张三", "李四"]);
-                newSettings.set('responsibles', ["打包组", "王五"]);
-                const saved = await newSettings.save();
+                // 初始化配置
+                const queryCreate = Bmob.Query("AuditSettings");
+                queryCreate.set("auditors", ["张三", "李四"]);
+                queryCreate.set("responsibles", ["打包组", "王五"]);
+                const saved = await queryCreate.save();
                 cloudSettings = { auditors: ["张三", "李四"], responsibles: ["打包组", "王五"] };
-                settingsObjectId = saved.id;
+                settingsObjectId = saved.objectId;
             }
             renderSettingsUI();
         } catch (error) {
@@ -293,53 +291,55 @@
     async function saveSettingsToCloud() {
         if (!settingsObjectId) return;
         showLoading(true);
-        const todo = AV.Object.createWithoutData('AuditSettings', settingsObjectId);
-        todo.set('auditors', cloudSettings.auditors);
-        todo.set('responsibles', cloudSettings.responsibles);
+        const query = Bmob.Query("AuditSettings");
+        query.set('id', settingsObjectId); // 这里Bmob SDK v3 修改对象需要指定id
+        query.set('auditors', cloudSettings.auditors);
+        query.set('responsibles', cloudSettings.responsibles);
         try {
-            await todo.save();
+            await query.save();
             updateFormSelects();
             showToast('配置已同步');
         } catch (error) {
+            console.error(error);
             showToast('同步配置失败', 'error');
         }
         showLoading(false);
     }
 
-    // 3. 提交记录 (上传图片 -> 保存对象)
+    // 3. 提交记录 (文件上传 + 数据保存)
     async function submitRecord(auditor, responsible, reason) {
         showLoading(true);
         try {
-            // A. 上传图片 (如果有)
             let imageUrls = [];
+            
+            // A. 上传图片
             if (currentFiles.length > 0) {
-                const uploadPromises = currentFiles.map(file => {
-                    const avFile = new AV.File(file.name, file);
-                    return avFile.save();
-                });
-                const savedFiles = await Promise.all(uploadPromises);
-                imageUrls = savedFiles.map(f => f.url());
+                for (let file of currentFiles) {
+                    // Bmob 文件上传
+                    let fileUpload = Bmob.File(file.name, file);
+                    let res = await fileUpload.save();
+                    // res[0].url 是文件地址
+                    if(res && res.length > 0){
+                        imageUrls.push(res[0].url);
+                    }
+                }
             }
 
-            // B. 保存数据记录
-            const RecordClass = AV.Object.extend('AuditRecord');
-            const record = new RecordClass();
-            record.set('auditor', auditor);
-            record.set('responsible', responsible);
-            record.set('reason', reason);
-            record.set('images', imageUrls);
-            // 存储日期对象，方便查询
-            record.set('recordDate', new Date());
+            // B. 保存数据
+            const query = Bmob.Query("AuditRecord");
+            query.set("auditor", auditor);
+            query.set("responsible", responsible);
+            query.set("reason", reason);
+            query.set("images", imageUrls);
+            // Bmob会自动记录 createdAt
 
-            await record.save();
+            await query.save();
             
-            // C. 清理
             document.getElementById('auditForm').reset();
             currentFiles = [];
             localPreviewUrls = [];
             renderPreviews();
             showToast('提交成功！');
-
         } catch (error) {
             console.error(error);
             showToast('提交失败：' + error.message, 'error');
@@ -347,28 +347,27 @@
         showLoading(false);
     }
 
-    // 4. 获取数据 (AuditRecord)
+    // 4. 获取数据
     async function fetchCloudData() {
         showLoading(true);
-        const query = new AV.Query('AuditRecord');
-        query.limit(1000); // 最大取1000条，更多需要分页
-        query.descending('createdAt'); // 按创建时间倒序
-        
+        const query = Bmob.Query("AuditRecord");
+        query.limit(500);
+        query.order("-createdAt"); // 倒序
         try {
             const results = await query.find();
-            // 转换为纯 JSON 格式方便处理
             cloudData = results.map(obj => ({
-                id: obj.id,
-                date: obj.createdAt, // LeanCloud 自动记录的时间
-                auditor: obj.get('auditor'),
-                responsible: obj.get('responsible'),
-                reason: obj.get('reason'),
-                images: obj.get('images') || []
+                id: obj.objectId,
+                date: obj.createdAt, 
+                auditor: obj.auditor,
+                responsible: obj.responsible,
+                reason: obj.reason,
+                images: obj.images || []
             }));
             
-            applyFilters(); // 获取后立即渲染
+            applyFilters();
             showToast('数据已刷新');
         } catch (error) {
+            console.error(error);
             showToast('获取数据失败', 'error');
         }
         showLoading(false);
@@ -377,10 +376,9 @@
     // 5. 删除数据
     async function deleteCloudRecord(id) {
         showLoading(true);
+        const query = Bmob.Query("AuditRecord");
         try {
-            const todo = AV.Object.createWithoutData('AuditRecord', id);
-            await todo.destroy();
-            // 本地移除，不必重新请求全量
+            await query.destroy(id);
             cloudData = cloudData.filter(i => i.id !== id);
             applyFilters();
             showToast('已删除');
@@ -390,17 +388,15 @@
         showLoading(false);
     }
 
-    /* ================= UI 逻辑 ================= */
-
+    /* ================= 界面交互逻辑 (与之前相同) ================= */
+    
     // Tab 切换
     window.switchTab = async function(tab) {
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         event.target.classList.add('active');
         document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
         document.getElementById('page-' + tab).classList.add('active');
-        
         if (tab === 'list') {
-            // 如果还没数据，或者用户想手动刷新，这里默认每次切过来刷新一次
             if (cloudData.length === 0) await fetchCloudData();
             else applyFilters(); 
         }
@@ -423,7 +419,7 @@
         }
     });
 
-    // 筛选逻辑
+    // 筛选
     function setupFilterListeners() {
         ['filterDateStart', 'filterDateEnd', 'filterKeyword'].forEach(id => {
             document.getElementById(id).addEventListener('input', applyFilters);
@@ -447,7 +443,6 @@
         renderStats(filtered);
     }
 
-    // 渲染表格
     function renderTable(data) {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
@@ -471,7 +466,6 @@
         });
     }
 
-    // 渲染统计 (Dashboard)
     function renderStats(data) {
         if (!data.length) { 
             document.getElementById('kpiArea').style.display='none'; 
@@ -482,17 +476,14 @@
         document.getElementById('chartArea').style.display='grid';
 
         const total = data.length;
-        // 统计责任人
         const respCount = {};
         data.forEach(i => respCount[i.responsible] = (respCount[i.responsible]||0)+1);
         const sortedResp = Object.entries(respCount).sort((a,b) => b[1]-a[1]);
 
-        // 统计原因
         const reasonCount = {};
         data.forEach(i => reasonCount[i.reason] = (reasonCount[i.reason]||0)+1);
         const sortedReason = Object.entries(reasonCount).sort((a,b) => b[1]-a[1]);
 
-        // KPI
         const topResp = sortedResp[0] ? sortedResp[0][0] : '-';
         const topReason = sortedReason[0] ? sortedReason[0][0] : '-';
         
@@ -512,13 +503,11 @@
             </div>
         `;
 
-        // 图表：责任人
         document.getElementById('statProgressArea').innerHTML = sortedResp.slice(0,5).map(item => {
             const pct = ((item[1]/total)*100).toFixed(1);
             return `<div class="bar-group"><div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600;"><span>${item[0]}</span><span>${item[1]}</span></div><div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div></div>`;
         }).join('');
 
-        // 图表：问题排行
         document.getElementById('statReasonList').innerHTML = sortedReason.slice(0,5).map((item,idx) => `
             <div class="rank-row">
                 <div class="rank-idx">${idx+1}</div>
@@ -526,8 +515,6 @@
                 <div style="font-weight:bold; font-size:12px;">${item[1]}</div>
             </div>
         `).join('');
-
-        // 触发动画
         setTimeout(() => document.querySelectorAll('.bar-fill').forEach(e => { const w=e.style.width; e.style.width='0'; setTimeout(()=>e.style.width=w,50) }), 100);
     }
 
@@ -540,7 +527,7 @@
         if(list.includes(val)) return showToast('已存在', 'error');
         
         list.push(val);
-        saveSettingsToCloud(); // 立即同步
+        saveSettingsToCloud();
         renderSettingsUI();
         document.getElementById(id).value = '';
     }
@@ -549,7 +536,7 @@
             const list = type==='auditor' ? cloudSettings.auditors : cloudSettings.responsibles;
             const idx = list.indexOf(name);
             if(idx>-1) list.splice(idx,1);
-            saveSettingsToCloud(); // 立即同步
+            saveSettingsToCloud();
             renderSettingsUI();
             closeModal();
         }});
@@ -565,7 +552,7 @@
         fill('selectResponsible', cloudSettings.responsibles);
     }
 
-    // 文件与粘贴处理
+    // 文件处理
     function setupPasteEvent() {
         document.addEventListener('paste', e => {
             if(!document.getElementById('page-add').classList.contains('active')) return;
@@ -575,8 +562,7 @@
     }
     window.handleFiles = function(files) { for(let f of files) processFile(f); }
     function processFile(file) {
-        currentFiles.push(file); // 存储原始 File 对象用于上传
-        // 生成本地预览
+        currentFiles.push(file);
         const url = URL.createObjectURL(file);
         localPreviewUrls.push(url);
         renderPreviews();
@@ -587,12 +573,10 @@
         ).join('');
     }
     window.removeFile = function(i) {
-        currentFiles.splice(i,1);
-        localPreviewUrls.splice(i,1);
-        renderPreviews();
+        currentFiles.splice(i,1); localPreviewUrls.splice(i,1); renderPreviews();
     }
 
-    // 删除与密码验证
+    // 删除验证
     window.confirmDelete = function(id) {
         showDialog({
             title: '安全验证', text: '删除不可恢复，请输入密码：', type: 'password',
@@ -607,7 +591,7 @@
         });
     }
 
-    // 通用工具
+    // 工具函数
     function showLoading(show) { document.getElementById('loadingMask').style.display = show ? 'flex' : 'none'; }
     function showToast(msg, type='success') {
         const t = document.getElementById('toast');
@@ -628,12 +612,23 @@
     }
     window.closeModal = function() { document.getElementById('uniModal').style.display='none'; }
     window.showBigImg = function(s) { document.getElementById('modalImg').src=s; document.getElementById('imgModal').style.display='flex'; }
-    
-    window.fetchCloudData = fetchCloudData; // 暴露给按钮
+    window.fetchCloudData = fetchCloudData; 
     window.exportToExcel = function() {
-        if(!currentFilteredData.length) return showToast('无数据', 'error');
+        if(!cloudData.length) return showToast('无数据', 'error');
+        // 使用当前筛选后的数据进行导出
+        const filtered = cloudData.filter(item => { /* 重复一次筛选逻辑以确保导出的是当前看到的 */
+            const start = document.getElementById('filterDateStart').value;
+            const end = document.getElementById('filterDateEnd').value;
+            const kw = document.getElementById('filterKeyword').value.toLowerCase();
+            const t = new Date(item.date).getTime();
+            if (start && t < new Date(start).setHours(0,0,0,0)) return false;
+            if (end && t > new Date(end).setHours(23,59,59,999)) return false;
+            if (kw && !item.auditor.includes(kw) && !item.responsible.includes(kw) && !item.reason.includes(kw)) return false;
+            return true;
+        });
+        
         let csv = "\uFEFF时间,审核人,责任人,详情,图\n";
-        currentFilteredData.forEach(i => csv += `${new Date(i.date).toLocaleString()},${i.auditor},${i.responsible},"${i.reason.replace(/"/g,'""')}",${i.images.length}\n`);
+        filtered.forEach(i => csv += `${new Date(i.date).toLocaleString()},${i.auditor},${i.responsible},"${i.reason.replace(/"/g,'""')}",${i.images.length}\n`);
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
         a.download = `Export_${new Date().toISOString().split('T')[0]}.csv`; a.click();
     }
