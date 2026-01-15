@@ -3,177 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>审核系统 | Supabase云端版</title>
-    <!-- 引入 Supabase SDK -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <title>审核系统 | Back4App免认证版</title>
+    <!-- 引入 Parse SDK (Back4App 核心) -->
+    <script src="https://npmcdn.com/parse/dist/parse.min.js"></script>
     <style>
-        /* --- 1. 设计变量 (Aurora UI) --- */
+        /* --- 保持高级 Aurora UI 不变 --- */
         :root {
             --primary: #6366f1;
             --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
-            --orange-gradient: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
-            --pink-gradient: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
             --bg-body: #f0f2f5;
-            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-bg: rgba(255, 255, 255, 0.9);
             --glass-border: 1px solid rgba(255, 255, 255, 0.8);
-            --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.05);
-            --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.1);
-            --text-main: #1e293b; --text-sub: #64748b; --radius-card: 20px;
+            --text-main: #1e293b; --text-sub: #64748b;
         }
-
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0; padding: 20px; color: var(--text-main); min-height: 100vh;
             background-color: var(--bg-body);
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 40%);
+            background-image: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 40%), radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 40%);
             background-attachment: fixed;
         }
-
         .container { max-width: 1000px; margin: 0 auto; padding-bottom: 40px; }
-
+        
         /* 导航 */
         .nav-wrapper { display: flex; justify-content: center; margin-bottom: 30px; }
-        .nav-tabs {
-            background: rgba(255,255,255,0.8); backdrop-filter: blur(12px);
-            padding: 5px; border-radius: 99px; border: var(--glass-border);
-            box-shadow: var(--shadow-sm); display: inline-flex; gap: 4px;
-        }
-        .nav-btn {
-            border: none; background: transparent; padding: 10px 24px; border-radius: 99px;
-            font-size: 14px; font-weight: 700; color: var(--text-sub); cursor: pointer; transition: 0.3s;
-        }
+        .nav-tabs { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); padding: 5px; border-radius: 99px; border: var(--glass-border); display: inline-flex; gap: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .nav-btn { border: none; background: transparent; padding: 10px 24px; border-radius: 99px; font-size: 14px; font-weight: 700; color: var(--text-sub); cursor: pointer; transition: 0.3s; }
         .nav-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
-        /* 页面切换 */
-        .page-section { display: none; animation: fadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        .page-section.active { display: block; }
+        /* 卡片 */
+        .page-section { display: none; animation: fadeIn 0.4s ease; } .page-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* 卡片风格 */
-        .glass-card {
-            background: var(--glass-bg); backdrop-filter: blur(20px);
-            border: var(--glass-border); border-radius: var(--radius-card);
-            padding: 30px; box-shadow: var(--shadow-sm); margin-bottom: 24px;
-        }
-
-        h2 { margin: 0 0 24px 0; font-size: 22px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
+        .glass-card { background: var(--glass-bg); backdrop-filter: blur(20px); border: var(--glass-border); border-radius: 20px; padding: 30px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); margin-bottom: 24px; }
+        h2 { margin: 0 0 24px 0; font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
         h2::before { content:''; width: 6px; height: 24px; background: var(--primary-gradient); border-radius: 10px; display: block; }
 
-        /* KPI 指标卡 */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 24px; }
-        .kpi-card {
-            background: white; border-radius: 16px; padding: 20px;
-            box-shadow: var(--shadow-sm); border: 1px solid rgba(255,255,255,0.5);
-            display: flex; flex-direction: column; justify-content: space-between;
-            transition: transform 0.2s;
-        }
-        .kpi-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
-        .kpi-icon-wrap {
-            width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
-            font-size: 20px; margin-bottom: 12px;
-        }
+        /* 统计卡片 */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .kpi-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .kpi-card:hover { transform: translateY(-3px); }
         .kpi-label { font-size: 13px; color: var(--text-sub); font-weight: 600; text-transform: uppercase; }
-        .kpi-value { font-size: 26px; font-weight: 800; color: var(--text-main); margin-top: 4px; letter-spacing: -1px; }
-        .kpi-trend { font-size: 12px; margin-top: 8px; font-weight: 500; }
+        .kpi-value { font-size: 26px; font-weight: 800; margin-top: 4px; }
         
-        .theme-blue .kpi-icon-wrap { background: #eff6ff; color: #3b82f6; }
-        .theme-purple .kpi-icon-wrap { background: #f5f3ff; color: #8b5cf6; }
-        .theme-orange .kpi-icon-wrap { background: #fff7ed; color: #f97316; }
-        .theme-pink .kpi-icon-wrap { background: #fdf2f8; color: #ec4899; }
-
-        /* 图表区域 */
         .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 24px; margin-bottom: 24px; }
-        .chart-card { background: white; border-radius: var(--radius-card); padding: 24px; box-shadow: var(--shadow-sm); }
-        .chart-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: 700; font-size: 15px; }
+        .chart-card { background: white; border-radius: 20px; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .bar-group { margin-bottom: 12px; }
+        .bar-bg { height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; margin-top: 5px; }
+        .bar-fill { height: 100%; border-radius: 4px; background: var(--primary-gradient); width: 0; transition: width 1s ease; }
         
-        .bar-group { margin-bottom: 16px; }
-        .bar-info { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; font-weight: 600; }
-        .bar-bg { height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
-        .bar-fill { height: 100%; border-radius: 4px; width: 0; transition: width 1s ease-out; }
-        .fill-1 { background: var(--primary-gradient); }
-        .fill-2 { background: var(--accent-gradient); }
-        .fill-3 { background: var(--orange-gradient); }
-        .fill-other { background: #cbd5e1; }
-
-        .rank-list { counter-reset: rank; }
-        .rank-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px dashed #f1f5f9; }
-        .rank-idx { 
-            width: 24px; height: 24px; border-radius: 6px; background: #f1f5f9; color: #64748b;
-            display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; margin-right: 12px;
-        }
-        .rank-row:nth-child(1) .rank-idx { background: #fef3c7; color: #d97706; } 
-        .rank-name { flex: 1; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .rank-val { font-weight: 700; color: var(--text-main); background: #f8fafc; padding: 2px 8px; border-radius: 6px; font-size: 12px; }
-
         /* 表单 */
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; }
-        .form-control {
-            width: 100%; padding: 14px; font-size: 15px; border: 1px solid #e2e8f0; border-radius: 12px;
-            background: rgba(255,255,255,0.8); transition: 0.2s;
-        }
-        textarea.form-control { min-height: 100px; }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 700; color: var(--text-sub); }
+        .form-control { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: rgba(255,255,255,0.8); transition: 0.2s; }
+        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); background: white; }
+        .btn-main { width: 100%; padding: 16px; border: none; border-radius: 14px; background: var(--primary-gradient); color: white; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 20px -5px rgba(99, 102, 241, 0.4); transition: 0.2s; }
+        .btn-main:hover { transform: translateY(-2px); }
 
-        .upload-zone {
-            border: 2px dashed #cbd5e1; border-radius: 16px; padding: 30px; text-align: center; cursor: pointer;
-            background: rgba(248, 250, 252, 0.5); transition: 0.3s;
-        }
-        .upload-zone:hover { border-color: var(--primary); background: #eef2ff; }
-        
-        .btn-main {
-            width: 100%; padding: 16px; border: none; border-radius: 14px;
-            background: var(--primary-gradient); color: white; font-size: 16px; font-weight: 700;
-            cursor: pointer; box-shadow: 0 8px 20px -5px rgba(99, 102, 241, 0.4); transition: 0.2s;
-        }
-        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 12px 25px -5px rgba(99, 102, 241, 0.5); }
+        /* 上传 */
+        .upload-zone { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; background: rgba(248, 250, 252, 0.5); }
+        .preview-box { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        .thumb-wrap { width: 70px; height: 70px; border-radius: 10px; overflow: hidden; position: relative; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .thumb-wrap img { width: 100%; height: 100%; object-fit: cover; }
+        .thumb-rm { position: absolute; inset: 0; background: rgba(0,0,0,0.5); color: white; display: flex; justify-content: center; align-items: center; cursor: pointer; opacity: 0; transition: 0.2s; }
+        .thumb-wrap:hover .thumb-rm { opacity: 1; }
 
-        /* 筛选与表格 */
-        .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: flex-end; }
-        .btn-tool { padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid transparent; background: white; }
-        .btn-export { background: #ecfdf5; color: #047857; }
-
-        .table-box { background: white; border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-sm); }
+        /* 表格 & 筛选 */
+        .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        .btn-tool { padding: 10px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; border: 1px solid #e2e8f0; background: white; }
+        .btn-export { background: #ecfdf5; color: #047857; border:none; }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 16px; background: #f8fafc; font-size: 12px; color: var(--text-sub); font-weight: 700; text-transform: uppercase; }
+        th { text-align: left; padding: 16px; background: #f8fafc; font-size: 12px; color: var(--text-sub); }
         td { padding: 16px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
-        .badge-auditor { background: #eff6ff; color: #2563eb; }
-        .badge-resp { background: #fff1f2; color: #e11d48; }
+        .badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .badge-auditor { background: #eff6ff; color: #2563eb; } .badge-resp { background: #fff1f2; color: #e11d48; }
 
-        /* 组件 */
+        /* 功能组件 */
         #loadingMask { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
         .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        #toast { position: fixed; top: 20px; right: 20px; z-index: 5000; background: white; padding: 16px 24px; border-radius: 14px; box-shadow: var(--shadow-lg); border-left: 5px solid var(--primary); transform: translateX(150%); transition: 0.4s; }
+        #toast { position: fixed; top: 20px; right: 20px; z-index: 5000; background: white; padding: 16px 24px; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-left: 5px solid var(--primary); transform: translateX(150%); transition: 0.4s; font-weight:600; }
         #toast.show { transform: translateX(0); }
         
-        #uniModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 4000; justify-content: center; align-items: center; }
-        .modal-body { background: white; padding: 30px; border-radius: 20px; text-align: center; width: 90%; max-width: 350px; }
-        .modal-input { width: 100%; padding: 10px; margin: 15px 0; border: 2px solid #e2e8f0; border-radius: 8px; text-align: center; }
-        .modal-btns { display: flex; gap: 10px; margin-top: 15px; }
-        .modal-btn { flex: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
-        .btn-confirm { background: var(--primary); color: white; }
-
-        .preview-box { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
-        .thumb-wrap { position: relative; width: 70px; height: 70px; border-radius: 10px; overflow: hidden; }
-        .thumb-wrap img { width: 100%; height: 100%; object-fit: cover; }
-        .thumb-rm { position: absolute; inset: 0; background: rgba(0,0,0,0.5); color: white; display: flex; justify-content: center; align-items: center; opacity: 0; cursor: pointer; }
-        .thumb-wrap:hover .thumb-rm { opacity: 1; }
-        
-        #imgModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; justify-content: center; align-items: center; }
-        #imgModal img { max-width: 90%; max-height: 90%; border-radius: 10px; }
-
-        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        /* 设置标签 */
         .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
-        .tag { background: #f1f5f9; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: default; }
-        .tag span { color: #94a3b8; margin-left: 6px; cursor: pointer; font-weight: bold; }
-        .tag span:hover { color: #ef4444; }
+        .tag { background: #f1f5f9; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; transition:0.2s; }
+        .tag:hover { background: #fee2e2; color: #991b1b; }
+
+        /* 图片放大 */
+        #imgModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; justify-content: center; align-items: center; }
+        #imgModal img { max-width: 90%; max-height: 90%; border-radius: 10px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
 
         @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } .glass-card { padding: 20px; } }
     </style>
@@ -183,15 +102,15 @@
 <!-- Loading -->
 <div id="loadingMask">
     <div class="spinner"></div>
-    <div style="margin-top:15px; font-weight:600; color:#64748b;">数据同步中...</div>
+    <div style="margin-top:15px; font-weight:600; color:#64748b;">云端同步中...</div>
 </div>
 
 <div class="container">
     <div class="nav-wrapper">
         <div class="nav-tabs">
-            <button class="nav-btn active" onclick="switchTab('add')">✏️ 问题登记</button>
-            <button class="nav-btn" onclick="switchTab('list')">☁️ 云端数据</button>
-            <button class="nav-btn" onclick="switchTab('settings')">⚙️ 全局配置</button>
+            <button class="nav-btn active" onclick="switchTab('add')">✏️ 登记</button>
+            <button class="nav-btn" onclick="switchTab('list')">📊 数据</button>
+            <button class="nav-btn" onclick="switchTab('settings')">⚙️ 设置</button>
         </div>
     </div>
 
@@ -203,48 +122,48 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>审核人员</label>
-                        <select id="selectAuditor" class="form-control" required><option value="">加载中...</option></select>
+                        <select id="selectAuditor" class="form-control" required><option>加载中...</option></select>
                     </div>
                     <div class="form-group">
                         <label>责任归属</label>
-                        <select id="selectResponsible" class="form-control" required><option value="">加载中...</option></select>
+                        <select id="selectResponsible" class="form-control" required><option>加载中...</option></select>
                     </div>
                 </div>
                 <div class="form-group" style="margin-bottom:20px;">
                     <label>异常详情</label>
-                    <textarea id="inputReason" class="form-control" placeholder="请详细描述..." required></textarea>
+                    <textarea id="inputReason" class="form-control" placeholder="描述问题..." required></textarea>
                 </div>
                 <div class="form-group" style="margin-bottom:30px;">
-                    <label>凭证上传 (云端同步)</label>
+                    <label>凭证上传 (支持多图/粘贴)</label>
                     <input type="file" id="fileInput" multiple accept="image/*" style="display:none;" onchange="handleFiles(this.files)">
                     <div class="upload-zone" id="pasteArea" onclick="document.getElementById('fileInput').click()">
                         📸 点击上传 或 Ctrl+V 粘贴
                     </div>
                     <div class="preview-box" id="previewContainer"></div>
                 </div>
-                <button type="submit" class="btn-main">提交到云端</button>
+                <button type="submit" class="btn-main">提交 (Back4App)</button>
             </form>
         </div>
     </div>
 
     <!-- 2. 数据 -->
     <div id="page-list" class="page-section">
-        <div class="kpi-grid" id="kpiArea"></div>
+        <div class="kpi-grid" id="kpiArea" style="display:none;"></div>
         <div class="chart-grid" id="chartArea" style="display:none;">
             <div class="chart-card">
-                <div class="chart-header">🏆 责任占比</div>
+                <div style="font-weight:700; margin-bottom:15px;">🏆 责任占比</div>
                 <div id="statProgressArea"></div>
             </div>
             <div class="chart-card">
-                <div class="chart-header">🔥 高频问题</div>
-                <div id="statReasonList" class="rank-list"></div>
+                <div style="font-weight:700; margin-bottom:15px;">🔥 高频问题</div>
+                <div id="statReasonList"></div>
             </div>
         </div>
         <div class="glass-card">
             <div class="filter-bar">
                 <div style="flex:1"><input type="date" id="filterDateStart" class="form-control"></div>
                 <div style="flex:1"><input type="date" id="filterDateEnd" class="form-control"></div>
-                <div style="flex:1"><input type="text" id="filterKeyword" class="form-control" placeholder="搜索..."></div>
+                <div style="flex:1"><input type="text" id="filterKeyword" class="form-control" placeholder="搜索 姓名/内容..."></div>
                 <button class="btn-tool" onclick="fetchCloudData()">🔄 刷新</button>
                 <button class="btn-tool btn-export" onclick="exportToExcel()">📥 导出</button>
             </div>
@@ -261,7 +180,7 @@
     <!-- 3. 配置 -->
     <div id="page-settings" class="page-section">
         <div class="glass-card">
-            <h3>👥 审核人名单 (云同步)</h3>
+            <h3>👥 审核人名单</h3>
             <div style="display:flex; gap:10px;">
                 <input type="text" id="newAuditorInput" class="form-control" placeholder="输入姓名">
                 <button class="btn-tool" style="background:black; color:white;" onclick="addSetting('auditor')">＋</button>
@@ -269,7 +188,7 @@
             <div id="auditorList" class="tag-list"></div>
         </div>
         <div class="glass-card" style="margin-top:20px;">
-            <h3>👤 责任人名单 (云同步)</h3>
+            <h3>👤 责任人名单</h3>
             <div style="display:flex; gap:10px;">
                 <input type="text" id="newResponsibleInput" class="form-control" placeholder="输入姓名">
                 <button class="btn-tool" style="background:black; color:white;" onclick="addSetting('responsible')">＋</button>
@@ -279,48 +198,38 @@
     </div>
 </div>
 
-<!-- 弹窗组件 -->
-<div id="uniModal">
-    <div class="modal-body">
-        <h3 id="modalTitle">提示</h3>
-        <p id="modalDesc">内容</p>
-        <input type="password" id="modalInput" class="modal-input" placeholder="输入管理员密码" style="display:none;">
-        <div class="modal-btns">
-            <button class="modal-btn" style="background:#f1f5f9;" onclick="closeModal()">取消</button>
-            <button class="modal-btn btn-confirm" id="modalConfirmBtn">确定</button>
-        </div>
-    </div>
-</div>
 <div id="imgModal" onclick="this.style.display='none'"><img id="modalImg" src=""></div>
 <div id="toast"></div>
 
 <script>
-    /* ================= ⚠️ 配置区域 ⚠️ ================= */
-    // 请将下方的信息替换为你 Supabase 的 API URL 和 anon Key
-    const SUPABASE_URL = 'https://yakxvfpsbivghmzqinft.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_MeGabPIgWg4Rx2H1holX4Q_Uqk0__oK';
-    const ADMIN_PASSWORD = "xinyunchu";  // 删除密码
+    /* ================= ⚠️ 配置区域 (Back4App) ⚠️ ================= */
+    // 1. 去 Back4App 官网注册 (邮箱即可)
+    // 2. 创建 App -> App Settings -> Security & Keys
+    // 3. 复制 App ID 和 Javascript Key 填入下面
+    
+    const APP_ID = 'QTPkvJWeuAKzgGlndrzkRiT51VmxLljrP6gj63Wc';
+    const JS_KEY = 'jY67lVrsSB309kgNEkV0b6g5EGVk1CY5ZMMTTxg3';
+    const ADMIN_PASSWORD = "xinyun123";  // 删除/修改配置时需要的密码
 
-    // =======================================================
-    const { createClient } = supabase;
-    let db = null;
+    // =============================================================
     let currentFiles = []; 
-    let localPreviewUrls = [];
     let cloudData = [];
     let cloudSettings = { auditors: [], responsibles: [] };
-    let settingsRowId = null;
+    let settingsObjId = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
-        // 检查配置
-        if(SUPABASE_URL.includes('你的Project')) {
-            alert('❌ 请用记事本打开文件，填入你的 Supabase URL 和 Key！');
+        if(APP_ID.includes('你的')) {
+            alert('❌ 请用记事本打开代码，填入 Back4App 的 APP ID 和 JS Key！');
             document.getElementById('loadingMask').style.display='none';
             return;
         }
 
+        // 初始化 Parse
+        Parse.initialize(APP_ID, JS_KEY);
+        Parse.serverURL = 'https://parseapi.back4app.com/';
+
+        showLoading(true);
         try {
-            db = createClient(SUPABASE_URL, SUPABASE_KEY);
-            showLoading(true);
             await fetchSettings();
             updateFormSelects();
             setupPasteEvent();
@@ -328,84 +237,94 @@
             showLoading(false);
             showToast('✅ 云端连接成功');
         } catch(e) {
-            alert('连接失败：' + e.message);
             showLoading(false);
+            alert("连接失败，请检查密钥是否正确: " + e.message);
         }
     });
 
-    /* ================= Supabase 核心逻辑 ================= */
+    /* --- 核心逻辑 (Parse) --- */
 
     // 1. 获取配置
     async function fetchSettings() {
-        const { data, error } = await db.from('audit_settings').select('*').limit(1);
-        if(error) { console.error(error); return; }
-
-        if(data && data.length > 0) {
-            cloudSettings = {
-                auditors: data[0].auditors || [],
-                responsibles: data[0].responsibles || []
-            };
-            settingsRowId = data[0].id;
-        } else {
-            // 初始化
-            const init = { auditors: ["张三", "李四"], responsibles: ["打包组", "王五"] };
-            const { data: newData } = await db.from('audit_settings').insert([init]).select();
-            if(newData) {
-                cloudSettings = init;
-                settingsRowId = newData[0].id;
+        const query = new Parse.Query("AuditSettings");
+        try {
+            const result = await query.first();
+            if (result) {
+                cloudSettings = {
+                    auditors: result.get("auditors") || [],
+                    responsibles: result.get("responsibles") || []
+                };
+                settingsObjId = result.id;
+            } else {
+                console.log("未找到配置，请先在 Back4App 后台创建 AuditSettings 表并添加一行数据");
+                // 默认防错
+                cloudSettings = { auditors: ["请在后台添加数据"], responsibles: ["请在后台添加数据"] };
             }
+            renderSettingsUI();
+        } catch (error) {
+            console.error("获取配置失败", error);
         }
-        renderSettingsUI();
     }
 
     // 2. 保存配置
     async function saveSettingsToCloud() {
-        if (!settingsRowId) return;
+        if (!settingsObjId) return alert("配置未初始化，无法保存");
         showLoading(true);
-        const { error } = await db.from('audit_settings').update({
-            auditors: cloudSettings.auditors,
-            responsibles: cloudSettings.responsibles
-        }).eq('id', settingsRowId);
+        
+        const Settings = Parse.Object.extend("AuditSettings");
+        const settings = new Settings();
+        settings.id = settingsObjId;
+        
+        settings.set("auditors", cloudSettings.auditors);
+        settings.set("responsibles", cloudSettings.responsibles);
 
-        if(error) showToast('同步配置失败', 'error');
-        else {
+        try {
+            await settings.save();
             updateFormSelects();
             showToast('配置已同步');
+        } catch (error) {
+            showToast('保存失败: ' + error.message, 'error');
         }
         showLoading(false);
     }
 
-    // 3. 提交记录 (转Base64存储)
+    // 3. 提交记录 (图片转 ParseFile)
     async function submitRecord(auditor, responsible, reason) {
         showLoading(true);
         try {
-            let imageUrls = [];
-            // 转 Base64
+            let imageFiles = [];
+            // 上传图片
             if (currentFiles.length > 0) {
-                const promises = currentFiles.map(file => {
-                    return new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onload = e => resolve(e.target.result);
-                        reader.readAsDataURL(file);
-                    });
+                // Back4App 的文件上传
+                const uploadPromises = currentFiles.map(file => {
+                    const parseFile = new Parse.File(file.name, file);
+                    return parseFile.save();
                 });
-                imageUrls = await Promise.all(promises);
+                const savedFiles = await Promise.all(uploadPromises);
+                // 存 URL 数组（这里稍微变通，把 ParseFile 对象存入数组列）
+                imageFiles = savedFiles; // 如果数据库是 Array 类型，可以直接存 ParseFile 数组
+                // 或者转为 url 字符串数组: imageFiles = savedFiles.map(f => f.url());
+                // 为了兼容之前逻辑，这里存 URL 字符串
+                imageFiles = savedFiles.map(f => f.url());
             }
 
-            const { error } = await db.from('audit_record').insert([{
-                auditor, responsible, reason, images: imageUrls
-            }]);
+            const AuditRecord = Parse.Object.extend("AuditRecord");
+            const record = new AuditRecord();
+            
+            record.set("auditor", auditor);
+            record.set("responsible", responsible);
+            record.set("reason", reason);
+            record.set("images", imageFiles);
 
-            if(error) throw error;
+            await record.save();
             
             document.getElementById('auditForm').reset();
             currentFiles = [];
-            localPreviewUrls = [];
-            renderPreviews();
+            document.getElementById('previewContainer').innerHTML = '';
             showToast('提交成功！');
         } catch (error) {
             console.error(error);
-            showToast('提交失败', 'error');
+            showToast('提交失败：' + error.message, 'error');
         }
         showLoading(false);
     }
@@ -413,42 +332,50 @@
     // 4. 获取数据
     async function fetchCloudData() {
         showLoading(true);
-        const { data, error } = await db.from('audit_record').select('*').order('created_at', { ascending: false }).limit(500);
+        const query = new Parse.Query("AuditRecord");
+        query.limit(500);
+        query.descending("createdAt");
         
-        if (error) {
-            showToast('获取数据失败', 'error');
-        } else {
-            cloudData = data.map(item => ({
-                id: item.id,
-                date: item.created_at,
-                auditor: item.auditor,
-                responsible: item.responsible,
-                reason: item.reason,
-                images: item.images || []
+        try {
+            const results = await query.find();
+            cloudData = results.map(obj => ({
+                id: obj.id,
+                date: obj.createdAt,
+                auditor: obj.get("auditor"),
+                responsible: obj.get("responsible"),
+                reason: obj.get("reason"),
+                images: obj.get("images") || []
             }));
             applyFilters();
             showToast('数据已刷新');
+        } catch (error) {
+            showToast('获取数据失败', 'error');
         }
         showLoading(false);
     }
 
     // 5. 删除数据
     async function deleteCloudRecord(id) {
+        if(prompt('请输入删除密码') !== ADMIN_PASSWORD) return showToast('密码错误', 'error');
+        
         showLoading(true);
-        const { error } = await db.from('audit_record').delete().eq('id', id);
-        if (error) {
-            showToast('删除失败', 'error');
-        } else {
+        const AuditRecord = Parse.Object.extend("AuditRecord");
+        const obj = new AuditRecord();
+        obj.id = id;
+        
+        try {
+            await obj.destroy();
             cloudData = cloudData.filter(i => i.id !== id);
             applyFilters();
             showToast('已删除');
+        } catch (error) {
+            showToast('删除失败: ' + error.message, 'error');
         }
         showLoading(false);
     }
 
-    /* ================= UI 逻辑 ================= */
+    /* --- UI & 工具 (保持不变) --- */
     
-    // Tab 切换
     window.switchTab = async function(tab) {
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         event.target.classList.add('active');
@@ -460,23 +387,14 @@
         }
     }
 
-    // 提交
     document.getElementById('auditForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const aud = document.getElementById('selectAuditor').value;
         const res = document.getElementById('selectResponsible').value;
         const rsn = document.getElementById('inputReason').value;
-
-        if (currentFiles.length === 0) {
-            showDialog({ title: '确认', text: '未上传图片，确定提交吗？', onConfirm: () => {
-                closeModal(); submitRecord(aud, res, rsn);
-            }});
-        } else {
-            submitRecord(aud, res, rsn);
-        }
+        submitRecord(aud, res, rsn);
     });
 
-    // 筛选
     function setupFilterListeners() {
         ['filterDateStart', 'filterDateEnd', 'filterKeyword'].forEach(id => {
             document.getElementById(id).addEventListener('input', applyFilters);
@@ -508,7 +426,7 @@
         data.forEach(item => {
             const d = new Date(item.date);
             const dateStr = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-            const imgs = item.images.map(src => `<img src="${src}" style="width:30px; height:30px; border-radius:4px; margin-right:4px; cursor:zoom-in; object-fit:cover;" onclick="showBigImg('${src}')">`).join('');
+            const imgs = item.images.map(src => `<img src="${src}" style="width:30px; height:30px; border-radius:4px; margin-right:4px; cursor:zoom-in; object-fit:cover; border:1px solid #ddd;" onclick="showBigImg('${src}')">`).join('');
             
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -517,7 +435,7 @@
                 <td><span class="badge badge-resp">${item.responsible}</span></td>
                 <td>${item.reason}</td>
                 <td><div style="display:flex;">${imgs||'-'}</div></td>
-                <td><button onclick="confirmDelete('${item.id}')" style="cursor:pointer; border:none; background:none; font-size:16px;">🗑</button></td>
+                <td><button onclick="deleteCloudRecord('${item.id}')" style="cursor:pointer; border:none; background:none; font-size:16px;">🗑</button></td>
             `;
             tbody.appendChild(tr);
         });
@@ -547,40 +465,32 @@
         document.getElementById('kpiArea').innerHTML = `
             <div class="kpi-card theme-blue">
                 <div><div class="kpi-icon-wrap">📄</div><div class="kpi-label">总记录数</div><div class="kpi-value">${total}</div></div>
-                <div class="kpi-trend">历史累计</div>
             </div>
             <div class="kpi-card theme-purple">
                 <div><div class="kpi-icon-wrap">📅</div><div class="kpi-label">今日新增</div><div class="kpi-value">${data.filter(i=>new Date(i.date).toDateString()===new Date().toDateString()).length}</div></div>
-                <div class="kpi-trend" style="color:#10b981">实时更新</div>
             </div>
             <div class="kpi-card theme-orange">
                 <div><div class="kpi-icon-wrap">👤</div><div class="kpi-label">头号责任人</div><div class="kpi-value" style="font-size:20px;">${topResp}</div></div>
-                <div class="kpi-trend">占比 ${(sortedResp[0] ? (sortedResp[0][1]/total*100).toFixed(0):0)}%</div>
             </div>
             <div class="kpi-card theme-pink">
                 <div><div class="kpi-icon-wrap">🔥</div><div class="kpi-label">高频问题</div><div class="kpi-value" style="font-size:18px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${topReason}</div></div>
-                <div class="kpi-trend">出现 ${sortedReason[0]?sortedReason[0][1]:0} 次</div>
             </div>
         `;
 
         document.getElementById('statProgressArea').innerHTML = sortedResp.slice(0,5).map((item, idx) => {
             const pct = ((item[1]/total)*100).toFixed(1);
-            const fillClass = idx < 4 ? `fill-${idx+1}` : 'fill-other';
-            return `<div class="bar-group"><div class="bar-info"><span>${item[0]}</span><span>${item[1]}</span></div><div class="bar-bg"><div class="bar-fill ${fillClass}" style="width:${pct}%"></div></div></div>`;
+            return `<div class="bar-group"><div class="bar-info"><span>${item[0]}</span><span>${item[1]}</span></div><div class="bar-bg"><div class="bar-fill fill-1" style="width:${pct}%"></div></div></div>`;
         }).join('');
 
         document.getElementById('statReasonList').innerHTML = sortedReason.slice(0,5).map((item,idx) => `
-            <div class="rank-row">
-                <div class="rank-idx">${idx+1}</div>
-                <div class="rank-name">${item[0]}</div>
-                <div class="rank-val">${item[1]}次</div>
+            <div style="display:flex; padding:8px 0; border-bottom:1px dashed #eee;">
+                <div style="width:20px; color:#999; font-weight:bold;">${idx+1}</div>
+                <div style="flex:1;">${item[0]}</div>
+                <div style="font-weight:bold;">${item[1]}</div>
             </div>
         `).join('');
-        
-        setTimeout(() => document.querySelectorAll('.bar-fill').forEach(e => { const w=e.style.width; e.style.width='0'; setTimeout(()=>e.style.width=w,50) }), 100);
     }
 
-    // 设置逻辑
     window.addSetting = function(type) {
         const id = type==='auditor'?'newAuditorInput':'newResponsibleInput';
         const val = document.getElementById(id).value.trim();
@@ -594,27 +504,24 @@
         document.getElementById(id).value = '';
     }
     window.removeSetting = function(type, name) {
-        showDialog({ title: '确认移除', text: `确定移除 "${name}" 吗？`, onConfirm: () => {
-            const list = type==='auditor' ? cloudSettings.auditors : cloudSettings.responsibles;
-            const idx = list.indexOf(name);
-            if(idx>-1) list.splice(idx,1);
-            saveSettingsToCloud();
-            renderSettingsUI();
-            closeModal();
-        }});
+        if(!confirm('确定删除?')) return;
+        const list = type==='auditor' ? cloudSettings.auditors : cloudSettings.responsibles;
+        const idx = list.indexOf(name);
+        if(idx>-1) list.splice(idx,1);
+        saveSettingsToCloud();
+        renderSettingsUI();
     }
     function renderSettingsUI() {
-        const render = (arr, t) => (arr||[]).map(n => `<div class="tag">${n}<span onclick="removeSetting('${t}','${n}')">×</span></div>`).join('');
+        const render = (arr, t) => arr.map(n => `<div class="tag" onclick="removeSetting('${t}','${n}')">${n} ×</div>`).join('');
         document.getElementById('auditorList').innerHTML = render(cloudSettings.auditors, 'auditor');
         document.getElementById('responsibleList').innerHTML = render(cloudSettings.responsibles, 'responsible');
     }
     function updateFormSelects() {
-        const fill = (id, arr) => document.getElementById(id).innerHTML = '<option value="">-- 选择 --</option>' + (arr||[]).map(v=>`<option value="${v}">${v}</option>`).join('');
+        const fill = (id, arr) => document.getElementById(id).innerHTML = '<option value="">-- 选择 --</option>' + arr.map(v=>`<option value="${v}">${v}</option>`).join('');
         fill('selectAuditor', cloudSettings.auditors);
         fill('selectResponsible', cloudSettings.responsibles);
     }
 
-    // 文件处理
     function setupPasteEvent() {
         document.addEventListener('paste', e => {
             if(!document.getElementById('page-add').classList.contains('active')) return;
@@ -626,34 +533,12 @@
     function processFile(file) {
         currentFiles.push(file);
         const url = URL.createObjectURL(file);
-        localPreviewUrls.push(url);
-        renderPreviews();
-    }
-    function renderPreviews() {
-        document.getElementById('previewContainer').innerHTML = localPreviewUrls.map((src,i) => 
-            `<div class="thumb-wrap"><img src="${src}"><div class="thumb-rm" onclick="removeFile(${i})">×</div></div>`
-        ).join('');
-    }
-    window.removeFile = function(i) {
-        currentFiles.splice(i,1); localPreviewUrls.splice(i,1); renderPreviews();
+        const div = document.createElement('div');
+        div.className = 'thumb-wrap';
+        div.innerHTML = `<img src="${url}"><div class="thumb-rm" onclick="this.parentElement.remove()">×</div>`;
+        document.getElementById('previewContainer').appendChild(div);
     }
 
-    // 删除验证
-    window.confirmDelete = function(id) {
-        showDialog({
-            title: '安全验证', text: '删除不可恢复，请输入密码：', type: 'password',
-            onConfirm: (pwd) => {
-                if (pwd === ADMIN_PASSWORD) {
-                    deleteCloudRecord(id);
-                    closeModal();
-                } else {
-                    showToast('密码错误', 'error');
-                }
-            }
-        });
-    }
-
-    // 工具函数
     function showLoading(show) { document.getElementById('loadingMask').style.display = show ? 'flex' : 'none'; }
     function showToast(msg, type='success') {
         const t = document.getElementById('toast');
@@ -661,37 +546,14 @@
         t.className = type==='success'?'show':'show error';
         setTimeout(()=>t.className='', 3000);
     }
-    window.showDialog = function({title, text, type='confirm', onConfirm}) {
-        document.getElementById('modalTitle').innerText = title;
-        document.getElementById('modalDesc').innerText = text;
-        const inp = document.getElementById('modalInput');
-        inp.value=''; inp.style.display=type==='password'?'block':'none';
-        document.getElementById('uniModal').style.display='flex';
-        const btn = document.getElementById('modalConfirmBtn');
-        const newBtn = btn.cloneNode(true); btn.parentNode.replaceChild(newBtn, btn);
-        newBtn.onclick = () => type==='password'?onConfirm(inp.value):onConfirm();
-        if(type==='password') inp.focus();
-    }
-    window.closeModal = function() { document.getElementById('uniModal').style.display='none'; }
     window.showBigImg = function(s) { document.getElementById('modalImg').src=s; document.getElementById('imgModal').style.display='flex'; }
     window.fetchCloudData = fetchCloudData; 
     window.exportToExcel = function() {
         if(!cloudData.length) return showToast('无数据', 'error');
-        let csv = "\uFEFF时间,审核人,责任人,详情,图\n";
-        // 使用当前筛选后的数据
-        const start = document.getElementById('filterDateStart').value;
-        const end = document.getElementById('filterDateEnd').value;
-        const kw = document.getElementById('filterKeyword').value.toLowerCase();
-        const filtered = cloudData.filter(item => {
-            const t = new Date(item.date).getTime();
-            if (start && t < new Date(start).setHours(0,0,0,0)) return false;
-            if (end && t > new Date(end).setHours(23,59,59,999)) return false;
-            if (kw && !item.auditor.includes(kw) && !item.responsible.includes(kw) && !item.reason.includes(kw)) return false;
-            return true;
-        });
-        filtered.forEach(i => csv += `${new Date(i.date).toLocaleString()},${i.auditor},${i.responsible},"${i.reason.replace(/"/g,'""')}",${i.images.length}\n`);
+        let csv = "\uFEFF时间,审核人,责任人,详情\n";
+        cloudData.forEach(i => csv += `${new Date(i.date).toLocaleString()},${i.auditor},${i.responsible},"${i.reason.replace(/"/g,'""')}"\n`);
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-        a.download = `Export_${new Date().toISOString().split('T')[0]}.csv`; a.click();
+        a.download = `Data.csv`; a.click();
     }
 </script>
 </body>
