@@ -1,0 +1,2150 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="antialiased scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ProBox 订单协作系统 (Premium)</title>
+    
+    <!-- 1. 样式库 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.4.2/css/all.min.css">
+    <!-- 引入 Inter 字体提升高级感 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- 2. 工具库 -->
+    <script src="https://cdn.staticfile.org/sweetalert2/11.7.32/sweetalert2.all.min.js"></script>
+    <script src="https://cdn.staticfile.org/compressorjs/1.2.1/compressor.min.js"></script>
+    
+    <!-- 3. 数据库 -->
+    <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.15.0/dist/av-min.js"></script>
+
+    <script>
+        // 核心切换逻辑 - 放在最前面防止被阻断
+        window.switchApp = function(app) {
+            try {['app-calculator', 'app-order-form', 'app-order-list'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) {
+                        el.classList.add('hidden');
+                        el.classList.remove('animate-fade-in-up');
+                    }
+                });
+                const target = document.getElementById('app-' + app);
+                if(target) {
+                    target.classList.remove('hidden');
+                    target.classList.add('animate-fade-in-up');
+                }
+
+                // 更新导航按钮状态
+                ['nav-calculator', 'nav-order-form', 'nav-order-list'].forEach(id => {
+                    const btn = document.getElementById(id);
+                    btn.className = "nav-item px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 relative overflow-hidden";
+                    
+                    if(id === 'nav-' + app) {
+                        btn.classList.add('bg-slate-900', 'text-white', 'shadow-lg', 'shadow-slate-900/20', 'dark:bg-white', 'dark:text-slate-900');
+                    } else {
+                        btn.classList.add('text-slate-500', 'hover:text-slate-800', 'hover:bg-slate-100', 'dark:text-slate-400', 'dark:hover:bg-slate-800');
+                    }
+                });
+            } catch(e) { console.error("Switch App Error:", e); }
+        };
+
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans:['Inter', 'sans-serif'] },
+                    colors: { 
+                        slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a' },
+                        primary: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#312e81' }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'fade-in-up': 'fadeInUp 0.5s ease-out',
+                        'bounce-slight': 'bounceSlight 2s infinite',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        fadeInUp: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        bounceSlight: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-3px)' } },
+                        pulseGlow: { '0%, 100%': { boxShadow: '0 0 0 0 rgba(99, 102, 241, 0.4)' }, '50%': { boxShadow: '0 0 0 6px rgba(99, 102, 241, 0)' } }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* 全局高级样式重写 */
+        body { background-color: #f3f4f6; color: #1e293b; letter-spacing: -0.01em; }
+        
+        /* 玻璃拟态与卡片 */
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.5); }
+        .dark .glass-panel { background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.05); }
+        
+        .pro-card { background: white; border-radius: 24px; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05); border: 1px solid rgba(241, 245, 249, 0.6); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .dark .pro-card { background: #1e293b; border-color: #334155; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.3); }
+        .pro-card:hover { transform: translateY(-2px); box-shadow: 0 20px 40px -12px rgba(0,0,0,0.1); }
+        
+        /* 输入框美化 */
+        .pro-input { width: 100%; background: #f8fafc; border: 2px solid transparent; border-radius: 14px; padding: 12px 16px; font-weight: 500; transition: all 0.2s; color: #334155; }
+        .dark .pro-input { background: #0f172a; color: #f1f5f9; }
+        .pro-input:focus { background: white; border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); outline: none; }
+        .dark .pro-input:focus { background: #1e293b; border-color: #6366f1; }
+        
+        /* 按钮美化 */
+        .btn { border-radius: 12px; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s; border: none; letter-spacing: 0.02em; }
+        .btn:active { transform: scale(0.96); }
+        .btn-primary { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3); }
+        .btn-primary:hover { box-shadow: 0 6px 16px rgba(15, 23, 42, 0.4); transform: translateY(-1px); }
+        
+        .btn-secondary { background: white; border: 1px solid #e2e8f0; color: #64748b; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .btn-secondary:hover { border-color: #cbd5e1; color: #334155; background: #f8fafc; }
+
+        /* 发货按钮优化 - 更紧凑 */
+        .btn-action-ship { 
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); 
+            color: white; 
+            padding: 4px 12px; 
+            font-size: 11px; 
+            height: 28px; 
+            border-radius: 99px; 
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(79, 70, 229, 0.2); 
+            transition: all 0.2s; 
+            white-space: nowrap;
+        }
+        .btn-action-ship:hover { box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3); transform: translateY(-1px); }
+        .btn-action-ship:active { transform: scale(0.95); }
+
+        /* 标签页与状态 */
+        .tab-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 600; text-align: center; cursor: pointer; z-index: 10; position: relative; color: #94a3b8; transition: color 0.3s; }
+        .tab-btn.active { color: #1e293b; }
+        .dark .tab-btn.active { color: white; }
+        
+        .status-pill { display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 700; gap: 6px; letter-spacing: 0.02em; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .pill-todo { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
+        .pill-shipping { background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; }
+        .pill-done { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
+        .pill-issue { background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; animation: pulse-red 2s infinite; }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+        /* 表格优化 - 解决抖动问题 */
+        .modern-table { border-collapse: separate; border-spacing: 0 8px; width: 100%; }
+        .modern-table thead th { font-size: 12px; text-transform: uppercase; color: #94a3b8; font-weight: 700; padding: 0 24px 12px; border: none; letter-spacing: 0.05em; }
+        .modern-table tbody tr { background: white; transition: background-color 0.2s, box-shadow 0.2s; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+        .modern-table tbody tr td:first-child { border-top-left-radius: 16px; border-bottom-left-radius: 16px; }
+        .modern-table tbody tr td:last-child { border-top-right-radius: 16px; border-bottom-right-radius: 16px; }
+        
+        /* 关键修改：移除 transform: scale 以防止抖动 */
+        .modern-table tbody tr:hover { 
+            background-color: #fcfcfc;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.06); 
+            transform: none !important; /* 强制禁止缩放 */
+            position: relative; 
+            z-index: 10; 
+        }
+        
+        .modern-table tbody td { padding: 16px 24px; vertical-align: middle; border: none; color: #475569; }
+        .dark .modern-table tbody tr { background: #1e293b; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .dark .modern-table tbody tr:hover { background-color: #273548; }
+        
+        /* 缩略图与图库 */
+        .upload-thumb { width: 72px; height: 72px; object-fit: cover; border-radius: 12px; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .table-thumb { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; border: 2px solid white; cursor: zoom-in; background: #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.2s; }
+        .table-thumb:hover { transform: scale(1.5); z-index: 50; }
+        
+        /* 提示框 Toast - 顶部醒目 */
+        #toastContainer { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 10000; pointer-events: none; width: auto; min-width: 300px; display: flex; flex-col-reverse: column-reverse; gap: 10px; }
+        .toast-msg { background: white; color: #1e293b; padding: 14px 24px; border-radius: 16px; font-size: 14px; font-weight: 600; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.15), 0 4px 6px -2px rgba(0,0,0,0.05); opacity: 0; transform: translateY(-20px) scale(0.95); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 12px; border-left: 4px solid #6366f1; pointer-events: auto; }
+        .toast-msg.show { opacity: 1; transform: translateY(0) scale(1); }
+        .toast-msg i { font-size: 18px; }
+        
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            .modern-table thead { display: none; }
+            .modern-table tbody tr { display: block; margin-bottom: 1rem; border-radius: 20px; padding: 20px; }
+            .modern-table tbody td { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; font-size: 14px; }
+            .modern-table tbody td::before { content: attr(data-label); font-weight: 700; color: #94a3b8; font-size: 12px; text-transform: uppercase; margin-right: 16px; }
+            .modern-table tbody td:first-child { font-size: 18px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 16px; margin-bottom: 12px; color: #0f172a; }
+            .modern-table tbody td:last-child { justify-content: flex-end; padding-top: 16px; border-top: 1px dashed #e2e8f0; margin-top: 12px; }
+        }
+
+        /* Lightbox Navigation */
+        .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); color: white; background: rgba(255,255,255,0.1); backdrop-filter: blur(4px); padding: 24px 12px; cursor: pointer; transition: 0.2s; border-radius: 12px; z-index: 20; border: 1px solid rgba(255,255,255,0.1); }
+        .lb-nav:hover { background: rgba(255,255,255,0.2); transform: translateY(-50%) scale(1.1); }
+        .lb-prev { left: 24px; } .lb-next { right: 24px; }
+        
+        /* 自定义复选框 */
+        .custom-checkbox { accent-color: #0f172a; width: 18px; height: 18px; cursor: pointer; }
+    </style>
+</head>
+<body class="pb-safe-area min-h-screen flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-900">
+
+    <!-- Loading Mask (UI 升级) -->
+    <div id="loadingMask" class="fixed inset-0 bg-white/80 dark:bg-slate-900/90 z-[9999] hidden flex-col justify-center items-center backdrop-blur-md">
+        <div class="relative">
+            <div class="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-indigo-600">
+                <i class="fas fa-cube text-xl animate-pulse"></i>
+            </div>
+        </div>
+        <div id="loadingText" class="text-sm font-bold text-slate-500 mt-4 tracking-widest uppercase animate-pulse">系统处理中...</div>
+    </div>
+    
+    <!-- Login Modal (UI 升级) -->
+    <div id="loginModal" class="fixed inset-0 z-[10002] bg-slate-900/40 backdrop-blur-md flex justify-center items-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-3xl p-10 shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+            <div class="text-center mb-10">
+                <div class="w-16 h-16 bg-slate-900 dark:bg-white rounded-2xl flex items-center justify-center text-white dark:text-slate-900 text-2xl mx-auto mb-6 shadow-xl shadow-slate-900/20 transform rotate-3"><i class="fas fa-user-astronaut"></i></div>
+                <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">ProBox 登录</h2>
+                <p class="text-sm text-slate-400 mt-2 font-medium">企业级订单协作系统</p>
+            </div>
+            <div class="space-y-5">
+                <div class="relative group">
+                    <i class="fas fa-user absolute left-4 top-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors"></i>
+                    <input id="loginUser" class="pro-input h-12 pl-12" placeholder="输入用户名">
+                </div>
+                <div class="relative group">
+                    <i class="fas fa-lock absolute left-4 top-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors"></i>
+                    <input id="loginPass" type="password" class="pro-input h-12 pl-12" placeholder="输入密码">
+                </div>
+                <button onclick="Auth.login()" class="btn btn-primary w-full h-12 text-sm shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 transform hover:-translate-y-0.5 transition-all mt-2">立即登录 <i class="fas fa-arrow-right"></i></button>
+                <div class="flex justify-between items-center mt-6 pt-6 border-t border-slate-100 dark:border-slate-700">
+                    <button onclick="Auth.guestLogin()" class="text-xs font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">访客浏览模式</button>
+                    <button onclick="Auth.register()" class="text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors">注册新账号</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <!-- Lightbox with Navigation (UI 升级) -->
+    <div id="lightbox" class="fixed inset-0 z-[10001] bg-black/95 hidden flex items-center justify-center p-4 cursor-pointer select-none backdrop-blur-xl" onclick="if(event.target === this) UI.closeLightbox()">
+        <button onclick="UI.closeLightbox()" class="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all z-20"><i class="fas fa-times text-xl"></i></button>
+        
+        <div class="lb-nav lb-prev" onclick="UI.prevImage(); event.stopPropagation()"><i class="fas fa-chevron-left text-2xl"></i></div>
+        <img id="lightboxImg" class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl animate-fade-in cursor-default ring-1 ring-white/10" onclick="event.stopPropagation()">
+        <div class="lb-nav lb-next" onclick="UI.nextImage(); event.stopPropagation()"><i class="fas fa-chevron-right text-2xl"></i></div>
+        
+        <div id="lightboxCounter" class="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/80 text-sm font-bold tracking-widest bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">1 / 1</div>
+    </div>
+
+    <!-- Header (悬浮式) -->
+    <header class="sticky top-4 z-40 mx-4 md:mx-auto max-w-7xl">
+        <div class="glass-panel rounded-2xl px-4 md:px-6 h-16 md:h-20 flex items-center justify-between shadow-xl shadow-slate-200/40 dark:shadow-none">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 bg-gradient-to-br from-slate-800 to-black dark:from-white dark:to-slate-200 rounded-xl flex items-center justify-center text-white dark:text-slate-900 text-xl shadow-lg shadow-slate-900/20 transform hover:rotate-6 transition-transform duration-500 cursor-pointer">
+                    <i class="fas fa-cube"></i>
+                </div>
+                <div class="leading-none">
+                    <h1 class="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white">ProBox <span class="text-indigo-500">MAX</span></h1>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Order System</span>
+                </div>
+            </div>
+            
+            <div class="flex bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-xl gap-1 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700">
+                <button onclick="switchApp('calculator')" id="nav-calculator" class="nav-item px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"><i class="fas fa-calculator"></i> <span class="hidden md:inline">打样</span></button>
+                <button onclick="switchApp('order-form')" id="nav-order-form" class="nav-item px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"><i class="fas fa-plus-circle"></i> <span class="hidden md:inline">下单</span></button>
+                <button onclick="switchApp('order-list')" id="nav-order-list" class="nav-item px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"><i class="fas fa-tasks"></i> <span class="hidden md:inline">记录</span></button>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div id="currentUserDisplay" class="text-xs font-bold text-slate-500 hidden md:block px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700">Guest</div>
+                <button onclick="Auth.logout()" class="w-10 h-10 rounded-full bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all flex items-center justify-center border border-slate-200 hover:border-red-200" title="退出登录"><i class="fas fa-power-off"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 py-6 md:py-10 w-full space-y-8">
+        <!-- 1. Calculator App -->
+        <div id="app-calculator" class="animate-fade-in-up">
+             <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">智能报价台</h2>
+                    <p class="text-slate-400 text-sm mt-1 font-medium">快速计算盒型成本与排版</p>
+                </div>
+                <button id="btnQuickSettings" class="text-xs font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 py-3 rounded-xl shadow-sm hover:shadow-lg transition-all auth-guard-admin group">
+                    <i class="fas fa-sliders-h group-hover:rotate-180 transition-transform duration-500"></i> <span>参数配置</span><span class="w-px h-3 bg-slate-300 mx-1"></span><span id="displayPaperSize" class="font-mono text-slate-400">读取中...</span>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <!-- 左侧：输入面板 -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="pro-card p-8">
+                        <div class="bg-slate-100 dark:bg-slate-900 p-1.5 rounded-xl flex w-full mb-8 relative border border-slate-200 dark:border-slate-700">
+                            <div id="tabIndicator" class="absolute h-[calc(100%-12px)] top-1.5 left-1.5 bg-white dark:bg-slate-700 rounded-lg shadow-sm transition-transform duration-300 w-[calc(50%-6px)]"></div>
+                            <button class="tab-btn active" data-target="basic">标准盒型</button>
+                            <button class="tab-btn" data-target="unfolded">自定义展开</button>
+                        </div>
+                        
+                        <div id="panel-basic" class="space-y-6">
+                            <div>
+                                <label class="text-xs font-bold text-slate-400 mb-3 block uppercase tracking-wider flex items-center gap-2"><i class="fas fa-cube"></i> 盒型结构</label>
+                                <div class="relative">
+                                    <select id="boxType" class="pro-input pro-select h-12 appearance-none cursor-pointer"></select>
+                                    <i class="fas fa-chevron-down absolute right-4 top-4 text-slate-400 pointer-events-none"></i>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4">
+                                <div><label class="text-[10px] font-bold text-slate-400 mb-2 block text-center">长 L (mm)</label><input type="number" id="length" class="pro-input font-mono font-bold text-center text-lg h-12" placeholder="0" step="1"></div>
+                                <div><label class="text-[10px] font-bold text-slate-400 mb-2 block text-center">宽 W (mm)</label><input type="number" id="width" class="pro-input font-mono font-bold text-center text-lg h-12" placeholder="0" step="1"></div>
+                                <div><label class="text-[10px] font-bold text-slate-400 mb-2 block text-center">高 H (mm)</label><input type="number" id="height" class="pro-input font-mono font-bold text-center text-lg h-12" placeholder="0" step="1"></div>
+                            </div>
+                            <div><label class="text-xs font-bold text-slate-400 mb-3 block uppercase tracking-wider flex items-center gap-2"><i class="fas fa-layer-group"></i> 打样数量</label><input type="number" id="quantity" class="pro-input font-bold text-lg h-12" value="1" min="1"></div>
+                            
+                            <label class="flex items-center gap-4 p-5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800/50 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all group">
+                                <input type="checkbox" id="checkCorrugatedBasic" class="custom-checkbox">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 transition-colors">加坑工艺 (裱瓦楞)</span>
+                                    <span class="text-[10px] text-slate-400">额外费用 +30元</span>
+                                </div>
+                            </label>
+                            
+                            <div class="grid grid-cols-4 gap-4 pt-4">
+                                <button id="btnResetBasic" class="col-span-1 btn-secondary text-slate-400 hover:text-red-500 hover:bg-red-50 hover:border-red-100 h-12 rounded-xl"><i class="fas fa-eraser"></i></button>
+                                <button id="btnCalculate" class="col-span-3 btn-primary text-sm h-12 rounded-xl"><i class="fas fa-calculator"></i> 立即计算</button>
+                            </div>
+                        </div>
+
+                        <div id="panel-unfolded" class="space-y-6 hidden">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="text-xs font-bold text-slate-400 mb-2 block">展开长 (mm)</label><input type="number" id="unfoldedL" class="pro-input font-mono font-bold text-center text-lg h-12" placeholder="Max"></div>
+                                <div><label class="text-xs font-bold text-slate-400 mb-2 block">展开宽 (mm)</label><input type="number" id="unfoldedW" class="pro-input font-mono font-bold text-center text-lg h-12" placeholder="Max"></div>
+                            </div>
+                            <div><label class="text-xs font-bold text-slate-400 mb-3 block">数量</label><input type="number" id="quantityUnfolded" class="pro-input font-bold text-lg h-12" value="1" min="1"></div>
+                             <label class="flex items-center gap-4 p-5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800/50 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all group">
+                                <input type="checkbox" id="checkCorrugatedUnfolded" class="custom-checkbox"><div class="flex flex-col"><span class="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 transition-colors">加坑工艺</span><span class="text-[10px] text-slate-400">额外费用 +30元</span></div>
+                            </label>
+                            <div class="grid grid-cols-4 gap-4 pt-4">
+                                <button id="btnResetUnfolded" class="col-span-1 btn-secondary text-slate-400 hover:text-red-500 hover:bg-red-50 h-12 rounded-xl"><i class="fas fa-eraser"></i></button>
+                                <button id="btnCalculateUnfolded" class="col-span-3 btn-primary text-sm h-12 rounded-xl">计算自定义</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧：结果展示 -->
+                <div class="lg:col-span-7 space-y-6">
+                    <div id="warningCard" class="hidden pro-card p-6 border-l-4 border-l-red-500 bg-red-50/50 flex gap-4 items-start shadow-none">
+                        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 text-red-500 text-xl"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div><h4 class="font-bold text-red-800 text-lg">无法排版</h4><div id="warningContent" class="text-sm text-red-600 mt-1 opacity-90 font-medium"></div></div>
+                    </div>
+                    
+                    <div id="resultCard" class="hidden opacity-0 transition-opacity duration-500 space-y-6">
+                        <!-- 价格主卡 -->
+                        <div class="pro-card p-0 overflow-hidden border-0 shadow-2xl shadow-indigo-500/10 ring-1 ring-black/5">
+                             <div class="p-8 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 text-white relative overflow-hidden">
+                                <div class="absolute top-0 right-0 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+                                <div class="relative z-10">
+                                    <p class="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2 flex items-center gap-2"><i class="fas fa-coins"></i> Total Estimated Cost</p>
+                                    <div class="flex items-baseline gap-3"><h2 class="text-6xl font-black tracking-tighter" id="resPrice">¥0</h2></div>
+                                    <p id="resUnitPrice" class="text-sm font-mono text-indigo-100 mt-4 bg-white/10 inline-flex px-4 py-1.5 rounded-lg backdrop-blur-md border border-white/10">单价: --</p>
+                                </div>
+                                <div class="flex flex-col gap-3 items-end relative z-10 mt-6 md:mt-0 w-full md:w-auto">
+                                    <button id="btnBridgeAddToOrder" class="btn bg-white text-slate-900 hover:bg-indigo-50 hover:text-indigo-700 w-full md:w-40 shadow-lg border-0 h-12 font-bold"><i class="fas fa-plus"></i> 加入订单</button>
+                                    <button id="btnCopyQuote" class="btn bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white w-full md:w-40 border border-slate-700 h-12"><i class="far fa-copy"></i> 复制报价</button>
+                                </div>
+                            </div>
+                            <div class="px-8 py-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+                                <div id="costList" class="flex flex-wrap gap-x-8 gap-y-2 text-sm text-slate-500 font-mono font-medium"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 视觉图卡 -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="pro-card overflow-hidden flex flex-col h-80 relative group">
+                                <div class="absolute top-4 left-4 z-10 bg-white/80 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-slate-500 shadow-sm border border-slate-100">刀模结构</div>
+                                <div id="dimensionDetails" class="absolute top-4 right-4 z-10 text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded"></div>
+                                <div class="scene-container flex-grow w-full bg-white relative transition-transform duration-500 group-hover:scale-[1.02]" id="svgContainer"></div>
+                            </div>
+                            <div id="layoutVisualCard" class="pro-card overflow-hidden hidden flex-col h-80 relative group">
+                                <div class="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50"><h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2"><i class="fas fa-th"></i> 拼版示意</h3><span id="layoutPaperLabel" class="text-[10px] px-2 py-0.5 rounded bg-indigo-100 text-indigo-600 font-bold"></span></div>
+                                <div class="p-6 bg-slate-100/30 flex-grow relative"><div id="layoutGridsContainer" class="shadow-xl rounded-sm transition-transform duration-500 group-hover:scale-[1.02]"></div><div class="absolute bottom-4 left-5 right-5 flex justify-between items-center text-[10px] text-slate-500 bg-white/95 p-3 rounded-xl border border-slate-100 backdrop-blur-md shadow-lg"><span id="layoutDesc" class="font-medium"></span><span id="layoutEfficiency" class="font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded"></span></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 历史记录 -->
+                    <div class="pro-card">
+                        <div class="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800">
+                            <h3 class="text-sm font-bold text-slate-700 dark:text-white flex items-center gap-2 uppercase tracking-wider"><i class="fas fa-history text-slate-400"></i> 最近计算</h3>
+                            <button id="btnClearHistory" class="text-[10px] text-slate-400 hover:text-red-500 transition-colors font-bold px-2 py-1 hover:bg-red-50 rounded">清空记录</button>
+                        </div>
+                        <div id="calcHistoryList" class="max-h-72 overflow-y-auto custom-scrollbar"></div>
+                        <div class="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center rounded-b-3xl">
+                            <label class="text-xs text-slate-600 font-bold flex items-center gap-3 cursor-pointer ml-1 select-none hover:text-indigo-600 transition-colors"><input type="checkbox" id="checkAllHistory" class="custom-checkbox"> 全选</label>
+                            <div class="flex gap-3">
+                                <button onclick="CalcUI.batchCopyQuote()" class="btn btn-secondary text-xs px-4 h-10 bg-white shadow-sm border-0"><i class="far fa-clipboard"></i> 复制汇总</button>
+                                <button onclick="CalcUI.batchAddToOrder()" class="btn btn-primary text-xs px-4 h-10"><i class="fas fa-arrow-right"></i> 批量入单</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Order Form App -->
+        <div id="app-order-form" class="hidden animate-fade-in-up space-y-6">
+            <div class="pro-card p-8 md:p-10 border-t-4 border-t-slate-800 shadow-2xl">
+                <div class="flex flex-col md:flex-row justify-between md:items-center mb-10 border-b border-slate-100 dark:border-slate-800 pb-6 gap-4">
+                    <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-3" id="formTitle">
+                        <span class="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center text-sm"><i class="fas fa-pen-nib"></i></span>
+                        录入新订单
+                    </h3>
+                    <div class="flex gap-3">
+                        <button class="btn btn-secondary text-xs font-bold" onclick="OrderForm.reset()"><i class="fas fa-redo mr-1"></i> 重置清空</button>
+                        <button id="btnCancelEdit" class="hidden btn bg-red-50 text-red-500 hover:bg-red-100 border-red-100 text-xs font-bold" onclick="OrderForm.cancelEdit()"><i class="fas fa-times mr-1"></i> 取消编辑</button>
+                    </div>
+                </div>
+                
+                <div class="mb-10 bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
+                    <label class="text-xs font-bold text-slate-500 mb-3 block uppercase tracking-wider">订单编号 (Order ID)</label>
+                    <div class="flex gap-4">
+                        <input id="inputOrderId" class="pro-input font-mono font-bold text-slate-700 text-xl bg-white h-14 tracking-wide" placeholder="输入单号或点击生成">
+                        <button onclick="document.getElementById('inputOrderId').value = 'ORD-'+Date.now().toString().slice(-8)" class="btn btn-secondary whitespace-nowrap shadow-sm h-14 px-8 text-indigo-600 font-bold hover:text-indigo-700"><i class="fas fa-magic"></i> 自动生成</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                    <div><label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">客户信息</label><input id="customerInfo" placeholder="公司名称 / 联系人" class="pro-input h-12"></div>
+                    <div><label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">订单来源</label><input id="source" list="sourceList" class="pro-input h-12" placeholder="选择来源"><datalist id="sourceList"><option value="拼多多"><option value="天猫"><option value="线下"></datalist></div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">订单流向</label>
+                        <input id="flowStatus" list="flowList" class="pro-input h-12" placeholder="生产方">
+                        <datalist id="flowList"><option value="新正方"><option value="盛大"><option value="公司"></datalist>
+                    </div>
+                    <div><label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">结算方式</label><input id="paymentMethod" list="payList" class="pro-input h-12" placeholder="支付方式"><datalist id="payList"><option value="平台支付"><option value="对公转账"><option value="月结"></datalist></div>
+                </div>
+                
+                <div class="mb-8">
+                    <label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">客户收货地址</label>
+                    <div class="relative"><i class="fas fa-map-marker-alt absolute left-4 top-4 text-slate-400"></i><input id="customerAddress" placeholder="省/市/区/街道详细地址..." class="pro-input pl-12 h-12"></div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                     <div>
+                         <label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">文件链接 / 外部记录</label>
+                         <textarea id="fileLink" rows="3" placeholder="http://... (支持多行)" class="pro-input font-mono text-xs text-indigo-600 resize-none leading-relaxed bg-indigo-50/30 border-indigo-100"></textarea>
+                     </div>
+                     <div>
+                         <label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">订单备注</label>
+                         <textarea id="remarks" rows="3" placeholder="工艺要求、材质信息、发货注意..." class="pro-input resize-none leading-relaxed"></textarea>
+                     </div>
+                </div>
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden mb-10 shadow-lg shadow-slate-200/50 dark:shadow-none">
+                    <div class="bg-slate-50 dark:bg-slate-900 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                        <div class="font-bold text-sm text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2"><i class="fas fa-list-ul"></i> 商品明细</div>
+                        <div class="text-[10px] font-bold text-slate-400 bg-white dark:bg-slate-800 px-2 py-1 rounded border border-slate-200">请添加至少一项</div>
+                    </div>
+                    <table class="w-full text-xs text-left modern-table">
+                        <thead class="bg-white dark:bg-slate-800">
+                            <tr><th class="pl-6">品名</th><th>尺寸</th><th class="w-24 text-center">数量</th><th class="w-32 text-right pr-6">总额</th><th class="w-16"></th></tr>
+                        </thead>
+                        <tbody id="tempItemsBody" class="bg-white dark:bg-slate-900"></tbody>
+                        <tfoot class="bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200">
+                            <tr>
+                                <td class="p-4"><input id="newItemName" placeholder="输入品名" class="pro-input bg-white h-11 border-slate-200"></td>
+                                <td class="p-4"><input id="newItemSize" placeholder="尺寸规格" class="pro-input bg-white h-11 border-slate-200"></td>
+                                <td class="p-4"><input type="number" id="newItemQty" placeholder="0" class="pro-input bg-white h-11 border-slate-200 text-center"></td>
+                                <td class="p-4"><input type="number" id="newItemTotal" placeholder="0.00" class="pro-input bg-white h-11 border-slate-200 text-right"></td>
+                                <td class="p-4 text-center"><button class="text-white bg-indigo-500 hover:bg-indigo-600 w-9 h-9 rounded-xl shadow-lg shadow-indigo-500/30 transition-all transform hover:scale-110 flex items-center justify-center mx-auto" onclick="OrderForm.addItem()"><i class="fas fa-plus"></i></button></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="flex flex-col xl:flex-row gap-10 items-start">
+                    <div class="flex-1 w-full">
+                        <label class="text-xs font-bold text-slate-500 mb-3 block uppercase tracking-wider ml-1">参考图片 / 附件</label>
+                        <div class="paste-area border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-10 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50/20 dark:hover:bg-slate-800 transition-all text-center group relative overflow-hidden" id="pasteArea">
+                            <input type="file" id="fileInput" accept="image/*" class="hidden" multiple onchange="OrderForm.handleFileSelect(this)">
+                            <div class="absolute inset-0 bg-indigo-50/0 group-hover:bg-indigo-50/10 transition-colors pointer-events-none"></div>
+                            <div id="pastePlaceholder" class="group-hover:text-indigo-600 text-slate-400 transition-colors">
+                                <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-5 text-2xl text-slate-400 group-hover:text-indigo-500 group-hover:scale-110 transition-all shadow-inner"><i class="fas fa-cloud-upload-alt"></i></div>
+                                <div class="text-sm font-bold text-slate-600 dark:text-slate-300">点击上传参考图 (并发处理)</div>
+                                <div class="text-xs opacity-60 mt-2 font-medium">支持 Ctrl+V 直接粘贴</div>
+                            </div>
+                            <div id="imgGallery" class="flex flex-wrap gap-4 mt-4 relative z-10"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="w-full xl:w-96 bg-slate-900 text-white p-8 md:p-10 rounded-3xl shadow-2xl relative overflow-hidden">
+                        <div class="absolute -top-12 -right-12 w-48 h-48 bg-indigo-500 rounded-full blur-3xl opacity-20 animate-pulse"></div>
+                        <div class="absolute bottom-0 left-0 w-32 h-32 bg-purple-500 rounded-full blur-3xl opacity-20"></div>
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-center mb-10 opacity-70">
+                                <span class="text-xs font-bold uppercase tracking-widest border-b border-white/20 pb-1">Total Amount</span>
+                                <i class="fas fa-coins text-lg"></i>
+                            </div>
+                            <div class="flex items-baseline gap-1 mb-10">
+                                <span class="text-2xl font-medium opacity-80">¥</span>
+                                <span class="text-6xl font-black tracking-tighter" id="grandTotal">0.00</span>
+                            </div>
+                            <button id="btnSubmitOrder" class="w-full py-5 bg-white text-slate-900 rounded-2xl font-bold text-base hover:bg-indigo-50 transition-colors flex justify-center items-center gap-3 shadow-xl transform hover:-translate-y-1 duration-200 auth-guard-write" onclick="OrderForm.submit()">
+                                <span>确认下单</span>
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Order List App -->
+        <div id="app-order-list" class="hidden animate-fade-in-up space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <!-- Clickable Filter Cards (Widget Style) -->
+                <div class="pro-card p-6 flex items-center justify-between hover:-translate-y-2 transition-transform cursor-pointer relative overflow-hidden group" onclick="OrderList.quickFilter('')">
+                    <div class="absolute right-0 top-0 w-24 h-24 bg-slate-100 rounded-full -mr-6 -mt-6 z-0 group-hover:scale-110 transition-transform"></div>
+                    <div class="relative z-10">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase mb-2 tracking-wider">全部订单 (Cloud)</h3>
+                        <div class="text-3xl font-black text-slate-800 dark:text-white" id="statCount">--</div>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-slate-800 text-white flex items-center justify-center text-lg shadow-lg relative z-10"><i class="fas fa-archive"></i></div>
+                </div>
+                
+                <div class="pro-card p-6 flex items-center justify-between hover:-translate-y-2 transition-transform cursor-pointer border-b-4 border-orange-400 relative overflow-hidden group" onclick="OrderList.quickFilter('待制作')">
+                    <div class="absolute right-0 top-0 w-24 h-24 bg-orange-50 rounded-full -mr-6 -mt-6 z-0 group-hover:scale-110 transition-transform"></div>
+                    <div class="relative z-10">
+                        <h3 class="text-xs font-bold text-orange-400 uppercase mb-2 tracking-wider">待制作</h3>
+                        <div class="text-3xl font-black text-orange-500" id="statTodo">--</div>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-orange-500 text-white flex items-center justify-center text-lg shadow-lg shadow-orange-500/30 relative z-10"><i class="fas fa-clock"></i></div>
+                </div>
+                
+                <div class="pro-card p-6 flex items-center justify-between hover:-translate-y-2 transition-transform cursor-pointer border-b-4 border-indigo-500 relative overflow-hidden group" onclick="OrderList.quickFilter('待发货')">
+                    <div class="absolute right-0 top-0 w-24 h-24 bg-indigo-50 rounded-full -mr-6 -mt-6 z-0 group-hover:scale-110 transition-transform"></div>
+                    <div class="relative z-10">
+                        <h3 class="text-xs font-bold text-indigo-400 uppercase mb-2 tracking-wider">待发货</h3>
+                        <div class="text-3xl font-black text-indigo-600" id="statShipping">--</div>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-lg shadow-indigo-600/30 relative z-10"><i class="fas fa-truck"></i></div>
+                </div>
+                
+                <!-- Revenue Card -->
+                <div class="pro-card p-6 flex items-center justify-between hover:-translate-y-2 transition-transform border-b-4 border-emerald-500 bg-gradient-to-br from-emerald-50 to-white relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h3 class="text-xs font-bold text-emerald-600/70 uppercase mb-2 tracking-wider">本月营收</h3>
+                        <div class="text-3xl font-black text-emerald-600">¥<span id="statMonth">0.00</span></div>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-lg shadow-lg shadow-emerald-500/30 relative z-10"><i class="fas fa-coins"></i></div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-4 items-center justify-between bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg shadow-slate-200/40 dark:shadow-none border border-slate-100 dark:border-slate-700">
+                <div class="flex flex-wrap gap-4 items-center flex-1">
+                    <div class="relative w-72">
+                        <i class="fas fa-search absolute left-4 top-3.5 text-slate-400 text-xs"></i>
+                        <input type="text" id="filterKeyword" placeholder="搜单号/客户/快递号..." class="pro-input pl-10 h-11 text-xs font-semibold shadow-sm border-slate-200" oninput="OrderList.debounceSearch()">
+                    </div>
+                    <div class="h-8 w-px bg-slate-200 mx-2 hidden md:block"></div>
+                    
+                    <div class="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                         <input type="date" id="dateStart" class="pro-input h-9 w-32 text-xs bg-white border-none shadow-sm" onchange="OrderList.refreshList()" title="开始日期">
+                         <span class="text-slate-400 font-bold">-</span>
+                         <input type="date" id="dateEnd" class="pro-input h-9 w-32 text-xs bg-white border-none shadow-sm" onchange="OrderList.refreshList()" title="结束日期">
+                    </div>
+                    
+                    <select id="filterFlow" class="pro-input w-32 h-11 text-xs cursor-pointer font-semibold" onchange="OrderList.refreshList()">
+                        <option value="">全部流向</option><option value="新正方">新正方</option><option value="盛大">盛大</option><option value="公司">公司</option>
+                    </select>
+                    <select id="filterStatus" class="pro-input w-32 h-11 text-xs cursor-pointer font-semibold" onchange="OrderList.refreshList()">
+                        <option value="">全部状态</option>
+                        <option value="待制作">🕒 待制作</option>
+                        <option value="待发货">📦 待发货</option>
+                        <option value="已完成">✅ 已完成</option>
+                        <option value="issue">⚠️ 异常/待处理</option>
+                    </select>
+                </div>
+                <button onclick="OrderList.refreshList()" class="w-11 h-11 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-all flex items-center justify-center shadow-sm" title="刷新"><i class="fas fa-sync-alt"></i></button>
+            </div>
+
+            <div class="bg-transparent">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left modern-table">
+                        <thead class="">
+                            <tr>
+                                <th class="pl-8 w-48">订单编号</th>
+                                <th class="w-28">图示</th>
+                                <th class="w-72">客户 & 地址</th>
+                                <th>内容摘要 (Top 2)</th>
+                                <th class="w-40 text-center">状态</th>
+                                <th class="w-36 text-right">金额</th>
+                                <th class="w-40 text-center pr-8">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody" class="space-y-4"></tbody>
+                    </table>
+                </div>
+                <div id="loadMoreContainer" class="p-8 text-center hidden">
+                    <button id="btnLoadMore" onclick="OrderList.loadMore()" class="btn btn-secondary text-xs px-8 py-3 rounded-full shadow-md hover:shadow-lg transition-all font-bold tracking-wide">
+                        加载更多数据 <i class="fas fa-chevron-down ml-1"></i>
+                    </button>
+                </div>
+                <div id="emptyTip" class="text-center py-24 text-slate-400 text-sm hidden flex flex-col items-center">
+                    <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-slate-300 text-4xl shadow-inner"><i class="fas fa-inbox"></i></div>
+                    <span id="emptyText" class="font-medium text-slate-500">暂无相关订单</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: Order Detail (UI 升级) -->
+    <div id="orderDetailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden justify-center items-center p-4 transition-all duration-300" onclick="if(event.target === this) UI.closeDetailModal()">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-4xl rounded-[32px] shadow-2xl max-h-[92vh] flex flex-col animate-fade-in-up overflow-hidden ring-1 ring-white/20">
+            <div class="flex justify-between items-center px-8 py-6 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 sticky top-0 z-10 shadow-sm">
+                <div>
+                    <h3 class="font-bold text-2xl text-slate-900 dark:text-white flex items-center gap-4">订单详情 <span id="modalStatusBadge" class="status-pill pill-todo scale-110">...</span></h3>
+                    <div class="text-xs text-slate-400 font-mono mt-2 flex gap-3 font-bold">
+                        <span id="modalOrderId" class="bg-slate-100 px-2 py-0.5 rounded text-slate-500">ID: ...</span>
+                        <span class="text-slate-300">|</span>
+                        <span id="modalDate"></span>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="OrderList.editOrder()" class="btn btn-secondary text-xs h-10 px-5 rounded-xl border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 auth-guard-write"><i class="fas fa-edit"></i> 编辑</button>
+                    <button onclick="UI.closeDetailModal()" class="w-10 h-10 rounded-full bg-slate-50 hover:bg-red-50 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"><i class="fas fa-times text-xl"></i></button>
+                </div>
+            </div>
+            
+            <div class="p-8 overflow-y-auto flex-1 space-y-8 bg-[#fafafa] dark:bg-slate-900/50 custom-scrollbar">
+                
+                <!-- 异常警告框 -->
+                <div id="issueAlertBox" class="hidden bg-red-50 border border-red-100 p-6 rounded-2xl flex items-start gap-5 animate-pulse-glow shadow-sm">
+                    <div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center shrink-0 shadow-sm text-lg"><i class="fas fa-bell"></i></div>
+                    <div class="flex-1 pt-1">
+                        <h4 class="text-base font-bold text-red-800">该订单有反馈/异常</h4>
+                        <p id="modalIssueText" class="text-sm text-red-600 mt-1 font-medium"></p>
+                    </div>
+                    <button onclick="OrderList.resolveIssue()" class="btn bg-red-600 text-white hover:bg-red-700 text-xs h-9 px-4 border-0 auth-guard-write shadow-red-500/30 shadow-lg">标记已解决</button>
+                </div>
+
+                <div id="modalWorkflowAction" class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-indigo-50 dark:border-slate-700 shadow-md shadow-slate-200/40 flex justify-between items-center"></div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><div class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">客户名称</div><div id="modalCustomer" class="font-bold text-slate-800 dark:text-white text-lg truncate"></div></div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><div class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">渠道流向</div><div id="modalSourceFlow" class="font-semibold text-slate-600 dark:text-slate-300"></div></div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><div class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">付款方式</div><div id="modalPayment" class="font-semibold text-slate-600 dark:text-slate-300"></div></div>
+                    <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-xl shadow-lg text-white"><div class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">订单金额</div><div id="modalTotal" class="font-black text-2xl font-mono"></div></div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2"><i class="fas fa-map-marker-alt text-indigo-500"></i> 收货地址</div>
+                        <div id="modalAddress" class="text-slate-700 dark:text-slate-200 text-sm leading-relaxed font-bold"></div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2"><i class="fas fa-link text-indigo-500"></i> 文件链接 / 记录</div>
+                        <textarea id="modalFileLink" readonly class="w-full bg-slate-50 border-0 p-3 rounded-lg text-indigo-600 text-xs font-mono resize-none focus:ring-0 leading-relaxed h-20 select-all"></textarea>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2"><i class="fas fa-box"></i> 商品清单</div>
+                    <table class="w-full text-xs">
+                        <thead class="bg-white dark:bg-slate-900 text-slate-400 border-b border-slate-50"><tr><th class="p-5 text-left font-bold">品名</th><th class="p-5 font-bold">尺寸</th><th class="p-5 font-bold">数量</th><th class="p-5 text-right font-bold">小计</th></tr></thead>
+                        <tbody id="modalItemsBody" class="divide-y divide-slate-50 dark:divide-slate-800"></tbody>
+                    </table>
+                    <div class="p-5 bg-amber-50/50 dark:bg-slate-800/30 text-xs text-slate-600 border-t border-amber-100/50">
+                        <span class="font-bold text-amber-600 dark:text-amber-500"><i class="fas fa-sticky-note mr-1"></i> 订单备注：</span> <span id="modalRemarks" class="font-medium"></span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase mb-4 flex items-center gap-2"><i class="fas fa-images"></i> 参考图片</h4>
+                        <div id="modalRefImages" class="flex flex-wrap gap-3"></div>
+                    </div>
+                    <div id="modalFinalImageSection" class="hidden relative group">
+                        <!-- 修改部分：包含标题和复制定稿词按钮 -->
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-xs font-bold text-emerald-600 uppercase flex items-center gap-2"><i class="fas fa-check-circle"></i> 定稿确认图 (支持Ctrl+V)</h4>
+                            <button id="btnCopyFinal" onclick="OrderList.copyFinalDraft()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors shadow-sm flex items-center gap-1">
+                                <i class="fas fa-copy"></i> 复制定稿词
+                            </button>
+                        </div>
+                        <div class="relative rounded-2xl overflow-hidden border-4 border-emerald-50 dark:border-emerald-900 shadow-lg group-hover:shadow-xl transition-all bg-white">
+                            <img id="modalFinalImage" class="w-full h-64 object-contain cursor-zoom-in hover:scale-105 transition-transform duration-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="modalTrackingSection" class="hidden bg-gradient-to-r from-indigo-50 to-white dark:from-indigo-900/20 dark:to-slate-800 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-800 flex items-center gap-6">
+                    <div class="w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl shadow-sm transform rotate-3"><i class="fas fa-shipping-fast"></i></div>
+                    <div>
+                        <div class="text-xs text-indigo-600 font-bold uppercase mb-1 tracking-wider">物流单号 Tracking No.</div>
+                        <div id="modalTrackingNum" class="text-2xl font-mono font-bold text-slate-800 dark:text-white tracking-wide select-all cursor-text"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="px-8 py-5 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center sticky bottom-0 z-10 rounded-b-[32px]">
+                <button class="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center gap-2 px-3 py-2 hover:bg-red-50 rounded-lg auth-guard-admin" onclick="OrderList.deleteOrderFromModal()"><i class="fas fa-trash-alt"></i> 删除订单</button>
+                <button id="btnReportIssue" class="text-xs font-bold text-slate-500 hover:text-orange-500 transition-colors flex items-center gap-2 px-3 py-2 hover:bg-orange-50 rounded-lg auth-guard-write" onclick="OrderList.reportIssue()"><i class="fas fa-exclamation-circle"></i> 反馈/报修</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Modal (UI 升级) -->
+    <div id="settingsModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="document.getElementById('settingsModal').classList.add('hidden')"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+            <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-3xl shadow-2xl p-8 pointer-events-auto transform transition-all border border-white/20">
+                <h3 class="font-bold text-xl mb-6 dark:text-white pb-4 border-b border-slate-100 flex justify-between items-center">
+                    <span class="flex items-center gap-2"><i class="fas fa-cogs text-slate-400"></i> 系统参数配置</span>
+                    <span class="text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-100 px-2 py-1 rounded font-bold uppercase tracking-wider">Cloud Sync</span>
+                </h3>
+                <div class="space-y-6">
+                    <section>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase mb-3">纸张规格 (mm)</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">纸张宽 (W)</label><input type="number" id="paperW" class="pro-input h-10 text-center font-mono"></div>
+                            <div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">纸张高 (H)</label><input type="number" id="paperH" class="pro-input h-10 text-center font-mono"></div>
+                        </div>
+                    </section>
+                    <section>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase mb-3">排版边距 (mm)</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">咬口 (上下)</label><input type="number" id="marginTB" class="pro-input h-10 text-center font-mono"></div>
+                            <div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">借咬口 (左右)</label><input type="number" id="marginLR" class="pro-input h-10 text-center font-mono"></div>
+                        </div>
+                    </section>
+                    <section>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase mb-3">计价因子</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">单价 (元/m²)</label><input type="number" id="unitPrice" class="pro-input h-10 text-center font-mono"></div>
+                            <div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">折扣 (%)</label><input type="number" id="discount" class="pro-input h-10 text-center font-mono"></div>
+                            <div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">覆膜费</label><input type="number" id="laminationFee" class="pro-input h-10 text-center font-mono"></div>
+                            <div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">模切费</label><input type="number" id="dieCutFee" class="pro-input h-10 text-center font-mono"></div>
+                        </div>
+                        <div class="mt-4"><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">后道附加费 (元/个)</label><input type="number" id="additionalFee" class="pro-input h-10 text-center font-mono"></div>
+                    </section>
+                    <button id="btnSaveSettings" class="btn btn-primary w-full mt-2 bg-slate-900 h-12 rounded-xl shadow-lg" onclick="CloudService.saveSystemSettings()">保存并上传云端</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <input type="file" id="finalImageInput" accept="image/*" class="hidden">
+
+    <!-- 逻辑脚本 (严格保留原封不动) -->
+    <script>
+        // ================= 模块化核心逻辑 =================
+        const AV_CONFIG = {
+            ID: "P091S6hqTmOR0rw4PsPWZuAe-MdYXbMMI", 
+            KEY: "fS2fVHKSfZUsNqvr340QKQsT",
+            SERVER: "https://api.dingdangl.xyz"
+        };
+        
+        // Auth Service
+        const Auth = {
+            currentUser: null,
+            
+            init() {
+                const user = AV.User.current();
+                if (user) {
+                    this.setCurrentUser(user);
+                } else {
+                    document.getElementById('loginModal').classList.remove('hidden');
+                }
+            },
+            
+            async login() {
+                const u = document.getElementById('loginUser').value;
+                const p = document.getElementById('loginPass').value;
+                if(!u || !p) return UI.showToast('请输入用户名和密码', 'error');
+                
+                try {
+                    const user = await AV.User.logIn(u, p);
+                    this.setCurrentUser(user);
+                    document.getElementById('loginModal').classList.add('hidden');
+                    UI.showToast('登录成功', 'success');
+                } catch(e) {
+                    UI.showToast('登录失败: ' + e.message, 'error');
+                }
+            },
+            
+            async register() {
+                const u = document.getElementById('loginUser').value;
+                const p = document.getElementById('loginPass').value;
+                if(!u || !p) return UI.showToast('请输入用户名和密码', 'error');
+                
+                try {
+                    const user = new AV.User();
+                    user.setUsername(u);
+                    user.setPassword(p);
+                    await user.signUp();
+                    this.setCurrentUser(user);
+                    document.getElementById('loginModal').classList.add('hidden');
+                    UI.showToast('注册并登录成功', 'success');
+                } catch(e) {
+                    UI.showToast('注册失败: ' + e.message, 'error');
+                }
+            },
+            
+            guestLogin() {
+                this.currentUser = { username: 'Guest', isGuest: true };
+                document.getElementById('currentUserDisplay').innerText = '访客模式';
+                document.getElementById('loginModal').classList.add('hidden');
+                this.applyGuards();
+                UI.showToast('已进入访客模式 (只读)');
+            },
+            
+            logout() {
+                AV.User.logOut();
+                window.location.reload();
+            },
+            
+            setCurrentUser(user) {
+                this.currentUser = user;
+                document.getElementById('currentUserDisplay').innerText = user.getUsername();
+                this.applyGuards();
+            },
+            
+            applyGuards() {
+                const isGuest = this.currentUser && this.currentUser.isGuest;
+                const isAdmin = this.currentUser && !isGuest && this.currentUser.getUsername() === 'admin';
+                const isUser = this.currentUser && !isGuest;
+
+                // Admin Guards
+                document.querySelectorAll('.auth-guard-admin').forEach(el => {
+                    if (!isAdmin) el.classList.add('hidden');
+                    else el.classList.remove('hidden');
+                });
+
+                // Write Guards (Guest can't do these)
+                document.querySelectorAll('.auth-guard-write').forEach(el => {
+                    if (isGuest) el.classList.add('hidden');
+                    else el.classList.remove('hidden');
+                });
+            }
+        };
+
+        // 1. 工具与 UI 模块
+        const UI = {
+            lightboxImages:[],
+            lightboxIndex: 0,
+
+            showLoading(show, text="处理中...") {
+                document.getElementById('loadingText').innerText = text;
+                document.getElementById('loadingMask').style.display = show ? 'flex' : 'none';
+            },
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = 'toast-msg';
+                let icon = '<i class="fas fa-info-circle text-blue-500"></i>';
+                if(type === 'success') {
+                    icon = '<i class="fas fa-check-circle text-emerald-500"></i>';
+                    toast.style.borderLeftColor = '#10b981';
+                }
+                if(type === 'error') {
+                    icon = '<i class="fas fa-exclamation-circle text-red-500"></i>';
+                    toast.style.borderLeftColor = '#ef4444';
+                }
+                toast.innerHTML = `${icon}<span>${message}</span>`;
+                container.appendChild(toast);
+                requestAnimationFrame(() => toast.classList.add('show'));
+                setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3500);
+            },
+            
+            // Lightbox Logic Update
+            showLightbox(src, contextImages = null) {
+                if(!src) return;
+                const img = document.getElementById('lightboxImg');
+                img.src = src;
+                
+                // Navigation Logic
+                if (contextImages && contextImages.length > 0) {
+                    this.lightboxImages = contextImages;
+                    this.lightboxIndex = contextImages.indexOf(src);
+                    if (this.lightboxIndex === -1) this.lightboxIndex = 0;
+                    this.updateLightboxNav();
+                } else {
+                    this.lightboxImages = [src];
+                    this.lightboxIndex = 0;
+                    this.updateLightboxNav();
+                }
+
+                document.getElementById('lightbox').classList.remove('hidden');
+            },
+            
+            updateLightboxNav() {
+                const counter = document.getElementById('lightboxCounter');
+                if (this.lightboxImages.length > 1) {
+                    document.querySelector('.lb-prev').style.display = 'block';
+                    document.querySelector('.lb-next').style.display = 'block';
+                    counter.style.display = 'block';
+                    counter.innerText = `${this.lightboxIndex + 1} / ${this.lightboxImages.length}`;
+                } else {
+                    document.querySelector('.lb-prev').style.display = 'none';
+                    document.querySelector('.lb-next').style.display = 'none';
+                    counter.style.display = 'none';
+                }
+            },
+            
+            nextImage() {
+                if (this.lightboxImages.length <= 1) return;
+                this.lightboxIndex = (this.lightboxIndex + 1) % this.lightboxImages.length;
+                document.getElementById('lightboxImg').src = this.lightboxImages[this.lightboxIndex];
+                this.updateLightboxNav();
+            },
+            
+            prevImage() {
+                if (this.lightboxImages.length <= 1) return;
+                this.lightboxIndex = (this.lightboxIndex - 1 + this.lightboxImages.length) % this.lightboxImages.length;
+                document.getElementById('lightboxImg').src = this.lightboxImages[this.lightboxIndex];
+                this.updateLightboxNav();
+            },
+
+            closeLightbox() {
+                document.getElementById('lightbox').classList.add('hidden');
+                setTimeout(() => { document.getElementById('lightboxImg').src = ''; }, 300);
+            },
+            closeDetailModal() {
+                const modal = document.getElementById('orderDetailModal');
+                modal.classList.add('hidden'); 
+                modal.style.display='none'; 
+            }
+        };
+
+        const Utils = {
+            compressImage(file) {
+                return new Promise((resolve, reject) => {
+                    new Compressor(file, {
+                        quality: 0.5,
+                        maxWidth: 1024,
+                        success(result) { resolve(result); },
+                        error(err) { resolve(file); }, 
+                    });
+                });
+            },
+            formatMoney: (num) => parseFloat(num).toFixed(2),
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            },
+            // 修改部分：新增将 URL 转换为微信剪贴板必须的 PNG Blob 函数
+            convertUrlToPngBlob(url) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'Anonymous'; // 必须加上，解决跨域污染 Canvas 的问题
+                    img.onload = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+                            canvas.toBlob(blob => {
+                                if (blob) resolve(blob);
+                                else reject(new Error('Canvas 转换失败'));
+                            }, 'image/png'); // 强制转换为 PNG 格式以适应微信/QQ剪贴板
+                        } catch (e) {
+                            reject(e);
+                        }
+                    };
+                    img.onerror = () => reject(new Error('图片加载失败，可能存在跨域限制'));
+                    
+                    // 加一个随机时间戳，强制浏览器不使用没有 CORS 头的缓存
+                    const hasQuery = url.indexOf('?') !== -1;
+                    img.src = url + (hasQuery ? '&' : '?') + 't=' + new Date().getTime();
+                });
+            }
+        };
+
+        // 2. 数据状态管理
+        const OrderState = {
+            currentItems: [],
+            currentImages:[], 
+            pendingUploadFiles: [],
+            allCloudOrders:[], 
+            currentViewingOrderId: null,
+            isEditingMode: false,
+            editingOrderObjId: null,
+            configObjectId: null,
+            pageSize: 20,
+            currentPage: 0,
+            isLoadingMore: false,
+            hasMoreData: true,
+            filterStats: { todo:0, shipping:0, month:0, total:0 },
+            
+            globalConfig: {
+                defaults: { paperW: 950, paperH: 650, marginTB: 0, marginLR: 0 },
+                prices: { unit: 100, discount: 0, lamination: 5, dieCut: 20, extra: 10 }
+            }
+        };
+
+        // 3. 云服务模块 (LeanCloud)
+        const CloudService = {
+            init() {
+                if(window.AV) AV.init({ appId: AV_CONFIG.ID, appKey: AV_CONFIG.KEY, serverURL: AV_CONFIG.SERVER });
+            },
+            async loadSystemSettings() {
+                if(!window.AV) return;
+                const q = new AV.Query('SystemConfig');
+                try {
+                    const config = await q.first();
+                    if(config) {
+                        OrderState.configObjectId = config.id;
+                        const d = config.attributes;
+                        const defs = OrderState.globalConfig.defaults;
+                        const prices = OrderState.globalConfig.prices;
+                        
+                        defs.paperW = d.paperW || 950; defs.paperH = d.paperH || 650;
+                        defs.marginTB = d.marginTB || 0; defs.marginLR = d.marginLR || 0;
+                        prices.unit = d.unitPrice || 100; prices.discount = d.discount || 0;
+                        prices.lamination = d.laminationFee || 5; prices.dieCut = d.dieCutFee || 20;
+                        prices.extra = d.additionalFee || 10;
+                        
+                        this.fillSettingsForm();
+                        CalcUI.updateStatusBar();
+                    }
+                } catch(e) { console.error("加载配置失败", e); }
+            },
+            fillSettingsForm() {
+                const defs = OrderState.globalConfig.defaults;
+                const prices = OrderState.globalConfig.prices;
+                document.getElementById('paperW').value = defs.paperW; document.getElementById('paperH').value = defs.paperH;
+                document.getElementById('marginTB').value = defs.marginTB; document.getElementById('marginLR').value = defs.marginLR;
+                document.getElementById('unitPrice').value = prices.unit; document.getElementById('discount').value = prices.discount;
+                document.getElementById('laminationFee').value = prices.lamination; document.getElementById('dieCutFee').value = prices.dieCut;
+                document.getElementById('additionalFee').value = prices.extra;
+            },
+            async saveSystemSettings() {
+                if(!window.AV) return;
+                const btn = document.getElementById('btnSaveSettings');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...'; btn.disabled = true;
+                try {
+                    let configObj;
+                    if(OrderState.configObjectId) configObj = AV.Object.createWithoutData('SystemConfig', OrderState.configObjectId);
+                    else { const ConfigClass = AV.Object.extend('SystemConfig'); configObj = new ConfigClass(); }
+                    
+                    configObj.set('paperW', parseFloat(document.getElementById('paperW').value));
+                    configObj.set('paperH', parseFloat(document.getElementById('paperH').value));
+                    configObj.set('marginTB', parseFloat(document.getElementById('marginTB').value));
+                    configObj.set('marginLR', parseFloat(document.getElementById('marginLR').value));
+                    configObj.set('unitPrice', parseFloat(document.getElementById('unitPrice').value));
+                    configObj.set('discount', parseFloat(document.getElementById('discount').value));
+                    configObj.set('laminationFee', parseFloat(document.getElementById('laminationFee').value));
+                    configObj.set('dieCutFee', parseFloat(document.getElementById('dieCutFee').value));
+                    configObj.set('additionalFee', parseFloat(document.getElementById('additionalFee').value));
+
+                    await configObj.save();
+                    if(!OrderState.configObjectId) OrderState.configObjectId = configObj.id;
+                    await this.loadSystemSettings(); 
+                    document.getElementById('settingsModal').classList.add('hidden');
+                    UI.showToast('配置已云端同步', 'success');
+                } catch(e) { UI.showToast('保存配置失败: ' + e.message, 'error'); } 
+                finally { btn.innerHTML = '保存并上传'; btn.disabled = false; }
+            },
+            async uploadFilesParallel(files) {
+                const promises = files.map(async (file, index) => {
+                    try {
+                        const compressedFile = await Utils.compressImage(file);
+                        const avFile = new AV.File(file.name, compressedFile);
+                        const savedFile = await avFile.save();
+                        return savedFile.url();
+                    } catch (err) {
+                        console.warn("文件上传失败，转为本地编码", err);
+                        return new Promise(resolve => {
+                            const reader = new FileReader();
+                            reader.onload = (e) => resolve(e.target.result);
+                            reader.readAsDataURL(file);
+                        });
+                    }
+                });
+                return Promise.all(promises);
+            },
+            async fetchOrderStats() {
+                try {
+                    const qTodo = new AV.Query('Order'); qTodo.equalTo('status', '待制作'); 
+                    const cTodo = await qTodo.count();
+                    
+                    const qShip = new AV.Query('Order'); qShip.equalTo('status', '待发货');
+                    const cShip = await qShip.count();
+
+                    const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
+                    const qMonth = new AV.Query('Order'); 
+                    qMonth.greaterThanOrEqualTo('createdAt', startOfMonth);
+                    qMonth.select(['totalAmount']);
+                    qMonth.limit(1000); 
+                    const monthOrders = await qMonth.find();
+                    const totalMonth = monthOrders.reduce((a,b) => a + (b.attributes.totalAmount||0), 0);
+
+                    const qTotal = new AV.Query('Order');
+                    const cTotal = await qTotal.count();
+
+                    OrderState.filterStats = { todo: cTodo, shipping: cShip, month: totalMonth, total: cTotal };
+                    OrderList.updateStatsUI();
+                } catch(e) { console.error("Stats fetch error", e); }
+            }
+        };
+
+        // 4. 计算逻辑模块
+        const CalcLogic = {
+            BOX_TYPES: { 
+                doubleInsert: { name: "双插盒", calc: (L, W, H) =>[{ name: "主盒", l: (L + W) * 2 + 20, w: H + W * 2 + 40 }] }, 
+                bottomLock: { name: "扣底盒", calc: (L, W, H) =>[{ name: "主盒", l: (L + W) * 2 + 20, w: W / 2 + 20 + H + W + 20 }] }, 
+                airplane: { name: "飞机盒", calc: (L, W, H) =>[{ name: "主盒", l: L + H * 4 + 20, w: W * 2 + H * 3 + 20 }] }, 
+                topBottom: { name: "天地盒", calc: (L, W, H) =>[{ name: "天盖", l: L + H * 4 + 40, w: W + H * 4 + 40 }, { name: "地盒", l: L + H * 4 + 40, w: W + H * 4 + 40 }] }, 
+                drawer: { name: "抽屉盒", calc: (L, W, H) =>[{ name: "外封", l: (H + W) * 2 + 20, w: L }, { name: "内盒", l: L + H * 2 + 20, w: W + H * 2 + 20 }] }, 
+                handle: { name: "手提盒", calc: (L, W, H) =>[{ name: "主盒", l: 2 * L + 2 * W + 20, w: W + H + 80 }] } 
+            },
+            getEffectivePaper: () => { 
+                const defs = OrderState.globalConfig.defaults;
+                const rawW = parseFloat(document.getElementById('paperW')?.value)||defs.paperW, 
+                      rawH = parseFloat(document.getElementById('paperH')?.value)||defs.paperH, 
+                      marginTB = parseFloat(document.getElementById('marginTB')?.value)||defs.marginTB, 
+                      marginLR = parseFloat(document.getElementById('marginLR')?.value)||defs.marginLR; 
+                return { rawW, rawH, w: Math.max(0, rawW-marginLR), h: Math.max(0, rawH-marginTB), marginTB, marginLR }; 
+            },
+            calcMaxCapacity: (partL, partW) => { 
+                const paper = CalcLogic.getEffectivePaper(), { w: maxW, h: maxH } = paper, r1 = Math.floor(maxH/partW), c1 = Math.floor(maxW/partL), n1 = r1*c1, r2 = Math.floor(maxH/partL), c2 = Math.floor(maxW/partW), n2 = r2*c2; return (n1>=n2) ? {rows:r1,cols:c1,count:n1,l:partL,w:partW,rotated:false,paperInfo:paper} : {rows:r2,cols:c2,count:n2,l:partW,w:partL,rotated:true,paperInfo:paper}; 
+            },
+            calcCost: (parts, params, totalQuantity) => {
+                let details = { material: 0, lamination: 0, dieCut: 0, extra: 0, corrugated: 0 }, layoutsInfo =[], hasError = false, errorMsgs =[], paper = CalcLogic.getEffectivePaper();
+                parts.forEach(part => {
+                    const fitNorm = (part.l<=paper.w && part.w<=paper.h), fitRot = (part.l<=paper.h && part.w<=paper.w);
+                    if (!fitNorm && !fitRot) { hasError = true; errorMsgs.push(`${part.name} 尺寸超限`); return; }
+                    const strategy = CalcLogic.calcMaxCapacity(part.l, part.w);
+                    if (strategy.count === 0) { hasError = true; errorMsgs.push(`${part.name} 无法排版`); return; }
+                    const fullSheets = Math.floor(totalQuantity/strategy.count), remainder = totalQuantity%strategy.count, totalSheets = Math.ceil(totalQuantity/strategy.count), corrugatedRate = params.isCorrugated?30:0;
+                    let sheetCost = 0;
+                    if (fullSheets>0) sheetCost += ((strategy.l*strategy.cols*strategy.w*strategy.rows)/1000000)*params.unitPrice*fullSheets + (params.laminationFee+params.dieCutFee+corrugatedRate)*fullSheets;
+                    if (remainder>0) { const remRows = Math.min(strategy.rows, Math.ceil(remainder/strategy.cols)), remCols = Math.min(strategy.cols, Math.ceil(remainder/remRows)); sheetCost += ((strategy.l*remCols*strategy.w*remRows)/1000000)*params.unitPrice + params.laminationFee + params.dieCutFee + corrugatedRate; }
+                    details.material += sheetCost - (params.laminationFee+params.dieCutFee+corrugatedRate)*totalSheets; details.lamination += params.laminationFee*totalSheets; details.dieCut += params.dieCutFee*totalSheets; details.corrugated += corrugatedRate*totalSheets;
+                    layoutsInfo.push({ ...strategy, partName: part.name, sheets: totalSheets, efficiency: ((strategy.l*strategy.cols*strategy.w*strategy.rows)/(paper.rawW*paper.rawH)*100).toFixed(1), originalDim: {l:part.l,w:part.w}, paper:paper });
+                });
+                details.extra = (totalQuantity>1)?(totalQuantity-1)*params.additionalFee:0; const totalOriginal = details.material+details.lamination+details.dieCut+details.extra+details.corrugated;
+                return { success:!hasError, errors:errorMsgs, originalTotal:totalOriginal, finalTotal:totalOriginal*(1-params.discount/100), unitPrice:totalOriginal*(1-params.discount/100)/totalQuantity, details, layouts:layoutsInfo };
+            }
+        };
+
+        const CalcUI = {
+            currentTab: 'basic',
+            currentQuote: null,
+            history: JSON.parse(localStorage.getItem('probox_history') || '[]'),
+            
+            init() {
+                const sel = document.getElementById('boxType');
+                Object.entries(CalcLogic.BOX_TYPES).forEach(([k,v]) => sel.add(new Option(v.name, k)));
+                
+                CloudService.loadSystemSettings();
+                this.renderHistory();
+                this.bindEvents();
+            },
+            bindEvents() {
+                document.querySelectorAll('.tab-btn').forEach(b => b.onclick = (e) => {
+                    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active');
+                    this.currentTab = e.target.dataset.target;
+                    document.getElementById('tabIndicator').style.transform = this.currentTab==='basic'?'translateX(0)':'translateX(100%)';
+                    const pBasic = document.getElementById('panel-basic');
+                    const pUnfolded = document.getElementById('panel-unfolded');
+                    if (this.currentTab === 'basic') { pBasic.classList.remove('hidden'); pUnfolded.classList.add('hidden'); } 
+                    else { pBasic.classList.add('hidden'); pUnfolded.classList.remove('hidden'); }
+                });
+
+                document.getElementById('checkAllHistory').onchange = (e) => { document.querySelectorAll('.hist-chk').forEach(c => c.checked = e.target.checked); };
+                document.getElementById('btnResetBasic').onclick = () => this.resetInputs();
+                document.getElementById('btnResetUnfolded').onclick = () => this.resetInputs();
+                document.getElementById('btnCalculate').onclick = () => this.doCalc();
+                document.getElementById('btnCalculateUnfolded').onclick = () => this.doCalc();
+                document.getElementById('btnBridgeAddToOrder').onclick = () => {
+                    if(!this.currentQuote) return UI.showToast("请先计算报价", 'error');
+                    OrderForm.bridgeAddToOrder([this.currentQuote]);
+                };
+                document.getElementById('btnCopyQuote').onclick = () => this.copyQuote();
+                document.getElementById('btnQuickSettings').onclick = () => document.getElementById('settingsModal').classList.remove('hidden');
+                
+                const btnClear = document.getElementById('btnClearHistory');
+                if(btnClear) btnClear.onclick = () => this.clearHistory();
+                
+                // Keyboard Nav for Lightbox
+                document.addEventListener('keydown', (e) => {
+                    if (document.getElementById('lightbox').classList.contains('hidden')) return;
+                    if (e.key === 'ArrowLeft') UI.prevImage();
+                    if (e.key === 'ArrowRight') UI.nextImage();
+                });
+            },
+            resetInputs() {
+                ['length', 'width', 'height', 'unfoldedL', 'unfoldedW'].forEach(id => document.getElementById(id).value = '');
+                ['quantity', 'quantityUnfolded'].forEach(id => document.getElementById(id).value = '1');
+                document.getElementById('resultCard').classList.add('hidden');
+                document.getElementById('warningCard').classList.add('hidden');
+            },
+            doCalc() {
+                const mode = this.currentTab;
+                let parts=[], qty=1, params = {
+                    unitPrice: parseFloat(document.getElementById('unitPrice').value)||100,
+                    discount: parseFloat(document.getElementById('discount').value)||0,
+                    laminationFee: parseFloat(document.getElementById('laminationFee').value)||0,
+                    dieCutFee: parseFloat(document.getElementById('dieCutFee').value)||0,
+                    additionalFee: parseFloat(document.getElementById('additionalFee').value)||0,
+                    isCorrugated: false
+                };
+                
+                if(mode==='basic') {
+                    const k = document.getElementById('boxType').value;
+                    const L=parseFloat(document.getElementById('length').value), W=parseFloat(document.getElementById('width').value), H=parseFloat(document.getElementById('height').value);
+                    if(!L||!W||!H) return UI.showToast('请输入完整尺寸 L/W/H', 'error');
+                    parts = CalcLogic.BOX_TYPES[k].calc(L,W,H);
+                    qty = parseInt(document.getElementById('quantity').value);
+                    params.isCorrugated = document.getElementById('checkCorrugatedBasic').checked;
+                    this.updateUnfoldedView(L,W,H,k);
+                } else {
+                    const L=parseFloat(document.getElementById('unfoldedL').value), W=parseFloat(document.getElementById('unfoldedW').value);
+                    if(!L||!W) return UI.showToast('请输入展开尺寸', 'error');
+                    parts =[{name:'自定义', l:L, w:W}];
+                    qty = parseInt(document.getElementById('quantityUnfolded').value);
+                    params.isCorrugated = document.getElementById('checkCorrugatedUnfolded').checked;
+                    document.getElementById('svgContainer').innerHTML = '<div class="text-xs text-gray-400 p-10 flex items-center justify-center h-full">自定义尺寸无结构图</div>';
+                }
+
+                const res = CalcLogic.calcCost(parts, params, qty);
+                if(!res.success) { 
+                    document.getElementById('warningCard').classList.remove('hidden'); 
+                    document.getElementById('warningContent').innerText = res.errors.join(', '); 
+                    document.getElementById('resultCard').classList.add('hidden'); return; 
+                }
+                
+                document.getElementById('warningCard').classList.add('hidden');
+                document.getElementById('resultCard').classList.remove('hidden', 'opacity-0');
+                document.getElementById('resPrice').innerText = '¥' + Math.round(res.finalTotal);
+                document.getElementById('resUnitPrice').innerText = '单价: ¥' + Math.round(res.unitPrice);
+                document.getElementById('costList').innerHTML = `<span class="text-slate-700">材料</span> ¥${res.details.material.toFixed(1)} <span class="text-slate-300 mx-1">|</span> <span class="text-slate-700">加工</span> ¥${(res.details.lamination+res.details.dieCut+res.details.corrugated).toFixed(1)} <span class="text-slate-300 mx-1">|</span> <span class="text-slate-700">附加</span> ¥${res.details.extra.toFixed(1)}`;
+                document.getElementById('dimensionDetails').innerHTML = res.layouts.map(l => `<span class="ml-2">印: ${l.originalDim.l.toFixed(0)}×${l.originalDim.w.toFixed(0)}</span>`).join('');
+
+                const con = document.getElementById('layoutGridsContainer'); con.innerHTML = '';
+                const wrap = document.createElement('div'); wrap.className = 'paper-canvas';
+                const l = res.layouts[0]; 
+                document.getElementById('layoutVisualCard').classList.remove('hidden');
+                document.getElementById('layoutEfficiency').innerText = l.efficiency + '% 利用率';
+                document.getElementById('layoutDesc').innerText = `${l.rows}行 ${l.cols}列 (${l.count}拼) - ${l.sheets}大张`;
+                
+                const wPct = (l.l/l.paper.rawW)*100, hPct = (l.w/l.paper.rawH)*100;
+                const sx = (l.paper.marginLR/2/l.paper.rawW)*100, sy = (l.paper.marginTB/2/l.paper.rawH)*100;
+                let gridHtml = '';
+                for(let r=0; r<l.rows; r++) for(let c=0; c<l.cols; c++) {
+                    gridHtml += `<div class="absolute border border-indigo-400/30 bg-indigo-500/10" style="width:${wPct}%;height:${hPct}%;top:${sy + r*hPct}%;left:${sx + c*wPct}%"></div>`;
+                }
+                wrap.style.position = 'relative'; wrap.style.width = '100%'; wrap.style.height = '100%'; wrap.innerHTML = gridHtml;
+                con.appendChild(wrap);
+                
+                const sizeStr = mode==='basic'?`${document.getElementById('length').value}x${document.getElementById('width').value}x${document.getElementById('height').value}`:`展开 ${document.getElementById('unfoldedL').value}x${document.getElementById('unfoldedW').value}`;
+                
+                this.currentQuote = { 
+                    name: mode==='basic'?CalcLogic.BOX_TYPES[document.getElementById('boxType').value].name:'自定义', 
+                    qty, total: parseFloat(res.finalTotal.toFixed(2)), unitPrice: (res.finalTotal/qty).toFixed(3),
+                    size: sizeStr, date: new Date().toLocaleString()
+                };
+                this.saveHistory(this.currentQuote);
+            },
+            copyQuote() {
+                if(!this.currentQuote) return;
+                const q = this.currentQuote;
+                const text = `【报价单】\n品名: ${q.name}\n规格: ${q.size} mm\n数量: ${q.qty}\n----------------\n总价: ¥${Math.round(q.total)}\n单价: ¥${Math.round(q.unitPrice)}`;
+                navigator.clipboard.writeText(text).then(() => UI.showToast('报价单已复制到剪贴板', 'success'));
+            },
+            saveHistory(item) {
+                this.history.unshift(item);
+                if(this.history.length > 50) this.history.pop();
+                localStorage.setItem('probox_history', JSON.stringify(this.history));
+                this.renderHistory();
+            },
+            renderHistory() {
+                const list = document.getElementById('calcHistoryList');
+                if(this.history.length === 0) { list.innerHTML = '<div class="text-xs text-center text-slate-300 py-6">暂无历史记录</div>'; return; }
+                list.innerHTML = this.history.map((h, i) => `
+                    <div class="flex items-center p-3 bg-white dark:bg-slate-800 border-b border-slate-50 dark:border-slate-700 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                        <input type="checkbox" class="hist-chk mr-3 custom-checkbox" data-idx="${i}">
+                        <div class="flex-1">
+                            <div class="font-bold text-slate-700 dark:text-slate-200">${h.name} <span class="text-slate-400 font-normal">x${h.qty}</span></div>
+                            <div class="text-[10px] text-slate-400 font-mono mt-0.5">${h.size}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-slate-800 dark:text-white">¥${Math.round(h.total)}</div>
+                            <div class="text-[9px] text-slate-300">${h.date.split(' ')[1]||''}</div>
+                        </div>
+                    </div>`).join('');
+            },
+            batchCopyQuote() {
+                const chks = document.querySelectorAll('.hist-chk:checked');
+                if(chks.length === 0) return UI.showToast('请至少勾选一项记录', 'error');
+                let text = "【报价汇总清单】\n"; let grandTotal = 0;
+                chks.forEach(c => { const h = this.history[c.dataset.idx]; text += `- ${h.name} (${h.size}) x ${h.qty} = ¥${Math.round(h.total)}\n`; grandTotal += parseFloat(h.total); });
+                text += `----------------\n合计: ¥${Math.round(grandTotal)}`;
+                navigator.clipboard.writeText(text).then(() => UI.showToast(`已复制 ${chks.length} 条报价汇总`, 'success'));
+            },
+            batchAddToOrder() {
+                const chks = document.querySelectorAll('.hist-chk:checked');
+                if(chks.length === 0) return UI.showToast('未选择记录', 'error');
+                const items = [];
+                chks.forEach(c => { items.push(this.history[c.dataset.idx]); c.checked = false; });
+                document.getElementById('checkAllHistory').checked = false;
+                OrderForm.bridgeAddToOrder(items);
+            },
+            clearHistory() {
+                Swal.fire({ title: '清空历史?', text: "此操作不可恢复", icon: 'warning', showCancelButton: true, confirmButtonText: '清空' })
+                    .then((r) => { 
+                        if(r.isConfirmed) { 
+                            this.history =[]; 
+                            localStorage.removeItem('probox_history'); 
+                            this.renderHistory(); 
+                        } 
+                    });
+            },
+            updateStatusBar() {
+                const w = document.getElementById('paperW').value || OrderState.globalConfig.defaults.paperW;
+                const h = document.getElementById('paperH').value || OrderState.globalConfig.defaults.paperH;
+                document.getElementById('displayPaperSize').innerText = `${w}x${h}mm`;
+            },
+            updateUnfoldedView(L, W, H, type) { 
+                const c = document.getElementById('svgContainer'); 
+                const COL = '#64748b'; 
+                const DIM = '#94a3b8'; 
+                
+                const drawDim = (x1, y1, x2, y2, text, offset=10, isVertical=false) => { 
+                    return isVertical ? 
+                        `<line x1="${x1-offset}" y1="${y1}" x2="${x1-offset}" y2="${y2}" stroke="${DIM}" stroke-width="0.5"/><text x="${x1-offset-5}" y="${(y1+y2)/2}" fill="${DIM}" font-size="12" text-anchor="end" dominant-baseline="middle">${text}</text>` :
+                        `<line x1="${x1}" y1="${y2+offset}" x2="${x2}" y2="${y2+offset}" stroke="${DIM}" stroke-width="0.5"/><text x="${(x1+x2)/2}" y="${y2+offset+15}" fill="${DIM}" font-size="12" text-anchor="middle">${text}</text>`; 
+                };
+                
+                let s = '', vb = '';
+                
+                 switch(type) {
+                    case 'topBottom': { 
+                        const flap=H, gap=30; const sw=flap+L+flap, sh=flap+W+flap, tw=sw*2+gap+20, th=sh+20, sx=10, sy=flap+10; vb=`-10 -10 ${tw} ${th}`; 
+                        s+=`<g stroke="${COL}" fill="none"><rect x="${sx+flap}" y="${sy-flap}" width="${L}" height="${flap}"/><rect x="${sx+flap}" y="${sy+W}" width="${L}" height="${flap}"/><rect x="${sx}" y="${sy}" width="${flap}" height="${W}"/><rect x="${sx+flap+L}" y="${sy}" width="${flap}" height="${W}"/><rect x="${sx+flap}" y="${sy}" width="${L}" height="${W}"/><text x="${sx+flap+L/2}" y="${sy+W/2}" fill="${DIM}" text-anchor="middle" font-size="12">天盖</text></g>`; 
+                        let sx2=sx+sw+gap; s+=`<g stroke="${COL}" fill="none"><rect x="${sx2+flap}" y="${sy-flap}" width="${L}" height="${flap}"/><rect x="${sx2+flap}" y="${sy+W}" width="${L}" height="${flap}"/><rect x="${sx2}" y="${sy}" width="${flap}" height="${W}"/><rect x="${sx2+flap+L}" y="${sy}" width="${flap}" height="${W}"/><rect x="${sx2+flap}" y="${sy}" width="${L}" height="${W}"/><text x="${sx2+flap+L/2}" y="${sy+W/2}" fill="${DIM}" text-anchor="middle" font-size="12">地盒</text></g>`; 
+                        s+=drawDim(sx+flap,sy+W+flap,sx+flap+L,sy+W+flap,"L",5)+drawDim(sx+flap+L+flap,sy,sx+flap+L+flap,sy+W,"W",5,true)+drawDim(sx+flap+L+flap,sy-flap,sx+flap+L+flap,sy,"H",5,true); 
+                        break; 
+                    }
+                    case 'drawer': { 
+                        const gapD = 50; const sleeveH = 2*(W+H)+20; const trayW = L+2*H, trayH = W+2*H; const slx=10, sly=10; 
+                        s+=`<g stroke="${COL}" fill="none"> <rect x="${slx}" y="${sly}" width="${L}" height="${H}"/> <rect x="${slx}" y="${sly+H}" width="${L}" height="${W}"/> <rect x="${slx}" y="${sly+H+W}" width="${L}" height="${H}"/> <rect x="${slx}" y="${sly+H+W+H}" width="${L}" height="${W}"/> <path d="M${slx},${sly} L${slx+L},${sly} L${slx+L},${sly+H*2+W*2} L${slx},${sly+H*2+W*2} Z"/> <text x="${slx+L/2}" y="${sly+H+W+H+W+15}" fill="${DIM}" text-anchor="middle" font-size="10">外封套</text> </g>`; 
+                        const tlx = slx+L+gapD, tly = sly + (sleeveH-trayH)/2; s+=`<g stroke="${COL}" fill="none"> <rect x="${tlx+H}" y="${tly+H}" width="${L}" height="${W}"/> <rect x="${tlx}" y="${tly+H}" width="${H}" height="${W}"/> <rect x="${tlx+H+L}" y="${tly+H}" width="${H}" height="${W}"/> <rect x="${tlx+H}" y="${tly}" width="${L}" height="${H}"/> <rect x="${tlx+H}" y="${tly+H+W}" width="${L}" height="${H}"/> <text x="${tlx+H+L/2}" y="${tly+H+W/2}" fill="${DIM}" text-anchor="middle" font-size="10">内盒</text> </g>`; vb = `0 0 ${tlx+trayW+20} ${sly+sleeveH+30}`; 
+                        break; 
+                    }
+                    case 'airplane': { 
+                        const apW = W, apL = L, apH = H; const ear = 15; const totalW_ap = apL + 2*apH + 2*ear + 20; const totalH_ap = apW*2 + apH*3 + 20; vb = `-10 -10 ${totalW_ap} ${totalH_ap}`; const cx = apH + ear + 10, cy = 10; 
+                        s += `<g stroke="${COL}" fill="none">`; s += `<rect x="${cx}" y="${cy}" width="${apL}" height="${apW}"/>`; s += `<path d="M${cx},${cy} L${cx+ear},${cy-apH} L${cx+apL-ear},${cy-apH} L${cx+apL},${cy} Z"/>`; s += `<rect x="${cx}" y="${cy+apW}" width="${apL}" height="${apH}"/>`; const by = cy+apW+apH; s += `<rect x="${cx}" y="${by}" width="${apL}" height="${apW}"/>`; s += `<rect x="${cx-apH}" y="${by}" width="${apH}" height="${apW}"/>`; s += `<path d="M${cx-apH},${by} L${cx-apH-ear},${by+10} L${cx-apH-ear},${by+apW-10} L${cx-apH},${by+apW} Z"/>`; s += `<rect x="${cx+apL}" y="${by}" width="${apH}" height="${apW}"/>`; s += `<path d="M${cx+apL+apH},${by} L${cx+apL+apH+ear},${by+10} L${cx+apL+apH+ear},${by+apW-10} L${cx+apL+apH},${by+apW} Z"/>`; s += `<rect x="${cx}" y="${by+apW}" width="${apL}" height="${apH}"/>`; s += `<path d="M${cx},${by+apW+apH} L${cx+10},${by+apW+apH+10} L${cx+apL-10},${by+apW+apH+10} L${cx+apL},${by+apW+apH} Z"/>`; 
+                        s+=drawDim(cx,by+apW,cx+apL,by+apW,"L",0,false) + drawDim(cx+apL,by,cx+apL,by+apW,"W",5,true); s += `</g>`; 
+                        break; 
+                    }
+                    case 'handle': { 
+                        const hL=L, hW=W, hH=H; const hTop = 60; const totalW_h = hL*2 + hW*2 + 40; const totalH_h = hH + hW/2 + hTop + 40; vb = `-10 -10 ${totalW_h} ${totalH_h}`; let curX = 10, curY = hTop + 20; 
+                        s+=`<g stroke="${COL}" fill="none">`; s+=`<rect x="${curX}" y="${curY}" width="${hW}" height="${hH}"/>`; s+=`<path d="M${curX},${curY} L${curX+hW/2-10},${curY-hTop} L${curX+hW/2+10},${curY-hTop} L${curX+hW},${curY} Z"/>`; s+=`<rect x="${curX}" y="${curY+hH}" width="${hW}" height="${hW/2}"/>`; curX += hW; s+=`<rect x="${curX}" y="${curY}" width="${hL}" height="${hH}"/>`; s+=`<rect x="${curX}" y="${curY+hH}" width="${hL}" height="${hW/2}"/>`; curX += hL; s+=`<rect x="${curX}" y="${curY}" width="${hW}" height="${hH}"/>`; s+=`<path d="M${curX},${curY} L${curX+hW/2-10},${curY-hTop} L${curX+hW/2+10},${curY-hTop} L${curX+hW},${curY} Z"/>`; s+=`<rect x="${curX}" y="${curY+hH}" width="${hW}" height="${hW/2}"/>`; curX += hW; s+=`<rect x="${curX}" y="${curY}" width="${hL}" height="${hH}"/>`; s+=`<rect x="${curX}" y="${curY+hH}" width="${hL}" height="${hW/2}"/>`; s+=`<path d="M${curX+hL},${curY} L${curX+hL+15},${curY+10} L${curX+hL+15},${curY+hH-10} L${curX+hL},${curY+hH} Z"/>`; 
+                        s+=drawDim(10+hW, curY+hH, 10+hW+hL, curY+hH, "L", 5, false); s+=drawDim(10, curY+hH, 10+hW, curY+hH, "W", 5, false); s+=drawDim(10, curY, 10, curY+hH, "H", 5, true); s+=`</g>`; 
+                        break; 
+                    }
+                    default: { 
+                        const flap2=20, dust2=W*0.6, glue2=15, tW = W+L+W+L+glue2+20, tH = H+(flap2*2)+20, sx2 = 5, sy2 = flap2+10; vb = `-10 -10 ${tW} ${tH}`; let cx2 = sx2; 
+                        s += `<g stroke="${COL}" fill="none">`; s += `<rect x="${cx2}" y="${sy2}" width="${W}" height="${H}"/>`; s += `<path d="M${cx2},${sy2} L${cx2+5},${sy2-dust2} L${cx2+W-5},${sy2-dust2} L${cx2+W},${sy2} Z"/>`; s += `<path d="M${cx2},${sy2+H} L${cx2+5},${sy2+H+dust2} L${cx2+W-5},${sy2+H+dust2} L${cx2+W},${sy2+H} Z"/>`; cx2 += W; s += `<rect x="${cx2}" y="${sy2}" width="${L}" height="${H}"/>`; s += `<path d="M${cx2},${sy2} L${cx2},${sy2-flap2} Q${cx2},${sy2-flap2-5} ${cx2+5},${sy2-flap2-5} L${cx2+L-5},${sy2-flap2-5} Q${cx2+L},${sy2-flap2-5} ${cx2+L},${sy2-flap2} L${cx2+L},${sy2} Z"/>`; 
+                        if (type === 'bottomLock') { s += `<path d="M${cx2},${sy2+H} L${cx2+L/2},${sy2+H+W*0.6} L${cx2+L},${sy2+H} Z"/>`; } else { s += `<path d="M${cx2},${sy2+H} L${cx2},${sy2+H+flap2} Q${cx2},${sy2+H+flap2+5} ${cx2+5},${sy2+H+flap2+5} L${cx2+L-5},${sy2+H+flap2+5} Q${cx2+L},${sy2+H+flap2+5} ${cx2+L},${sy2+H+flap2} L${cx2+L},${sy2+H} Z"/>`; } cx2 += L; s += `<rect x="${cx2}" y="${sy2}" width="${W}" height="${H}"/>`; s += `<path d="M${cx2},${sy2} L${cx2+5},${sy2-dust2} L${cx2+W-5},${sy2-dust2} L${cx2+W},${sy2} Z"/>`; s += `<path d="M${cx2},${sy2+H} L${cx2+5},${sy2+H+dust2} L${cx2+W-5},${sy2+H+dust2} L${cx2+W},${sy2+H} Z"/>`; cx2 += W; s += `<rect x="${cx2}" y="${sy2}" width="${L}" height="${H}"/>`; 
+                        if (type === 'bottomLock') { s += `<path d="M${cx2},${sy2+H} L${cx2+L/2},${sy2+H+W*0.6} L${cx2+L},${sy2+H} Z"/>`; } else { s += `<path d="M${cx2},${sy2+H} L${cx2},${sy2+H+flap2} Q${cx2},${sy2+H+flap2+5} ${cx2+5},${sy2+H+flap2+5} L${cx2+L-5},${sy2+H+flap2+5} Q${cx2+L},${sy2+H+flap2+5} ${cx2+L},${sy2+H+flap2} L${cx2+L},${sy2+H} Z"/>`; } cx2 += L; s += `<path d="M${cx2},${sy2} L${cx2+glue2},${sy2+5} L${cx2+glue2},${sy2+H-5} L${cx2},${sy2+H} Z"/></g>`; s += drawDim(sx2+W/2, sy2, sx2+W/2, sy2+H, "H", 5, true) + drawDim(sx2+W+L, sy2+H-10, sx2+W+L+W, sy2+H-10, "W", 0) + drawDim(sx2+W, sy2+H-10, sx2+W+L, sy2+H-10, "L", 0); 
+                        break; 
+                    }
+                }
+                c.innerHTML = `<svg width="100%" height="100%" viewBox="${vb}" style="padding:10px">${s}</svg>`;
+            },
+
+            // 5. 订单录入模块
+            // (OrderForm methods will be attached here or globally)
+        };
+
+        // 5. 订单录入模块
+        const OrderForm = {
+            init() {
+                // 粘贴事件监听 (支持页面任意位置粘贴)
+                document.addEventListener('paste', (e) => this.handlePaste(e));
+                
+                const pasteArea = document.getElementById('pasteArea');
+                pasteArea.addEventListener('click', (e) => { 
+                    if(!e.target.closest('.img-remove')) document.getElementById('fileInput').click(); 
+                });
+            },
+            handlePaste(e) {
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                const modal = document.getElementById('orderDetailModal');
+                
+                if(!document.getElementById('app-order-form').classList.contains('hidden')) {
+                    for (let item of items) {
+                        if (item.kind === 'file' && item.type.startsWith('image/')) {
+                            this.processImageFile(item.getAsFile());
+                        }
+                    }
+                }
+                else if(modal && !modal.classList.contains('hidden') && modal.style.display !== 'none') {
+                    for (let item of items) {
+                        if (item.kind === 'file' && item.type.startsWith('image/')) {
+                            OrderList.handleFinalImagePaste(item.getAsFile());
+                        }
+                    }
+                }
+            },
+            handleFileSelect(input) { 
+                Array.from(input.files).forEach(f => this.processImageFile(f)); 
+                input.value = ''; 
+            },
+            processImageFile(file) {
+                OrderState.pendingUploadFiles.push(file); 
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    OrderState.currentImages.push(e.target.result); 
+                    this.renderImgGallery();
+                };
+                reader.readAsDataURL(file);
+            },
+            renderImgGallery() {
+                const g = document.getElementById('imgGallery'); 
+                if(OrderState.currentImages.length === 0) {
+                    g.innerHTML = '';
+                    document.getElementById('pastePlaceholder').style.display = 'block';
+                    return;
+                }
+                document.getElementById('pastePlaceholder').style.display = 'none';
+                g.innerHTML = OrderState.currentImages.map((src, i) => 
+                    `<div class="relative group"><img src="${src}" class="upload-thumb"><div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer rounded-lg img-remove" onclick="OrderForm.removeImage(${i});event.stopPropagation()"><i class="fas fa-trash text-white"></i></div></div>`
+                ).join('');
+            },
+            removeImage(index) {
+                OrderState.currentImages.splice(index, 1);
+                OrderState.pendingUploadFiles.splice(index, 1);
+                this.renderImgGallery();
+            },
+            addItem() {
+                const n=document.getElementById('newItemName').value, q=document.getElementById('newItemQty').value, t=document.getElementById('newItemTotal').value;
+                if(!n||!q) return UI.showToast('请填写品名和数量', 'error');
+                OrderState.currentItems.push({name:n, size:document.getElementById('newItemSize').value, qty:q, total:parseFloat(t)||0, unitPrice: t?(t/q).toFixed(3):0});
+                this.renderTempTable();
+                document.getElementById('newItemName').value=''; document.getElementById('newItemTotal').value='';
+                document.getElementById('newItemName').focus();
+            },
+            renderTempTable() {
+                const b = document.getElementById('tempItemsBody'); 
+                let t=0;
+                b.innerHTML = OrderState.currentItems.map((i,x) => { 
+                    t+=i.total; 
+                    return `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"><td class="p-3 pl-4 font-medium">${i.name}</td><td class="p-3 text-slate-500">${i.size}</td><td class="p-3 text-center">${i.qty}</td><td class="p-3 pr-4 font-mono text-right">¥${i.total}</td><td class="p-3 text-center text-red-400 cursor-pointer hover:text-red-600 transition-colors" onclick="OrderForm.removeItem(${x})"><i class="fas fa-times"></i></td></tr>`; 
+                }).join('');
+                document.getElementById('grandTotal').innerText = t.toFixed(2);
+            },
+            removeItem(index) {
+                OrderState.currentItems.splice(index, 1);
+                this.renderTempTable();
+            },
+            bridgeAddToOrder(newItems) {
+                if(!newItems || !newItems.length) return;
+                const itemsToAdd = newItems.map(i => ({
+                    name: i.name, size: i.size, qty: i.qty,
+                    total: Math.round(parseFloat(i.total) || 0), unitPrice: i.unitPrice || (i.total/i.qty).toFixed(3)
+                }));
+                OrderState.currentItems.push(...itemsToAdd);
+                this.renderTempTable();
+                switchApp('order-form');
+                UI.showToast(`已导入 ${itemsToAdd.length} 个商品到订单`, 'success');
+            },
+            async submit() {
+                if(!OrderState.currentItems.length) return Swal.fire('提示', '请添加至少一个商品', 'warning');
+                
+                const oid = document.getElementById('inputOrderId').value || ('ORD-' + Date.now().toString().slice(-8));
+                const btn = document.getElementById('btnSubmitOrder');
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                
+                try {
+                    // 1. 收集已有的 HTTP 链接图片（例如编辑模式下旧图）
+                    let finalImagesToSave = OrderState.currentImages.filter(img => img.startsWith('http'));
+
+                    // 2. 并行处理新上传的图片
+                    if(OrderState.pendingUploadFiles.length > 0) {
+                        btn.innerHTML = `<i class="fas fa-circle-notch animate-spin"></i> 处理图片 (${OrderState.pendingUploadFiles.length})...`;
+                        const uploadedUrls = await CloudService.uploadFilesParallel(OrderState.pendingUploadFiles);
+                        finalImagesToSave = [...finalImagesToSave, ...uploadedUrls];
+                    }
+
+                    btn.innerHTML = `<i class="fas fa-circle-notch animate-spin"></i> 保存订单...`;
+
+                    let o;
+                    if(OrderState.isEditingMode && OrderState.editingOrderObjId) {
+                        o = AV.Object.createWithoutData('Order', OrderState.editingOrderObjId);
+                    } else {
+                        const Order = AV.Object.extend('Order');
+                        o = new Order();
+                        o.set('status', '待制作'); 
+                    }
+
+                    o.set('orderId', oid);
+                    o.set('customerInfo', document.getElementById('customerInfo').value);
+                    o.set('customerAddress', document.getElementById('customerAddress').value);
+                    o.set('source', document.getElementById('source').value);
+                    o.set('flowStatus', document.getElementById('flowStatus').value);
+                    o.set('paymentMethod', document.getElementById('paymentMethod').value);
+                    o.set('fileLink', document.getElementById('fileLink').value);
+                    o.set('remarks', document.getElementById('remarks').value);
+                    o.set('items', OrderState.currentItems); 
+                    o.set('totalAmount', parseFloat(document.getElementById('grandTotal').innerText));
+                    o.set('images', finalImagesToSave); 
+                    
+                    await o.save();
+                    
+                    // NEW: Update Stats on New Order
+                    CloudService.fetchOrderStats();
+
+                    // 关键修改：先恢复按钮状态，再弹窗，避免双遮罩
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+
+                    Swal.fire({ title: '成功', text: '订单已云端同步', icon: 'success', timer: 1500, showConfirmButton: false });
+                    this.reset(); 
+                    document.getElementById('filterKeyword').value = '';
+                    await OrderList.refreshList(); 
+                    switchApp('order-list');
+                    
+                } catch(e) { 
+                    console.error(e);
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                    Swal.fire('提交失败', '错误信息: ' + e.message, 'error');
+                } 
+            },
+            reset() { 
+                document.getElementById('customerInfo').value=''; 
+                document.getElementById('customerAddress').value=''; 
+                document.getElementById('source').value=''; 
+                document.getElementById('flowStatus').value=''; 
+                document.getElementById('paymentMethod').value=''; 
+                document.getElementById('fileLink').value=''; 
+                document.getElementById('remarks').value=''; 
+                document.getElementById('inputOrderId').value = ''; 
+                OrderState.currentItems=[]; this.renderTempTable(); 
+                OrderState.currentImages=[]; OrderState.pendingUploadFiles=[]; this.renderImgGallery();
+                this.cancelEdit();
+            },
+            cancelEdit() {
+                OrderState.isEditingMode = false;
+                OrderState.editingOrderObjId = null;
+                document.getElementById('formTitle').innerText = "录入新订单";
+                const btn = document.getElementById('btnSubmitOrder');
+                btn.innerHTML = `<span>确认下单</span><i class="fas fa-chevron-right text-xs ml-1"></i>`;
+                document.getElementById('btnCancelEdit').classList.add('hidden');
+            }
+        };
+
+        // 6. 订单列表模块
+        const OrderList = {
+            // Replaces: loadCloudData, doCloudSearch, applyFilters
+            // New logic: fetchOrders(isAppend)
+            debounceSearch: Utils.debounce(() => {
+                OrderList.refreshList();
+            }, 500),
+
+            // Quick Filter Method added for Top Cards
+            quickFilter(status) {
+                const select = document.getElementById('filterStatus');
+                select.value = status;
+                this.refreshList();
+            },
+
+            // FIXED: Helper to consistently find order from cache or loaded array
+            findOrder(id) {
+                return OrderState.allCloudOrders.find(o => {
+                    const oid = o.id || o.objectId; // Handle AV.Object or JSON
+                    return oid === id;
+                });
+            },
+
+            refreshList() {
+                // Try load from local storage cache for instant render
+                const cached = localStorage.getItem('cached_orders');
+                if (cached && OrderState.currentPage === 0) {
+                    this.renderListToDOM(JSON.parse(cached));
+                }
+
+                OrderState.currentPage = 0;
+                OrderState.allCloudOrders =[]; // Reset local cache for new query
+                this.fetchOrders(false);
+                CloudService.fetchOrderStats();
+            },
+
+            loadMore() {
+                if(OrderState.isLoadingMore || !OrderState.hasMoreData) return;
+                OrderState.currentPage++;
+                this.fetchOrders(true);
+            },
+
+            async fetchOrders(isAppend) {
+                if (!isAppend) UI.showLoading(true, "同步数据中...");
+                else {
+                    OrderState.isLoadingMore = true;
+                    document.getElementById('btnLoadMore').innerText = '加载中...';
+                }
+
+                try {
+                    const q = new AV.Query('Order');
+                    
+                    // --- Build Query based on inputs ---
+                    const k = document.getElementById('filterKeyword').value.trim();
+                    const s = document.getElementById('filterStatus').value;
+                    const f = document.getElementById('filterFlow').value;
+                    const dStart = document.getElementById('dateStart').value;
+                    const dEnd = document.getElementById('dateEnd').value;
+
+                    if (k) {
+                        // FIXED: Added trackingNumber to OR query
+                        const q1 = new AV.Query('Order'); q1.contains('orderId', k);
+                        const q2 = new AV.Query('Order'); q2.contains('customerInfo', k);
+                        const q3 = new AV.Query('Order'); q3.contains('customerAddress', k);
+                        const q4 = new AV.Query('Order'); q4.contains('trackingNumber', k);
+                        const coreQuery = AV.Query.or(q1, q2, q3, q4);
+                        
+                        if (s) {
+                             if(s === 'issue') coreQuery.equalTo('hasIssue', true);
+                             else coreQuery.equalTo('status', s);
+                        }
+                        if (f) coreQuery.equalTo('flowStatus', f);
+                        if (dStart) coreQuery.greaterThanOrEqualTo('createdAt', new Date(dStart));
+                        if (dEnd) {
+                            const e = new Date(dEnd); e.setHours(23,59,59);
+                            coreQuery.lessThanOrEqualTo('createdAt', e);
+                        }
+                        
+                         var finalQ = coreQuery;
+
+                    } else {
+                        // No keyword, standard filtering
+                        if (s) {
+                             if(s === 'issue') q.equalTo('hasIssue', true);
+                             else q.equalTo('status', s);
+                        }
+                        if (f) q.equalTo('flowStatus', f);
+                        if (dStart) q.greaterThanOrEqualTo('createdAt', new Date(dStart));
+                        if (dEnd) {
+                            const e = new Date(dEnd); e.setHours(23,59,59);
+                            q.lessThanOrEqualTo('createdAt', e);
+                        }
+                        var finalQ = q;
+                    }
+
+                    finalQ.descending('createdAt');
+                    finalQ.limit(OrderState.pageSize);
+                    finalQ.skip(OrderState.currentPage * OrderState.pageSize);
+
+                    const results = await finalQ.find();
+                    
+                    // Logic for "Has More"
+                    if (results.length < OrderState.pageSize) {
+                        OrderState.hasMoreData = false;
+                        document.getElementById('loadMoreContainer').classList.add('hidden');
+                    } else {
+                        OrderState.hasMoreData = true;
+                        document.getElementById('loadMoreContainer').classList.remove('hidden');
+                        document.getElementById('btnLoadMore').innerText = '加载更多...';
+                    }
+
+                    if (isAppend) {
+                        OrderState.allCloudOrders = [...OrderState.allCloudOrders, ...results];
+                        this.appendListToDOM(results);
+                    } else {
+                        OrderState.allCloudOrders = results;
+                        // Cache first page (serialize AV.Objects to JSON)
+                        const jsonResults = results.map(r => r.toJSON());
+                        localStorage.setItem('cached_orders', JSON.stringify(jsonResults));
+                        this.renderListToDOM(results);
+                    }
+
+                } catch(e) { 
+                    UI.showToast("数据加载失败: " + e.message, 'error'); 
+                    console.error(e);
+                } finally { 
+                    UI.showLoading(false); 
+                    OrderState.isLoadingMore = false;
+                }
+            },
+
+            // Replaces previous renderList (which did innerHTML override)
+            renderListToDOM(list) {
+                const b = document.getElementById('historyBody');
+                b.innerHTML = '';
+                
+                if(list.length === 0) {
+                     document.getElementById('emptyTip').classList.remove('hidden');
+                     document.getElementById('loadMoreContainer').classList.add('hidden');
+                     return;
+                }
+                document.getElementById('emptyTip').classList.add('hidden');
+                
+                const html = this.generateRowsHTML(list);
+                // Use insertAdjacentHTML for better performance than innerHTML on large sets, 
+                // though for "replace" innerHTML is fine.
+                b.innerHTML = html;
+            },
+
+            appendListToDOM(list) {
+                 const b = document.getElementById('historyBody');
+                 const html = this.generateRowsHTML(list);
+                 b.insertAdjacentHTML('beforeend', html);
+            },
+
+            generateRowsHTML(list) {
+                 return list.map(o => {
+                    const d = o.attributes ? o.attributes : o; // Handle both LeanCloud Obj and cached JSON
+                    const objId = o.id || o.objectId;
+                    
+                    let statusClass = 'pill-done', statusText = d.status || '已完成';
+                    if(d.hasIssue) { statusClass = 'pill-issue'; statusText = '⚠️ 异常/待处理'; } 
+                    else if(d.status === '待制作') { statusClass = 'pill-todo'; } 
+                    else if(d.status === '待发货') { statusClass = 'pill-shipping'; }
+                    
+                    let rowClass = d.hasIssue ? 'row-issue' : 'hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group';
+                    
+                    // Lightbox context preparation
+                    const refImgs = (d.images && Array.isArray(d.images)) ? d.images : (d.image ? [d.image] :[]);
+                    const allImgs = d.finalImage ? [d.finalImage, ...refImgs] : refImgs;
+                    const contextStr = JSON.stringify(allImgs).replace(/"/g, '&quot;');
+
+                    let imgHTML = '';
+                    if(d.finalImage) imgHTML = `<img src="${d.finalImage}" class="table-thumb thumb-final" onclick="UI.showLightbox('${d.finalImage}', ${contextStr})" title="已定稿">`;
+                    else if(allImgs.length > 0) imgHTML = `<img src="${allImgs[0]}" class="table-thumb" onclick="UI.showLightbox('${allImgs[0]}', ${contextStr})" title="参考图">`;
+                    else imgHTML = `<div class="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center text-slate-300 text-sm shadow-inner"><i class="fas fa-image"></i></div>`;
+
+                    const fullAddr = d.customerAddress || '';
+                    const shortAddr = fullAddr.length > 6 ? fullAddr.substring(0, 6) + '...' : (fullAddr || '');
+                    const addressHTML = fullAddr ? `<div class="text-[11px] text-slate-400 mt-1 flex items-center gap-1 group relative cursor-help" title="${fullAddr}"><i class="fas fa-map-marker-alt text-indigo-400"></i> ${shortAddr}</div>` : '';
+                    const linkHTML = (d.fileLink && d.fileLink.trim() !== '') ? `<div class="mt-2 flex items-center gap-1 text-[10px] text-indigo-500 bg-indigo-50 px-2 py-1 rounded w-fit max-w-[200px] truncate"><i class="fas fa-link"></i> ${d.fileLink}</div>` : '';
+
+                    const items = d.items ||[];
+                    const visibleItems = items.slice(0, 2);
+                    const itemsHTML = visibleItems.map(i => `<div class="flex justify-between items-start max-w-[240px] border-b border-dashed border-slate-100 pb-1 mb-1 last:border-0 last:mb-0"><div class="flex flex-col leading-tight"><span class="text-slate-700 font-medium">${i.name}</span>${i.size ? `<span class="text-[10px] text-slate-400 mt-0.5">${i.size}</span>` : ''}</div><span class="text-slate-500 text-xs font-mono ml-2 whitespace-nowrap bg-slate-50 px-1.5 py-0.5 rounded">x${i.qty}</span></div>`).join('');
+                    const moreHTML = (items.length - 2) > 0 ? `<div class="text-[10px] text-slate-400 italic mt-1 pl-1 cursor-pointer hover:text-indigo-500" onclick="OrderList.openDetail('${objId}')">+ 还有 ${items.length - 2} 件商品...</div>` : '';
+
+                    let trackingDisplay = '';
+                    if(d.trackingNumber) {
+                        trackingDisplay = `<div class="mt-2 flex items-center justify-center gap-1 text-[10px] text-slate-500 font-mono bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 select-all cursor-pointer hover:text-indigo-600 hover:border-indigo-300 transition-colors" onclick="navigator.clipboard.writeText('${d.trackingNumber}'); UI.showToast('单号已复制')"><i class="fas fa-truck-fast"></i> ${d.trackingNumber}</div>`;
+                    }
+                    
+                    let actionBtn = `<button onclick="OrderList.openDetail('${objId}')" class="w-9 h-9 rounded-xl hover:bg-slate-100 hover:shadow-md text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center"><i class="fas fa-ellipsis-h"></i></button>`;
+                    if(d.status === '待发货' && !d.hasIssue) {
+                        // 缩小后的发货按钮
+                        actionBtn = `<div class="flex items-center gap-2 justify-end">
+                            <button onclick="OrderList.quickShip('${objId}')" class="btn-action-ship auth-guard-write shadow-indigo-500/20"><i class="fas fa-truck"></i> 发货</button>
+                            <button onclick="OrderList.openDetail('${objId}')" class="w-9 h-9 rounded-xl hover:bg-slate-100 hover:shadow-md text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center"><i class="fas fa-ellipsis-h"></i></button>
+                        </div>`;
+                    }
+
+                    return `
+                    <tr class="${rowClass}" id="row-${objId}">
+                        <td class="p-6 font-mono font-bold text-slate-600 dark:text-slate-400 select-all" data-label="订单编号">${d.orderId || 'No-ID'}</td>
+                        <td class="p-6" data-label="图示">${imgHTML}</td>
+                        <td class="p-6" data-label="客户信息"><div class="font-bold text-slate-800 dark:text-white text-sm">${d.customerInfo||'散客'}</div>${addressHTML}</td>
+                        <td class="p-6 text-slate-500 text-xs" data-label="内容摘要"><div class="space-y-1">${itemsHTML}${moreHTML}</div>${linkHTML}${d.hasIssue ? `<div class="text-[10px] font-bold text-red-600 mt-2 bg-red-50 p-1 rounded text-center animate-pulse">‼️ ${d.issueMsg || '有异常反馈'}</div>` : ''}</td>
+                        <td class="p-6 text-center" data-label="状态"><span class="status-pill ${statusClass} shadow-sm"><span class="status-dot"></span>${statusText}</span>${trackingDisplay}</td>
+                        <td class="p-6 font-mono font-bold text-slate-800 dark:text-white text-right" data-label="金额">¥${d.totalAmount}</td>
+                        <td class="p-6 text-center pr-8" data-label="操作">${actionBtn}</td>
+                    </tr>`;
+                }).join('');
+            },
+            
+            updateStatsUI() {
+                const s = OrderState.filterStats;
+                document.getElementById('statCount').innerText = s.total;
+                document.getElementById('statTodo').innerText = s.todo;
+                document.getElementById('statShipping').innerText = s.shipping;
+                document.getElementById('statMonth').innerText = s.month.toFixed(2);
+            },
+            
+            // 修改部分：新增的复制定稿词方法
+            async copyFinalDraft() {
+                const oObj = this.findOrder(OrderState.currentViewingOrderId);
+                if (!oObj) return;
+                const d = oObj.attributes ? oObj.attributes : oObj;
+
+                if (!d.finalImage) return UI.showToast('该订单暂无定稿图', 'error');
+
+                const btn = document.getElementById('btnCopyFinal');
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 生成中...';
+                btn.disabled = true;
+
+                try {
+                    // 1. 拼接文字部分
+                    let itemsText = (d.items ||[]).map((i, idx) => 
+                        `${idx + 1}. 品名:${i.name} / 尺寸:${i.size || '常规'} / 数量:${i.qty}`
+                    ).join('\n');
+                    
+                    let materialText = d.remarks ? `材质及备注：${d.remarks}\n` : '';
+                    
+                    const fullText = `【请确认定稿信息】\n` + 
+                                     `${materialText}商品明细：\n${itemsText}\n\n` + 
+                                     `⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现文字问题不做售后。`;
+
+                    // 2. 将图片转为 PNG Blob (微信/QQ 剪贴板严格要求 image/png)
+                    const imageBlob = await Utils.convertUrlToPngBlob(d.finalImage);
+                    const textBlob = new Blob([fullText], { type: 'text/plain' });
+
+                    // 3. 同时把文本和图片写入剪贴板
+                    const clipboardItem = new ClipboardItem({
+                        'text/plain': textBlob,
+                        'image/png': imageBlob
+                    });
+                    
+                    await navigator.clipboard.write([clipboardItem]);
+                    UI.showToast('✅ 定稿词和图片已复制，可直接粘贴到微信', 'success');
+                    
+                } catch (err) {
+                    console.error('复制到剪贴板失败:', err);
+                    
+                    // 降级方案：如果图片跨域导致无法转为Blob或浏览器不支持，尝试仅复制文字和链接
+                    try {
+                        let itemsText = (d.items ||[]).map((i, idx) => 
+                            `${idx + 1}. 品名:${i.name} / 尺寸:${i.size || '常规'} / 数量:${i.qty}`
+                        ).join('\n');
+                        let materialText = d.remarks ? `材质及备注：${d.remarks}\n` : '';
+                        const fallbackText = `【请确认定稿信息】\n${materialText}商品明细：\n${itemsText}\n\n⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现文字问题不做售后。\n\n[图片链接]: ${d.finalImage}`;
+                        
+                        await navigator.clipboard.writeText(fallbackText);
+                        UI.showToast('⚠️ 图片受跨域限制，仅成功复制了文字和图片链接', 'info');
+                    } catch (fallbackErr) {
+                        UI.showToast('复制失败，请检查浏览器权限', 'error');
+                    }
+                } finally {
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                }
+            },
+
+            openDetail(id) {
+                // FIXED: Robust object finding using helper
+                OrderState.currentViewingOrderId = id; 
+                const oObj = this.findOrder(id); 
+                
+                if(!oObj) {
+                     return;
+                }
+                const d = oObj.attributes ? oObj.attributes : oObj;
+                
+                document.getElementById('modalOrderId').innerText = `ID: ${d.orderId || id}`;
+                document.getElementById('modalDate').innerText = oObj.createdAt ? new Date(oObj.createdAt).toLocaleString() : new Date().toLocaleString();
+                document.getElementById('modalCustomer').innerText = d.customerInfo||'-';
+                document.getElementById('modalAddress').innerText = d.customerAddress || '未录入地址';
+                document.getElementById('modalSourceFlow').innerText = `${d.source||'-'} / ${d.flowStatus||'-'}`;
+                document.getElementById('modalPayment').innerText = d.paymentMethod||'-';
+                document.getElementById('modalTotal').innerText = `¥${d.totalAmount}`;
+                document.getElementById('modalRemarks').innerText = d.remarks||'-';
+                document.getElementById('modalFileLink').value = d.fileLink || ''; 
+                
+                const badge = document.getElementById('modalStatusBadge'); 
+                badge.innerText = d.status||'已完成';
+                badge.className = 'status-pill scale-110';
+                if(d.hasIssue) { badge.innerText = '⚠️ 异常/待处理'; badge.classList.add('pill-issue'); } 
+                else if(d.status === '待制作') badge.classList.add('pill-todo');
+                else if(d.status === '待发货') badge.classList.add('pill-shipping');
+                else badge.classList.add('pill-done');
+
+                const issueBox = document.getElementById('issueAlertBox');
+                if(d.hasIssue) {
+                    issueBox.classList.remove('hidden'); issueBox.classList.add('flex');
+                    document.getElementById('modalIssueText').innerText = d.issueMsg || '未填写具体原因';
+                    document.getElementById('btnReportIssue').classList.add('hidden');
+                } else {
+                    issueBox.classList.add('hidden'); issueBox.classList.remove('flex');
+                    document.getElementById('btnReportIssue').classList.remove('hidden');
+                }
+
+                document.getElementById('modalItemsBody').innerHTML = (d.items||[]).map(i => `<tr><td class="p-5 font-bold text-slate-700">${i.name}</td><td class="p-5 text-slate-500">${i.size||'-'}</td><td class="p-5 text-slate-500 font-mono">x${i.qty}</td><td class="p-5 text-right font-mono text-slate-700">¥${i.total}</td></tr>`).join('');
+
+                const ib = document.getElementById('modalRefImages'); ib.innerHTML='';
+                
+                // Construct Images for lightbox context
+                const refImgs = (d.images && Array.isArray(d.images)) ? d.images : (d.image ? [d.image] : []);
+                const allImgs = d.finalImage ?[d.finalImage, ...refImgs] : refImgs;
+                
+                // FIXED: Direct function assignment instead of setAttribute
+                ib.innerHTML = '';
+                refImgs.forEach(s => {
+                    const img = document.createElement('img');
+                    img.src = s;
+                    img.className = "w-20 h-20 object-cover rounded-xl border border-slate-200 cursor-zoom-in hover:shadow-lg transition-all hover:-translate-y-1";
+                    img.onclick = () => UI.showLightbox(s, allImgs);
+                    ib.appendChild(img);
+                });
+
+                const finalSec = document.getElementById('modalFinalImageSection');
+                const finalImgEl = document.getElementById('modalFinalImage');
+                if(d.finalImage) { 
+                    finalSec.classList.remove('hidden'); 
+                    finalImgEl.src=d.finalImage; 
+                    // FIXED: Direct onclick assignment
+                    finalImgEl.onclick = () => UI.showLightbox(d.finalImage, allImgs);
+                } else finalSec.classList.add('hidden');
+
+                const trackSec = document.getElementById('modalTrackingSection');
+                if(d.trackingNumber) { trackSec.classList.remove('hidden'); document.getElementById('modalTrackingNum').innerText=d.trackingNumber; } else trackSec.classList.add('hidden');
+
+                const act = document.getElementById('modalWorkflowAction'); 
+                if(d.status==='待制作') act.innerHTML = `<span class="text-sm font-bold text-orange-600 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></div> 生产中...</span><button onclick="document.getElementById('finalImageInput').click()" class="btn btn-primary bg-orange-500 hover:bg-orange-600 shadow-md text-xs border-0 auth-guard-write px-6 h-10">上传定稿图 (完成)</button>`;
+                else if(d.status==='待发货') act.innerHTML = `<span class="text-sm font-bold text-indigo-600 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div> 待发货</span><button onclick="OrderList.doShipping()" class="btn btn-primary bg-indigo-600 hover:bg-indigo-700 shadow-md text-xs border-0 auth-guard-write px-6 h-10">填写单号 (发货)</button>`;
+                else act.innerHTML = `<span class="text-sm font-bold text-emerald-600 flex items-center gap-2"><i class="fas fa-check-circle text-lg"></i> 订单已完成</span>`;
+
+                // Re-apply guards for modal content
+                Auth.applyGuards();
+
+                const modal = document.getElementById('orderDetailModal');
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+            },
+            async reportIssue() {
+                const { value: text } = await Swal.fire({ title: '反馈订单异常', input: 'textarea', inputLabel: '请描述遇到的问题', inputPlaceholder: '例如：客户修改尺寸、物流破损等...', showCancelButton: true, confirmButtonText: '提交反馈', confirmButtonColor: '#ef4444' });
+                if (text) {
+                    UI.showLoading(true, "提交反馈...");
+                    try {
+                        const o = AV.Object.createWithoutData('Order', OrderState.currentViewingOrderId);
+                        o.set('hasIssue', true); o.set('issueMsg', text);
+                        await o.save(); 
+                        
+                        // SYNC LOCAL CACHE & STATS
+                        const localOrder = this.findOrder(OrderState.currentViewingOrderId);
+                        if(localOrder) {
+                            if(localOrder.set) { localOrder.set('hasIssue', true); localOrder.set('issueMsg', text); }
+                            else { localOrder.hasIssue = true; localOrder.issueMsg = text; }
+                        }
+                        CloudService.fetchOrderStats();
+                        
+                        UI.showLoading(false); // 关键修改：先关遮罩
+                        UI.closeDetailModal(); await this.refreshList();
+                        Swal.fire('反馈成功', '订单已标记为异常状态', 'success');
+                    } catch(e) { 
+                        UI.showLoading(false); 
+                        Swal.fire('提交失败', e.message, 'error'); 
+                    } 
+                }
+            },
+            async resolveIssue() {
+                 Swal.fire({ title: '确定问题已解决?', text: "订单状态将恢复正常显示", icon: 'question', showCancelButton: true, confirmButtonText: '已解决', confirmButtonColor: '#10b981' })
+                 .then(async (result) => {
+                    if (result.isConfirmed) {
+                        UI.showLoading(true, "更新状态...");
+                        try {
+                            const o = AV.Object.createWithoutData('Order', OrderState.currentViewingOrderId);
+                            o.set('hasIssue', false); o.set('issueMsg', '');
+                            await o.save(); 
+                            
+                            // SYNC LOCAL CACHE & STATS
+                            const localOrder = this.findOrder(OrderState.currentViewingOrderId);
+                            if(localOrder) {
+                                if(localOrder.set) { localOrder.set('hasIssue', false); localOrder.set('issueMsg', ''); }
+                                else { localOrder.hasIssue = false; localOrder.issueMsg = ''; }
+                            }
+                            CloudService.fetchOrderStats();
+                            
+                            UI.showLoading(false); // 关键修改：先关遮罩
+                            UI.closeDetailModal(); await this.refreshList();
+                            Swal.fire('已恢复', '订单异常标记已清除', 'success');
+                        } catch(e) { 
+                            UI.showLoading(false);
+                            Swal.fire('操作失败', e.message, 'error'); 
+                        } 
+                    }
+                });
+            },
+            editOrder() {
+                const oObj = this.findOrder(OrderState.currentViewingOrderId);
+                if(!oObj) return;
+                const d = oObj.attributes ? oObj.attributes : oObj;
+                const objId = oObj.id || oObj.objectId;
+
+                OrderState.isEditingMode = true; OrderState.editingOrderObjId = objId;
+                
+                document.getElementById('inputOrderId').value = d.orderId || '';
+                document.getElementById('customerInfo').value = d.customerInfo || '';
+                document.getElementById('customerAddress').value = d.customerAddress || '';
+                document.getElementById('source').value = d.source || '';
+                document.getElementById('flowStatus').value = d.flowStatus || '';
+                document.getElementById('paymentMethod').value = d.paymentMethod || '';
+                document.getElementById('fileLink').value = d.fileLink || '';
+                document.getElementById('remarks').value = d.remarks || '';
+                OrderState.currentItems = d.items ? JSON.parse(JSON.stringify(d.items)) : [];
+                
+                OrderState.currentImages =[];
+                if(d.images && Array.isArray(d.images)) OrderState.currentImages =[...d.images];
+                else if(d.image) OrderState.currentImages = [d.image];
+                OrderState.pendingUploadFiles =[];
+
+                OrderForm.renderTempTable(); OrderForm.renderImgGallery();
+                
+                document.getElementById('formTitle').innerText = "编辑订单信息";
+                const btn = document.getElementById('btnSubmitOrder');
+                btn.innerHTML = `<span>保存修改</span><i class="fas fa-save text-xs ml-1"></i>`;
+                document.getElementById('btnCancelEdit').classList.remove('hidden');
+                
+                UI.closeDetailModal(); switchApp('order-form'); UI.showToast("已进入编辑模式", "info");
+            },
+            async doShipping() {
+                this.performShippingLogic(OrderState.currentViewingOrderId);
+            },
+            async quickShip(orderId) {
+                this.performShippingLogic(orderId);
+            },
+            async performShippingLogic(orderId) {
+                const { value: n } = await Swal.fire({ title: '发货', input: 'text', inputLabel: '请输入物流单号', inputPlaceholder: '例如: SF12345678', showCancelButton: true });
+                if (n) {
+                    UI.showLoading(true, "更新物流信息..."); 
+                    try {
+                        const o = AV.Object.createWithoutData('Order', orderId);
+                        o.set('trackingNumber', n); o.set('status', '已完成');
+                        await o.save(); 
+                        
+                        // SYNC LOCAL CACHE
+                        const localOrder = this.findOrder(orderId);
+                        if(localOrder) {
+                            if(localOrder.set) { // AV.Object
+                                localOrder.set('trackingNumber', n);
+                                localOrder.set('status', '已完成');
+                            } else { // JSON
+                                localOrder.trackingNumber = n;
+                                localOrder.status = '已完成';
+                            }
+                        }
+                        
+                        // NEW: Sync Stats
+                        CloudService.fetchOrderStats();
+
+                        // Instant Update UI
+                        const row = document.getElementById(`row-${orderId}`);
+                        if(row) {
+                            const statusCell = row.querySelector('[data-label="状态"]');
+                            statusCell.innerHTML = `<span class="status-pill pill-done shadow-sm"><span class="status-dot"></span>已完成</span><div class="mt-2 flex items-center justify-center gap-1 text-[10px] text-slate-500 font-mono bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 select-all"><i class="fas fa-truck-fast"></i> ${n}</div>`;
+                            const actionCell = row.querySelector('[data-label="操作"]');
+                            actionCell.innerHTML = `<button onclick="OrderList.openDetail('${orderId}')" class="w-9 h-9 rounded-xl hover:bg-slate-100 hover:shadow-md text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center"><i class="fas fa-ellipsis-h"></i></button>`;
+                        }
+
+                        UI.showLoading(false); // 关键修改：先关遮罩
+                        UI.closeDetailModal(); 
+                        Swal.fire('已发货', '物流单号已保存', 'success');
+                    } catch(e) {
+                         UI.showLoading(false);
+                         Swal.fire('操作失败', e.message, 'error');
+                    } 
+                }
+            },
+            async deleteOrderFromModal() {
+                Swal.fire({ title: '确定删除?', text: "此操作不可恢复！", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: '删除' }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        UI.showLoading(true, "正在删除..."); 
+                        const o = AV.Object.createWithoutData('Order', OrderState.currentViewingOrderId); 
+                        await o.destroy(); 
+                        
+                        // NEW: Update Stats
+                        CloudService.fetchOrderStats();
+                        
+                        UI.showLoading(false); // 关键修改：先关遮罩
+                        UI.closeDetailModal(); this.refreshList(); Swal.fire('已删除', '订单已移除', 'success');
+                    }
+                });
+            },
+            handleFinalImagePaste(file) {
+                Swal.fire({ title: '上传定稿图', text: '确定上传这张图片作为定稿图并完成订单吗？', showCancelButton: true, confirmButtonText: '上传并完成' })
+                .then(async (r) => {
+                    if(r.isConfirmed) {
+                        UI.showLoading(true, "压缩上传定稿图...");
+                        try {
+                            const compressedFile = await Utils.compressImage(file);
+                            const avFile = new AV.File("final_"+file.name, compressedFile);
+                            const savedFile = await avFile.save();
+                            const o = AV.Object.createWithoutData('Order', OrderState.currentViewingOrderId);
+                            o.set('finalImage', savedFile.url()); o.set('status', '待发货');
+                            await o.save(); 
+                            
+                            // SYNC LOCAL CACHE
+                            const localOrder = this.findOrder(OrderState.currentViewingOrderId);
+                            if(localOrder) {
+                                if(localOrder.set) { // AV.Object
+                                    localOrder.set('finalImage', savedFile.url());
+                                    localOrder.set('status', '待发货');
+                                } else { // JSON
+                                    localOrder.finalImage = savedFile.url();
+                                    localOrder.status = '待发货';
+                                }
+                            }
+                            
+                            // NEW: Sync Stats
+                            CloudService.fetchOrderStats();
+
+                            // Instant Update
+                            const row = document.getElementById(`row-${OrderState.currentViewingOrderId}`);
+                            if(row) {
+                                const statusCell = row.querySelector('[data-label="状态"]');
+                                statusCell.innerHTML = `<span class="status-pill pill-shipping shadow-sm"><span class="status-dot"></span>待发货</span>`;
+                                const imgCell = row.querySelector('[data-label="图示"]');
+                                // Use simple onclick for list view is fine, detail view handles context
+                                const contextStr = JSON.stringify([savedFile.url()]).replace(/"/g, '&quot;');
+                                imgCell.innerHTML = `<img src="${savedFile.url()}" class="table-thumb thumb-final" onclick="UI.showLightbox('${savedFile.url()}', ${contextStr})" title="已定稿">`;
+                                const actionCell = row.querySelector('[data-label="操作"]');
+                                actionCell.innerHTML = `<div class="flex items-center gap-2 justify-end"><button onclick="OrderList.quickShip('${OrderState.currentViewingOrderId}')" class="btn-action-ship auth-guard-write shadow-indigo-500/20"><i class="fas fa-truck"></i> 发货</button><button onclick="OrderList.openDetail('${OrderState.currentViewingOrderId}')" class="w-9 h-9 rounded-xl hover:bg-slate-100 hover:shadow-md text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center"><i class="fas fa-ellipsis-h"></i></button></div>`;
+                            }
+
+                            UI.showLoading(false); // 关键修改：先关遮罩
+                            UI.closeDetailModal();
+                            Swal.fire('成功', '定稿图已同步，状态更新：待发货', 'success');
+                        } catch(e) { 
+                            UI.showLoading(false);
+                            Swal.fire('失败', e.message, 'error'); 
+                        } 
+                    }
+                });
+            }
+        };
+
+        // ================= 全局入口与事件 =================
+        function switchApp(app) {['app-calculator', 'app-order-form', 'app-order-list'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById('app-' + app).classList.remove('hidden');
+            ['nav-calculator', 'nav-order-form', 'nav-order-list'].forEach(id => {
+                const btn = document.getElementById(id);
+                if(id === 'nav-' + app) {
+                    btn.classList.remove('text-slate-400', 'hover:bg-slate-800');
+                    btn.classList.add('bg-white', 'text-slate-900', 'shadow-sm', 'dark:bg-slate-700', 'dark:text-white');
+                } else {
+                    btn.classList.add('text-slate-500', 'hover:text-slate-800', 'hover:bg-slate-200/50');
+                    btn.classList.remove('bg-white', 'text-slate-900', 'shadow-sm', 'dark:bg-slate-700', 'dark:text-white');
+                }
+            });
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            CloudService.init();
+            Auth.init(); // NEW: Auth Init
+            CalcUI.init();
+            OrderForm.init();
+            if(window.AV) OrderList.refreshList();
+            switchApp('calculator');
+
+            // 监听定稿图上传
+            document.getElementById('finalImageInput').onchange = (e) => {
+                if(e.target.files[0]) OrderList.handleFinalImagePaste(e.target.files[0]);
+            };
+        });
+    </script>
+</body>
+</html>
