@@ -1555,7 +1555,7 @@
                     const htmlText = `<div>
                         【请确认定稿信息】<br>
                         ${materialTextHtml}商品明细：<br>${itemsTextHtml}<br><br>
-                        ⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现文字问题不做售后。<br><br>
+                        ⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现问题不做售后。<br><br>
                     </div>`;
 
                     const dataUrl = await Utils.convertUrlToDataURL(d.finalImage);
@@ -1591,7 +1591,7 @@
                             `${idx + 1}. 品名:${i.name} / 尺寸:${i.size || '常规'} / 数量:${i.qty}`
                         ).join('\n');
                         let materialText = d.remarks ? `材质及备注：${d.remarks}\n` : '';
-                        const fallbackText = `【请确认定稿信息】\n${materialText}商品明细：\n${itemsText}\n\n⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现文字问题不做售后。\n\n[定稿图链接，点击查看]:\n${d.finalImage}`;
+                        const fallbackText = `【请确认定稿信息】\n${materialText}商品明细：\n${itemsText}\n\n⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现问题不做售后。\n\n[定稿图链接，点击查看]:\n${d.finalImage}`;
                         
                         await navigator.clipboard.writeText(fallbackText);
                         UI.showToast('⚠️ 图片受限，已复制纯文本和链接', 'info');
@@ -2082,3 +2082,4 @@
     </script>
 </body>
 </html>
+
