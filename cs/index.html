@@ -34,8 +34,7 @@
                     target.classList.add('animate-fade-in-up');
                 }
 
-                // 更新导航按钮状态
-                ['nav-calculator', 'nav-order-form', 'nav-order-list'].forEach(id => {
+                // 更新导航按钮状态['nav-calculator', 'nav-order-form', 'nav-order-list'].forEach(id => {
                     const btn = document.getElementById(id);
                     btn.className = "nav-item px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 relative overflow-hidden";
                     
@@ -439,7 +438,7 @@
                      </div>
                      <div>
                          <label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">订单备注</label>
-                         <textarea id="remarks" rows="3" placeholder="工艺要求、材质信息、发货注意..." class="pro-input resize-none leading-relaxed"></textarea>
+                         <textarea id="remarks" rows="3" placeholder="工艺要求、发货注意..." class="pro-input resize-none leading-relaxed"></textarea>
                      </div>
                 </div>
 
@@ -668,9 +667,9 @@
                         <div id="modalRefImages" class="flex flex-wrap gap-3"></div>
                     </div>
                     <div id="modalFinalImageSection" class="hidden relative group">
-                        <!-- 修改部分：包含标题和复制定稿词按钮 -->
                         <div class="flex justify-between items-center mb-4">
                             <h4 class="text-xs font-bold text-emerald-600 uppercase flex items-center gap-2"><i class="fas fa-check-circle"></i> 定稿确认图 (支持Ctrl+V)</h4>
+                            <!-- 复制按钮 -->
                             <button id="btnCopyFinal" onclick="OrderList.copyFinalDraft()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors shadow-sm flex items-center gap-1">
                                 <i class="fas fa-copy"></i> 复制定稿词
                             </button>
@@ -943,11 +942,11 @@
                     timeout = setTimeout(later, wait);
                 };
             },
-            // 修改部分：新增将 URL 转换为微信剪贴板必须的 PNG Blob 函数
-            convertUrlToPngBlob(url) {
+            // 修改部分：将图片URL转换为Base64 (用于确保在富文本复制中不会因为跨域而拉取失败)
+            convertUrlToDataURL(url) {
                 return new Promise((resolve, reject) => {
                     const img = new Image();
-                    img.crossOrigin = 'Anonymous'; // 必须加上，解决跨域污染 Canvas 的问题
+                    img.crossOrigin = 'Anonymous'; // 解决跨域污染 Canvas
                     img.onload = () => {
                         try {
                             const canvas = document.createElement('canvas');
@@ -955,17 +954,12 @@
                             canvas.height = img.height;
                             const ctx = canvas.getContext('2d');
                             ctx.drawImage(img, 0, 0);
-                            canvas.toBlob(blob => {
-                                if (blob) resolve(blob);
-                                else reject(new Error('Canvas 转换失败'));
-                            }, 'image/png'); // 强制转换为 PNG 格式以适应微信/QQ剪贴板
+                            resolve(canvas.toDataURL('image/png'));
                         } catch (e) {
                             reject(e);
                         }
                     };
                     img.onerror = () => reject(new Error('图片加载失败，可能存在跨域限制'));
-                    
-                    // 加一个随机时间戳，强制浏览器不使用没有 CORS 头的缓存
                     const hasQuery = url.indexOf('?') !== -1;
                     img.src = url + (hasQuery ? '&' : '?') + 't=' + new Date().getTime();
                 });
@@ -1299,7 +1293,7 @@
             batchAddToOrder() {
                 const chks = document.querySelectorAll('.hist-chk:checked');
                 if(chks.length === 0) return UI.showToast('未选择记录', 'error');
-                const items = [];
+                const items =[];
                 chks.forEach(c => { items.push(this.history[c.dataset.idx]); c.checked = false; });
                 document.getElementById('checkAllHistory').checked = false;
                 OrderForm.bridgeAddToOrder(items);
@@ -1773,8 +1767,8 @@
                 document.getElementById('statShipping').innerText = s.shipping;
                 document.getElementById('statMonth').innerText = s.month.toFixed(2);
             },
-            
-            // 修改部分：新增的复制定稿词方法
+
+            // ================= 核心修改部分：最新修复的复制图文逻辑 =================
             async copyFinalDraft() {
                 const oObj = this.findOrder(OrderState.currentViewingOrderId);
                 if (!oObj) return;
@@ -1788,43 +1782,65 @@
                 btn.disabled = true;
 
                 try {
-                    // 1. 拼接文字部分
-                    let itemsText = (d.items ||[]).map((i, idx) => 
+                    // 1. 拼接文本(HTML格式，让微信识别换行)
+                    let itemsTextHtml = (d.items ||[]).map((i, idx) => 
                         `${idx + 1}. 品名:${i.name} / 尺寸:${i.size || '常规'} / 数量:${i.qty}`
-                    ).join('\n');
+                    ).join('<br>');
                     
-                    let materialText = d.remarks ? `材质及备注：${d.remarks}\n` : '';
+                    let materialTextHtml = d.remarks ? `材质及备注：${d.remarks}<br>` : '';
                     
-                    const fullText = `【请确认定稿信息】\n` + 
-                                     `${materialText}商品明细：\n${itemsText}\n\n` + 
-                                     `⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现文字问题不做售后。`;
+                    const htmlText = `<div>
+                        【请确认定稿信息】<br>
+                        ${materialTextHtml}商品明细：<br>${itemsTextHtml}<br><br>
+                        ⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现文字问题不做售后。<br><br>
+                    </div>`;
 
-                    // 2. 将图片转为 PNG Blob (微信/QQ 剪贴板严格要求 image/png)
-                    const imageBlob = await Utils.convertUrlToPngBlob(d.finalImage);
-                    const textBlob = new Blob([fullText], { type: 'text/plain' });
+                    // 2. 将远程图片转为 Base64 代码 (保证图片一定会被系统剪贴板强行吸收)
+                    const dataUrl = await Utils.convertUrlToDataURL(d.finalImage);
 
-                    // 3. 同时把文本和图片写入剪贴板
-                    const clipboardItem = new ClipboardItem({
-                        'text/plain': textBlob,
-                        'image/png': imageBlob
-                    });
+                    // 3. 构造一个屏幕外不可见的“富文本输入框”
+                    const tempDiv = document.createElement('div');
+                    tempDiv.contentEditable = 'true'; // 必须加上，模拟真实编辑框
+                    tempDiv.style.position = 'fixed';
+                    tempDiv.style.left = '-9999px';
+                    tempDiv.style.top = '0';
                     
-                    await navigator.clipboard.write([clipboardItem]);
-                    UI.showToast('✅ 定稿词和图片已复制，可直接粘贴到微信', 'success');
+                    // 将拼好的文字和图片一起放进去
+                    tempDiv.innerHTML = htmlText + `<img src="${dataUrl}" style="max-width: 400px; display: block;" />`;
+                    document.body.appendChild(tempDiv);
+
+                    // 4. 全选这个不可见框里面的所有内容，并执行系统的“Ctrl+C”复制指令
+                    const selection = window.getSelection();
+                    const range = document.createRange();
+                    range.selectNodeContents(tempDiv);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+
+                    const success = document.execCommand('copy');
                     
+                    // 5. 扫尾工作：清理痕迹
+                    selection.removeAllRanges();
+                    document.body.removeChild(tempDiv);
+
+                    if (success) {
+                        UI.showToast('✅ 图文已合并复制，可直接粘贴到微信/QQ', 'success');
+                    } else {
+                        throw new Error('浏览器阻止了复制操作');
+                    }
+
                 } catch (err) {
                     console.error('复制到剪贴板失败:', err);
                     
-                    // 降级方案：如果图片跨域导致无法转为Blob或浏览器不支持，尝试仅复制文字和链接
+                    // 降级保护方案：万一图片跨域导致无法转化，保证文字和链接还能被复制出来
                     try {
                         let itemsText = (d.items ||[]).map((i, idx) => 
                             `${idx + 1}. 品名:${i.name} / 尺寸:${i.size || '常规'} / 数量:${i.qty}`
                         ).join('\n');
                         let materialText = d.remarks ? `材质及备注：${d.remarks}\n` : '';
-                        const fallbackText = `【请确认定稿信息】\n${materialText}商品明细：\n${itemsText}\n\n⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现文字问题不做售后。\n\n[图片链接]: ${d.finalImage}`;
+                        const fallbackText = `【请确认定稿信息】\n${materialText}商品明细：\n${itemsText}\n\n⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现文字问题不做售后。\n\n[定稿图链接，点击查看]:\n${d.finalImage}`;
                         
                         await navigator.clipboard.writeText(fallbackText);
-                        UI.showToast('⚠️ 图片受跨域限制，仅成功复制了文字和图片链接', 'info');
+                        UI.showToast('⚠️ 图片加载受限，仅复制了纯文字和图片链接', 'info');
                     } catch (fallbackErr) {
                         UI.showToast('复制失败，请检查浏览器权限', 'error');
                     }
@@ -1877,8 +1893,8 @@
                 const ib = document.getElementById('modalRefImages'); ib.innerHTML='';
                 
                 // Construct Images for lightbox context
-                const refImgs = (d.images && Array.isArray(d.images)) ? d.images : (d.image ? [d.image] : []);
-                const allImgs = d.finalImage ?[d.finalImage, ...refImgs] : refImgs;
+                const refImgs = (d.images && Array.isArray(d.images)) ? d.images : (d.image ? [d.image] :[]);
+                const allImgs = d.finalImage ? [d.finalImage, ...refImgs] : refImgs;
                 
                 // FIXED: Direct function assignment instead of setAttribute
                 ib.innerHTML = '';
@@ -1987,7 +2003,7 @@
                 OrderState.currentItems = d.items ? JSON.parse(JSON.stringify(d.items)) : [];
                 
                 OrderState.currentImages =[];
-                if(d.images && Array.isArray(d.images)) OrderState.currentImages =[...d.images];
+                if(d.images && Array.isArray(d.images)) OrderState.currentImages = [...d.images];
                 else if(d.image) OrderState.currentImages = [d.image];
                 OrderState.pendingUploadFiles =[];
 
@@ -2118,8 +2134,7 @@
 
         // ================= 全局入口与事件 =================
         function switchApp(app) {['app-calculator', 'app-order-form', 'app-order-list'].forEach(id => document.getElementById(id).classList.add('hidden'));
-            document.getElementById('app-' + app).classList.remove('hidden');
-            ['nav-calculator', 'nav-order-form', 'nav-order-list'].forEach(id => {
+            document.getElementById('app-' + app).classList.remove('hidden');['nav-calculator', 'nav-order-form', 'nav-order-list'].forEach(id => {
                 const btn = document.getElementById(id);
                 if(id === 'nav-' + app) {
                     btn.classList.remove('text-slate-400', 'hover:bg-slate-800');
