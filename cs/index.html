@@ -21,7 +21,8 @@
     <script>
         // 核心切换逻辑 - 放在最前面防止被阻断
         window.switchApp = function(app) {
-            try {['app-calculator', 'app-order-form', 'app-order-list'].forEach(id => {
+            try {
+                ['app-calculator', 'app-order-form', 'app-order-list'].forEach(id => {
                     const el = document.getElementById(id);
                     if(el) {
                         el.classList.add('hidden');
@@ -668,8 +669,7 @@
                     </div>
                     <div id="modalFinalImageSection" class="hidden relative group">
                         <div class="flex justify-between items-center mb-4">
-                            <h4 class="text-xs font-bold text-emerald-600 uppercase flex items-center gap-2"><i class="fas fa-check-circle"></i> 定稿确认图 (支持Ctrl+V)</h4>
-                            <!-- 复制按钮 -->
+                            <h4 class="text-xs font-bold text-emerald-600 uppercase flex items-center gap-2"><i class="fas fa-check-circle"></i> 定稿确认图</h4>
                             <button id="btnCopyFinal" onclick="OrderList.copyFinalDraft()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors shadow-sm flex items-center gap-1">
                                 <i class="fas fa-copy"></i> 复制定稿词
                             </button>
@@ -942,7 +942,7 @@
                     timeout = setTimeout(later, wait);
                 };
             },
-            // 修改部分：将图片URL转换为Base64 (用于确保在富文本复制中不会因为跨域而拉取失败)
+            // 将图片URL转换为Base64 (用于确保在富文本复制中不会因为跨域而拉取失败)
             convertUrlToDataURL(url) {
                 return new Promise((resolve, reject) => {
                     const img = new Image();
@@ -1181,9 +1181,7 @@
                     if (e.key === 'ArrowRight') UI.nextImage();
                 });
             },
-            resetInputs() {
-                ['length', 'width', 'height', 'unfoldedL', 'unfoldedW'].forEach(id => document.getElementById(id).value = '');
-                ['quantity', 'quantityUnfolded'].forEach(id => document.getElementById(id).value = '1');
+            resetInputs() {['length', 'width', 'height', 'unfoldedL', 'unfoldedW'].forEach(id => document.getElementById(id).value = '');['quantity', 'quantityUnfolded'].forEach(id => document.getElementById(id).value = '1');
                 document.getElementById('resultCard').classList.add('hidden');
                 document.getElementById('warningCard').classList.add('hidden');
             },
@@ -1209,7 +1207,7 @@
                 } else {
                     const L=parseFloat(document.getElementById('unfoldedL').value), W=parseFloat(document.getElementById('unfoldedW').value);
                     if(!L||!W) return UI.showToast('请输入展开尺寸', 'error');
-                    parts =[{name:'自定义', l:L, w:W}];
+                    parts = [{name:'自定义', l:L, w:W}];
                     qty = parseInt(document.getElementById('quantityUnfolded').value);
                     params.isCorrugated = document.getElementById('checkCorrugatedUnfolded').checked;
                     document.getElementById('svgContainer').innerHTML = '<div class="text-xs text-gray-400 p-10 flex items-center justify-center h-full">自定义尺寸无结构图</div>';
@@ -1561,6 +1559,83 @@
                 this.refreshList();
             },
 
+            // ============== 新增的复制图文逻辑 ==============
+            async copyFinalDraft() {
+                const oObj = this.findOrder(OrderState.currentViewingOrderId);
+                if (!oObj) return;
+                const d = oObj.attributes ? oObj.attributes : oObj;
+
+                if (!d.finalImage) return UI.showToast('该订单暂无定稿图', 'error');
+
+                const btn = document.getElementById('btnCopyFinal');
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 生成中...';
+                btn.disabled = true;
+
+                try {
+                    // 1. 拼接文本(HTML格式，让微信识别换行)
+                    let itemsTextHtml = (d.items ||[]).map((i, idx) => 
+                        `${idx + 1}. 品名:${i.name} / 尺寸:${i.size || '常规'} / 数量:${i.qty}`
+                    ).join('<br>');
+                    
+                    let materialTextHtml = d.remarks ? `材质及备注：${d.remarks}<br>` : '';
+                    
+                    const htmlText = `<div>
+                        【请确认定稿信息】<br>
+                        ${materialTextHtml}商品明细：<br>${itemsTextHtml}<br><br>
+                        ⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现文字问题不做售后。<br><br>
+                    </div>`;
+
+                    // 2. 将远程图片转为 Base64 代码
+                    const dataUrl = await Utils.convertUrlToDataURL(d.finalImage);
+
+                    // 3. 构造不可见富文本
+                    const tempDiv = document.createElement('div');
+                    tempDiv.contentEditable = 'true';
+                    tempDiv.style.position = 'fixed';
+                    tempDiv.style.left = '-9999px';
+                    tempDiv.style.top = '0';
+                    tempDiv.innerHTML = htmlText + `<img src="${dataUrl}" style="max-width: 400px; display: block;" />`;
+                    document.body.appendChild(tempDiv);
+
+                    // 4. 全选并复制
+                    const selection = window.getSelection();
+                    const range = document.createRange();
+                    range.selectNodeContents(tempDiv);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+
+                    const success = document.execCommand('copy');
+                    
+                    selection.removeAllRanges();
+                    document.body.removeChild(tempDiv);
+
+                    if (success) {
+                        UI.showToast('✅ 图文已合并复制，可直接粘贴到微信', 'success');
+                    } else {
+                        throw new Error('浏览器阻止了复制操作');
+                    }
+                } catch (err) {
+                    console.error('复制失败:', err);
+                    try {
+                        let itemsText = (d.items ||[]).map((i, idx) => 
+                            `${idx + 1}. 品名:${i.name} / 尺寸:${i.size || '常规'} / 数量:${i.qty}`
+                        ).join('\n');
+                        let materialText = d.remarks ? `材质及备注：${d.remarks}\n` : '';
+                        const fallbackText = `【请确认定稿信息】\n${materialText}商品明细：\n${itemsText}\n\n⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现文字问题不做售后。\n\n[定稿图链接，点击查看]:\n${d.finalImage}`;
+                        
+                        await navigator.clipboard.writeText(fallbackText);
+                        UI.showToast('⚠️ 图片受限，已复制纯文本和链接', 'info');
+                    } catch (fallbackErr) {
+                        UI.showToast('复制失败，请检查浏览器权限', 'error');
+                    }
+                } finally {
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                }
+            },
+            // ============================================
+
             // FIXED: Helper to consistently find order from cache or loaded array
             findOrder(id) {
                 return OrderState.allCloudOrders.find(o => {
@@ -1767,89 +1842,6 @@
                 document.getElementById('statShipping').innerText = s.shipping;
                 document.getElementById('statMonth').innerText = s.month.toFixed(2);
             },
-
-            // ================= 核心修改部分：最新修复的复制图文逻辑 =================
-            async copyFinalDraft() {
-                const oObj = this.findOrder(OrderState.currentViewingOrderId);
-                if (!oObj) return;
-                const d = oObj.attributes ? oObj.attributes : oObj;
-
-                if (!d.finalImage) return UI.showToast('该订单暂无定稿图', 'error');
-
-                const btn = document.getElementById('btnCopyFinal');
-                const originalHtml = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 生成中...';
-                btn.disabled = true;
-
-                try {
-                    // 1. 拼接文本(HTML格式，让微信识别换行)
-                    let itemsTextHtml = (d.items ||[]).map((i, idx) => 
-                        `${idx + 1}. 品名:${i.name} / 尺寸:${i.size || '常规'} / 数量:${i.qty}`
-                    ).join('<br>');
-                    
-                    let materialTextHtml = d.remarks ? `材质及备注：${d.remarks}<br>` : '';
-                    
-                    const htmlText = `<div>
-                        【请确认定稿信息】<br>
-                        ${materialTextHtml}商品明细：<br>${itemsTextHtml}<br><br>
-                        ⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现文字问题不做售后。<br><br>
-                    </div>`;
-
-                    // 2. 将远程图片转为 Base64 代码 (保证图片一定会被系统剪贴板强行吸收)
-                    const dataUrl = await Utils.convertUrlToDataURL(d.finalImage);
-
-                    // 3. 构造一个屏幕外不可见的“富文本输入框”
-                    const tempDiv = document.createElement('div');
-                    tempDiv.contentEditable = 'true'; // 必须加上，模拟真实编辑框
-                    tempDiv.style.position = 'fixed';
-                    tempDiv.style.left = '-9999px';
-                    tempDiv.style.top = '0';
-                    
-                    // 将拼好的文字和图片一起放进去
-                    tempDiv.innerHTML = htmlText + `<img src="${dataUrl}" style="max-width: 400px; display: block;" />`;
-                    document.body.appendChild(tempDiv);
-
-                    // 4. 全选这个不可见框里面的所有内容，并执行系统的“Ctrl+C”复制指令
-                    const selection = window.getSelection();
-                    const range = document.createRange();
-                    range.selectNodeContents(tempDiv);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-
-                    const success = document.execCommand('copy');
-                    
-                    // 5. 扫尾工作：清理痕迹
-                    selection.removeAllRanges();
-                    document.body.removeChild(tempDiv);
-
-                    if (success) {
-                        UI.showToast('✅ 图文已合并复制，可直接粘贴到微信/QQ', 'success');
-                    } else {
-                        throw new Error('浏览器阻止了复制操作');
-                    }
-
-                } catch (err) {
-                    console.error('复制到剪贴板失败:', err);
-                    
-                    // 降级保护方案：万一图片跨域导致无法转化，保证文字和链接还能被复制出来
-                    try {
-                        let itemsText = (d.items ||[]).map((i, idx) => 
-                            `${idx + 1}. 品名:${i.name} / 尺寸:${i.size || '常规'} / 数量:${i.qty}`
-                        ).join('\n');
-                        let materialText = d.remarks ? `材质及备注：${d.remarks}\n` : '';
-                        const fallbackText = `【请确认定稿信息】\n${materialText}商品明细：\n${itemsText}\n\n⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现文字问题不做售后。\n\n[定稿图链接，点击查看]:\n${d.finalImage}`;
-                        
-                        await navigator.clipboard.writeText(fallbackText);
-                        UI.showToast('⚠️ 图片加载受限，仅复制了纯文字和图片链接', 'info');
-                    } catch (fallbackErr) {
-                        UI.showToast('复制失败，请检查浏览器权限', 'error');
-                    }
-                } finally {
-                    btn.innerHTML = originalHtml;
-                    btn.disabled = false;
-                }
-            },
-
             openDetail(id) {
                 // FIXED: Robust object finding using helper
                 OrderState.currentViewingOrderId = id; 
@@ -2000,10 +1992,10 @@
                 document.getElementById('paymentMethod').value = d.paymentMethod || '';
                 document.getElementById('fileLink').value = d.fileLink || '';
                 document.getElementById('remarks').value = d.remarks || '';
-                OrderState.currentItems = d.items ? JSON.parse(JSON.stringify(d.items)) : [];
+                OrderState.currentItems = d.items ? JSON.parse(JSON.stringify(d.items)) :[];
                 
-                OrderState.currentImages =[];
-                if(d.images && Array.isArray(d.images)) OrderState.currentImages = [...d.images];
+                OrderState.currentImages = [];
+                if(d.images && Array.isArray(d.images)) OrderState.currentImages =[...d.images];
                 else if(d.image) OrderState.currentImages = [d.image];
                 OrderState.pendingUploadFiles =[];
 
@@ -2133,8 +2125,11 @@
         };
 
         // ================= 全局入口与事件 =================
-        function switchApp(app) {['app-calculator', 'app-order-form', 'app-order-list'].forEach(id => document.getElementById(id).classList.add('hidden'));
-            document.getElementById('app-' + app).classList.remove('hidden');['nav-calculator', 'nav-order-form', 'nav-order-list'].forEach(id => {
+        function switchApp(app) {
+            ['app-calculator', 'app-order-form', 'app-order-list'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById('app-' + app).classList.remove('hidden');
+            
+            // 更新导航按钮状态['nav-calculator', 'nav-order-form', 'nav-order-list'].forEach(id => {
                 const btn = document.getElementById(id);
                 if(id === 'nav-' + app) {
                     btn.classList.remove('text-slate-400', 'hover:bg-slate-800');
