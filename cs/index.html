@@ -252,7 +252,7 @@
             
             <div class="flex items-center gap-4">
                 <div id="currentUserDisplay" class="text-xs font-bold text-slate-500 hidden md:block px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700">Guest</div>
-                <button onclick="Auth.logout()" class="w-10 h-10 rounded-full bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all flex items-center justify-center border border-slate-200 hover:border-red-200" title="退出登录"><i class="fas fa-power-off"></i></button>
+                <button onclick="Auth.logout()" class="w-10 h-10 rounded-full bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-50 transition-all flex items-center justify-center border border-slate-200 hover:border-red-200" title="退出登录"><i class="fas fa-power-off"></i></button>
             </div>
         </div>
     </header>
@@ -1075,7 +1075,7 @@
                 let details = { material: 0, lamination: 0, dieCut: 0, extra: 0, corrugated: 0 }, layoutsInfo =[], hasError = false, errorMsgs =[], paper = CalcLogic.getEffectivePaper();
                 parts.forEach(part => {
                     const fitNorm = (part.l<=paper.w && part.w<=paper.h), fitRot = (part.l<=paper.h && part.w<=paper.w);
-                    if (!fitNorm && !fitRot) { hasError = true; errorMsgs.push(`${part.name} 尺寸超限 (需 ${part.l}×${part.w} mm)`); return; }
+                    if (!fitNorm && !fitRot) { hasError = true; errorMsgs.push(`${part.name} 尺寸超限 (需 ${part.l.toFixed(0)}×${part.w.toFixed(0)} mm)`); return; }
                     const strategy = CalcLogic.calcMaxCapacity(part.l, part.w);
                     if (strategy.count === 0) { hasError = true; errorMsgs.push(`${part.name} 无法排版`); return; }
                     const fullSheets = Math.floor(totalQuantity/strategy.count), remainder = totalQuantity%strategy.count, totalSheets = Math.ceil(totalQuantity/strategy.count), corrugatedRate = params.isCorrugated?30:0;
@@ -1204,7 +1204,7 @@
                         const el = document.getElementById(id);
                         if(el) { el.classList.add('input-error'); requestAnimationFrame(()=> el.classList.add('animate-shake')); }
                     });
-                    const detailedErrors = res.errors.map(err => `${err} (当前设置的纸张可用区仅为: ${paper.w}×${paper.h} mm)`);
+                    const detailedErrors = res.errors.map(err => `${err} (当前可用区: ${paper.w}×${paper.h} mm)`);
                     document.getElementById('warningCard').classList.remove('hidden'); 
                     document.getElementById('warningContent').innerHTML = detailedErrors.join('<br>'); 
                     document.getElementById('resultCard').classList.add('hidden'); 
@@ -2172,13 +2172,15 @@
             }
         };
 
-        // 初始化
+        // ======================= 系统初始化 =======================
         document.addEventListener('DOMContentLoaded', () => {
             CloudService.init();
             Auth.init();
             CalcUI.init();
             OrderForm.init();
             if(window.AV) OrderList.refreshList();
+            
+            // 默认启动报价台
             switchApp('calculator');
 
             // 监听定稿图上传
