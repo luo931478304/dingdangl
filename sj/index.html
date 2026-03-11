@@ -45,20 +45,23 @@
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             width: 100%;
-            padding: 15px 0;
+            padding: 15px 10px;
             text-align: center;
             box-shadow: 0 1px 5px rgba(0,0,0,0.05);
             position: sticky;
             top: 0;
             z-index: 9999;
             margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .global-sys-nav button {
             background: #e8e8ed;
             color: var(--text-main);
             border: none;
-            padding: 10px 24px;
-            margin: 0 10px;
+            padding: 10px 20px;
             border-radius: 20px;
             font-size: 15px;
             font-weight: 600;
@@ -121,10 +124,12 @@
         #box-system .error-panel h3 { color: var(--danger-color); margin-bottom: 10px; }
         #box-system .error-panel p { color: #555; font-size: 15px; line-height: 1.6; }
         
-        #box-system .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
-        #box-system .badge-green { background: #e5f9e7; color: #248a3d; }
-        #box-system .badge-orange { background: #fff4e5; color: #cc7a00; }
-        #box-system .badge-red { background: #ffebee; color: #c62828; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+        .badge-green { background: #e5f9e7; color: #248a3d; }
+        .badge-orange { background: #fff4e5; color: #cc7a00; }
+        .badge-red { background: #ffebee; color: #c62828; }
+        .badge-blue { background: #e5f1ff; color: #0066cc; }
+
         #box-system .btn-copy { position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 6px; }
         #box-system .btn-copy:active { transform: scale(0.96); }
 
@@ -215,18 +220,32 @@
         #label-system .page.active { display: block; }
         #label-system .settings-hint { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; background: #FFF8E1; padding: 12px; border-radius: var(--radius-sm); border-left: 4px solid #FFC107; }
         #label-system .btn-group { display: flex; gap: 12px; margin-top: 24px; }
+
+        /* ==================== 历史记录系统样式区 ==================== */
+        #history-system { max-width: 960px; }
+        .history-card { margin-bottom: 20px; display: flex; flex-direction: column; }
+        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px dashed var(--border-color); padding-bottom: 12px; }
+        .history-time { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+        .history-content { background: var(--bg-color); padding: 16px; border-radius: 10px; font-size: 14px; color: #333; white-space: pre-wrap; word-wrap: break-word; line-height: 1.6; font-family: inherit; margin: 0; border: 1px solid #e5e5ea; }
+        .history-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 15px; }
+        .empty-history { text-align: center; padding: 60px 20px; background: var(--card-bg); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+        .empty-history svg { width: 64px; height: 64px; color: #d2d2d7; margin-bottom: 15px; }
+        .empty-history p { color: var(--text-muted); font-size: 16px; }
+        .btn-clear-history { background: #fff0f0; color: var(--danger-color); border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; transition: 0.2s; display: block; margin: 0 0 20px auto; }
+        .btn-clear-history:hover { background: #ffe5e5; }
     </style>
 </head>
 <body>
 
 <div class="global-sys-nav">
-    <button id="nav-btn-box" class="active" onclick="switchSystem('box')">📦 包装盒多拼智能算价</button>
-    <button id="nav-btn-label" onclick="switchSystem('label')">🏷️ 卷标不干胶阶梯核价</button>
+    <button id="nav-btn-box" class="active" onclick="switchSystem('box')">📦 包装盒多拼算价</button>
+    <button id="nav-btn-label" onclick="switchSystem('label')">🏷️ 卷标不干胶算价</button>
+    <button id="nav-btn-history" onclick="switchSystem('history')">🕒 历史报价记录</button>
 </div>
 
 <div id="box-system" class="system-module active">
     <div class="tab-nav">
-        <button class="tab-btn active" onclick="switchBoxTab('calc')">多尺寸合拼算价</button>
+        <button class="tab-btn active" onclick="switchBoxTab('calc')">多尺寸排版算价</button>
         <button class="tab-btn" onclick="switchBoxTab('settings')">参数设置</button>
     </div>
 
@@ -237,11 +256,11 @@
                 <div class="input-group"><label>需求套装数 (套)</label><input type="number" id="global-qty" placeholder="每款各需要多少个" value="1000"></div>
                 <div class="input-group"><label>期望利润率 (%)</label><input type="number" id="global-profit" value="20"></div>
             </div>
-            <p style="font-size:12px; color:var(--text-muted); margin-top:-10px;">注：1套 = 下方录入的所有产品各1个。系统会自动将它们拼在一张纸上计算。</p>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:-10px;">注：1套 = 下方录入的所有产品各1个。录入单款自动触发"插拼"算法，多款自动触发"合拼"算法。</p>
         </div>
 
         <div class="card">
-            <h2>录入合拼尺寸 (mm)</h2>
+            <h2>录入盒子净尺寸 (mm)</h2>
             <div id="size-list"></div>
             <button class="btn-add" onclick="addSizeRow()">+ 添加需合拼的产品</button>
             <button class="btn-primary" style="width: 100%;" onclick="calculateComboQuote()">智能拼版并计算报价</button>
@@ -254,18 +273,23 @@
 
     <div id="settings-page" class="page-section">
         <div class="card">
-            <h2>加工费设置 <button class="btn-secondary" onclick="saveGlobalSettings()">保存更改</button></h2>
+            <h2>加工费设置与安全边界 <button class="btn-secondary" onclick="saveGlobalSettings()">保存更改</button></h2>
             <div class="form-grid">
                 <div class="input-group"><label>模切 (<5000张) 元/张</label><input type="number" id="set-diecut-under" step="0.01"></div>
                 <div class="input-group"><label>模切 (≥5000张) 元/张</label><input type="number" id="set-diecut-over" step="0.01"></div>
                 <div class="input-group"><label>模切起步价 (元)</label><input type="number" id="set-diecut-min" step="1"></div>
                 <div class="input-group"><label>刀版费单价 (元/连)</label><input type="number" id="set-dieboard" step="1"></div>
             </div>
+            <div class="form-grid" style="border-top: 1px dashed var(--border-color); padding-top: 20px; margin-top: 20px;">
+                <div class="input-group"><label>纸张左右修边 (mm)</label><input type="number" id="set-margin-l" value="10"></div>
+                <div class="input-group"><label>纸张上下咬口 (mm)</label><input type="number" id="set-margin-w" value="16"></div>
+            </div>
+            <p style="font-size:12px; color:var(--danger-color); margin-top:-10px;">注：排版算法会自动从大纸的长宽中扣除上述数值，保证机器能够正常咬纸和出血。</p>
         </div>
         <div class="card">
             <h2>纸张规格与价格库 <button class="btn-secondary" onclick="addMaterialRow()">+ 添加规格</button></h2>
             <table id="materials-table">
-                <thead><tr><th>长(mm)</th><th>宽(mm)</th><th>单价(元/张)</th><th>操作</th></tr></thead>
+                <thead><tr><th>大纸长(mm)</th><th>大纸宽(mm)</th><th>单价(元/张)</th><th>操作</th></tr></thead>
                 <tbody></tbody>
             </table>
             <div style="margin-top: 20px; text-align: right;"><button class="btn-primary" onclick="saveMaterials()">保存规格库</button></div>
@@ -368,7 +392,7 @@
                         </div>
                         <div class="result-unit" id="r_unit">折合对外单张：0 元</div>
                         
-                        <button class="btn btn-outline" id="copyBtn" onclick="copyLabelQuote()">📋 复制卖价发给客户 (隐藏底价)</button>
+                        <button class="btn btn-outline" id="copyBtn" onclick="copyLabelQuote()">📋 复制卖价发给客户 (并记录)</button>
                     </div>
                 </div>
             </div>
@@ -420,6 +444,15 @@
     </div>
 </div>
 
+<div id="history-system" class="system-module">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin-bottom: 20px; color: var(--text-main);">已复制的报价记录</h2>
+        <button class="btn-clear-history" onclick="clearAllHistory()">🗑️ 清空所有记录</button>
+    </div>
+    <div id="history-list">
+        </div>
+</div>
+
 <script>
     // ================== 全局系统切换逻辑 ==================
     function switchSystem(sysId) {
@@ -428,10 +461,97 @@
         
         document.getElementById('nav-btn-box').classList.remove('active');
         document.getElementById('nav-btn-label').classList.remove('active');
+        document.getElementById('nav-btn-history').classList.remove('active');
         document.getElementById('nav-btn-' + sysId).classList.add('active');
+
+        if(sysId === 'history') { renderHistoryUI(); }
     }
 
-    // ================== 系统 1：白瓦包装合拼引擎 ==================
+    // ================== 历史记录管理引擎 ==================
+    let globalQuoteHistory = JSON.parse(localStorage.getItem('quoteHistoryV1')) || [];
+
+    function saveToHistory(type, contentText) {
+        const now = new Date();
+        const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+        
+        // 插入到数组最前面
+        globalQuoteHistory.unshift({
+            id: Date.now(),
+            type: type, // 'box' 或 'label'
+            time: timeStr,
+            text: contentText
+        });
+
+        // 限制最多保留 200 条记录
+        if(globalQuoteHistory.length > 200) {
+            globalQuoteHistory.pop();
+        }
+
+        localStorage.setItem('quoteHistoryV1', JSON.stringify(globalQuoteHistory));
+        renderHistoryUI(); // 更新后台渲染
+    }
+
+    function renderHistoryUI() {
+        const listContainer = document.getElementById('history-list');
+        const clearBtn = document.querySelector('.btn-clear-history');
+        
+        if (globalQuoteHistory.length === 0) {
+            listContainer.innerHTML = `
+                <div class="empty-history">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <p>暂无报价记录，去算价并点击"复制给客户"试试吧~</p>
+                </div>`;
+            clearBtn.style.display = 'none';
+            return;
+        }
+
+        clearBtn.style.display = 'block';
+        let htmlStr = '';
+        globalQuoteHistory.forEach((item, index) => {
+            const badgeClass = item.type === 'box' ? 'badge-blue' : 'badge-green';
+            const badgeText = item.type === 'box' ? '📦 包装盒算价' : '🏷️ 卷标算价';
+            
+            htmlStr += `
+            <div class="card history-card">
+                <div class="history-header">
+                    <span class="badge ${badgeClass}">${badgeText}</span>
+                    <span class="history-time">${item.time}</span>
+                </div>
+                <pre class="history-content">${item.text}</pre>
+                <div class="history-actions">
+                    <button class="btn-secondary" onclick="copyHistoryItem(${index})">📋 重新复制</button>
+                    <button class="btn-danger" style="border:none; background:#fff0f0;" onclick="deleteHistoryItem(${index})">删除</button>
+                </div>
+            </div>`;
+        });
+        listContainer.innerHTML = htmlStr;
+    }
+
+    function copyHistoryItem(index) {
+        const text = globalQuoteHistory[index].text;
+        navigator.clipboard.writeText(text).then(() => {
+            alert('✅ 已重新复制到剪贴板！');
+        }).catch(err => alert('复制失败，请手动选取文字复制。'));
+    }
+
+    function deleteHistoryItem(index) {
+        if(confirm('确定要删除这条报价记录吗？')) {
+            globalQuoteHistory.splice(index, 1);
+            localStorage.setItem('quoteHistoryV1', JSON.stringify(globalQuoteHistory));
+            renderHistoryUI();
+        }
+    }
+
+    function clearAllHistory() {
+        if(confirm('⚠️ 警告：确定要清空所有已保存的报价记录吗？此操作不可恢复！')) {
+            globalQuoteHistory = [];
+            localStorage.setItem('quoteHistoryV1', JSON.stringify(globalQuoteHistory));
+            renderHistoryUI();
+        }
+    }
+
+
+    // ================== 系统 1：白瓦包装拼版引擎 ==================
     class Packer {
         constructor(w, h) { this.root = { x: 0, y: 0, w: w, h: h }; }
         fit(blocks) {
@@ -460,7 +580,7 @@
         }
     }
 
-    const defaultBoxSettings = { dieCutUnder5k: 0.10, dieCutOver5k: 0.05, dieCutMin: 60, dieBoardRate: 20 };
+    const defaultBoxSettings = { dieCutUnder5k: 0.10, dieCutOver5k: 0.05, dieCutMin: 60, dieBoardRate: 20, marginL: 10, marginW: 16 };
     const defaultBoxMaterials = [
         { l: 889, w: 500, price: 0.82677 }, { l: 889, w: 550, price: 0.909447 }, { l: 889, w: 600, price: 0.992124 }, { l: 889, w: 650, price: 1.074801 },
         { l: 787, w: 500, price: 0.73191 }, { l: 787, w: 550, price: 0.805101 }, { l: 787, w: 600, price: 0.878292 }, { l: 787, w: 650, price: 0.951483 },
@@ -469,6 +589,10 @@
     ];
 
     let globalBoxSettings = JSON.parse(localStorage.getItem('bwSettingsV2')) || defaultBoxSettings;
+    // 兼容老版本存储没有 margin 设置的情况
+    if(globalBoxSettings.marginL === undefined) globalBoxSettings.marginL = 10;
+    if(globalBoxSettings.marginW === undefined) globalBoxSettings.marginW = 16;
+    
     let boxMaterialsDB = JSON.parse(localStorage.getItem('bwMaterialsV2')) || defaultBoxMaterials;
     let currentBoxQuoteData = null;
 
@@ -504,6 +628,8 @@
 
         const rows = document.querySelectorAll('#box-system .size-row');
         let setBlocks = []; let setAreaM2 = 0; 
+        let singleBoxW = 0; 
+
         rows.forEach((row, index) => {
             const L = parseFloat(row.querySelector('.val-l').value);
             const W = parseFloat(row.querySelector('.val-w').value);
@@ -513,25 +639,95 @@
                 const expW = H + W * 2;
                 setBlocks.push({ id: index + 1, w: expL, h: expW, origW: expL, origH: expW, inputSize: `${L} x ${W} x ${H}`, label: `款${index+1}` });
                 setAreaM2 += (expL / 1000) * (expW / 1000);
+                singleBoxW = W;
             }
         });
 
         if(setBlocks.length === 0) { alert("请至少录入一个产品的尺寸！"); return; }
 
+        const isSingleBox = setBlocks.length === 1;
         let results = [];
-        boxMaterialsDB.forEach(mat => {
-            const paperAreaM2 = (mat.l / 1000) * (mat.w / 1000);
-            if (setAreaM2 > paperAreaM2) return;
-            const maxSetsPossible = Math.floor(paperAreaM2 / setAreaM2);
-            if (maxSetsPossible === 0) return;
+        
+        // 获取最新的咬口和修边设置
+        const marginL = parseFloat(document.getElementById('set-margin-l').value) || 0;
+        const marginW = parseFloat(document.getElementById('set-margin-w').value) || 0;
 
-            let bestSets = 0; let bestPackedBlocks = null;
-            for(let M = maxSetsPossible; M >= 1; M--) {
-                let blocksToPack = [];
-                for(let i=0; i<M; i++) setBlocks.forEach(b => blocksToPack.push({ ...b }));
-                blocksToPack.sort((a, b) => Math.max(b.w, b.h) - Math.max(a.w, a.h));
-                const packer = new Packer(mat.l, mat.w);
-                if(packer.fit(blocksToPack)) { bestSets = M; bestPackedBlocks = blocksToPack; break; }
+        boxMaterialsDB.forEach(mat => {
+            // 计价和计算利用率依然使用整张纸面积
+            const paperAreaM2 = (mat.l / 1000) * (mat.w / 1000); 
+            
+            // 🔥 新增：实际排版可用面积 = 大纸长宽 减去 咬口和修边
+            const usableL = mat.l - marginL;
+            const usableW = mat.w - marginW;
+            
+            // 如果可用尺寸出现负数（虽然一般不可能），直接跳过
+            if (usableL <= 0 || usableW <= 0) return;
+
+            const usableAreaM2 = (usableL / 1000) * (usableW / 1000);
+            // 如果单套面积直接大于净用纸面积，也直接跳过
+            if (setAreaM2 > usableAreaM2) return;
+
+            let bestSets = 0; 
+            let bestPackedBlocks = null;
+
+            if (isSingleBox) {
+                // =============== 插拼模式：在净尺寸区域内计算 ===============
+                const b = setBlocks[0];
+                const eL = b.origW; 
+                const eW = b.origH; 
+                const sW = singleBoxW; 
+
+                // 方向1：常规
+                let m1 = Math.floor(usableL / eL);
+                let n1 = usableW >= eW ? Math.floor((usableW - sW) / (eW - sW)) : 0;
+                let total1 = m1 * n1;
+
+                // 方向2：旋转90度
+                let m2 = Math.floor(usableW / eL);
+                let n2 = usableL >= eW ? Math.floor((usableL - sW) / (eW - sW)) : 0;
+                let total2 = m2 * n2;
+
+                if (total1 > 0 || total2 > 0) {
+                    if (total1 >= total2) {
+                        bestSets = total1;
+                        bestPackedBlocks = [];
+                        for(let i=0; i<m1; i++){
+                            for(let j=0; j<n1; j++){
+                                bestPackedBlocks.push({
+                                    ...b, id: i*n1+j+1,
+                                    fit: {x: i * eL, y: j * (eW - sW)},
+                                    w: eL, h: eW
+                                });
+                            }
+                        }
+                    } else {
+                        bestSets = total2;
+                        bestPackedBlocks = [];
+                        for(let i=0; i<m2; i++){
+                            for(let j=0; j<n2; j++){
+                                bestPackedBlocks.push({
+                                    ...b, id: i*n2+j+1,
+                                    fit: {x: j * (eW - sW), y: i * eL},
+                                    w: eW, h: eL,
+                                    origW: eW, origH: eL
+                                });
+                            }
+                        }
+                    }
+                }
+            } else {
+                // =============== 合拼模式：在净尺寸区域内计算 ===============
+                const maxSetsPossible = Math.floor(usableAreaM2 / setAreaM2);
+                if (maxSetsPossible > 0) {
+                    for(let M = maxSetsPossible; M >= 1; M--) {
+                        let blocksToPack = [];
+                        for(let i=0; i<M; i++) setBlocks.forEach(b => blocksToPack.push({ ...b }));
+                        blocksToPack.sort((a, b) => Math.max(b.w, b.h) - Math.max(a.w, a.h));
+                        // 约束引擎使用扣除咬口后的尺寸
+                        const packer = new Packer(usableL, usableW);
+                        if(packer.fit(blocksToPack)) { bestSets = M; bestPackedBlocks = blocksToPack; break; }
+                    }
+                }
             }
 
             if(bestSets > 0) {
@@ -547,9 +743,11 @@
 
                 results.push({
                     spec: `${mat.l} x ${mat.w}`, matL: mat.l, matW: mat.w,
+                    usableL: usableL, usableW: usableW, // 传递给画图函数
                     setsPerSheet: bestSets, packedBlocks: bestPackedBlocks,
                     sheets: sheetsNeeded, paperCost: paperCost, dieCutCost: dieCutCost, dieBoardCost: dieBoardCost,
-                    totalCost: totalCost, finalQuote: finalQuote, unitPrice: finalQuote / qty, utilization: utilization
+                    totalCost: totalCost, finalQuote: finalQuote, unitPrice: finalQuote / qty, utilization: utilization,
+                    isNested: isSingleBox
                 });
             }
         });
@@ -559,7 +757,7 @@
         document.getElementById('result-container').scrollIntoView({ behavior: 'smooth' });
 
         if(results.length === 0) {
-            resultArea.innerHTML = `<div class="error-panel"><h3>无法完成合拼</h3><p>您录入的产品尺寸总和过大，没有任何一张纸能拼下！</p></div>`;
+            resultArea.innerHTML = `<div class="error-panel"><h3>无法完成排版</h3><p>算上咬口修边后，尺寸超出所有纸张规格，没有任何一张纸能拼下！</p></div>`;
             return;
         }
 
@@ -571,15 +769,19 @@
     function copyBoxQuoteToClipboard() {
         if (!currentBoxQuoteData) return;
         const { qty, blocks, best } = currentBoxQuoteData;
-        let text = `【包装定制合拼报价单】\n📦 产品明细：\n`;
+        let text = `【包装定制排版报价单】\n📦 产品明细：\n`;
         blocks.forEach(b => { text += ` - ${b.label}：${b.inputSize} mm\n`; });
-        text += `🔢 定制数量：${qty} 套 (合拼加工)\n----------------------\n`;
+        text += `🔢 定制数量：${qty} 套 (${best.isNested ? '单款插拼' : '多款合拼'})\n----------------------\n`;
         text += `💰 整单总价：¥ ${best.finalQuote.toFixed(2)}\n💎 单套均价：¥ ${best.unitPrice.toFixed(4)}\n----------------------\n* 报价已含材料费、模切加工及刀版费。`;
 
         navigator.clipboard.writeText(text).then(() => {
             const btn = document.querySelector('#box-system .btn-copy');
             const originalText = btn.innerHTML;
-            btn.innerHTML = `✓ 复制成功！`; btn.style.background = '#e5f9e7'; btn.style.color = '#248a3d';
+            btn.innerHTML = `✓ 复制成功并已记录！`; btn.style.background = '#e5f9e7'; btn.style.color = '#248a3d';
+            
+            // 记录历史
+            saveToHistory('box', text);
+
             setTimeout(() => { btn.innerHTML = originalText; btn.style.background = '#e8e8ed'; btn.style.color = 'var(--text-main)'; }, 2000);
         }).catch(err => alert('复制失败，请手动选取文字复制。'));
     }
@@ -592,13 +794,19 @@
 
     function renderBoxResultsHTML(results, container) {
         const best = results[0];
-        let html = `<h2>最佳合拼方案推荐</h2>
+        const mL = parseFloat(document.getElementById('set-margin-l').value) || 0;
+        const mW = parseFloat(document.getElementById('set-margin-w').value) || 0;
+
+        let html = `<h2>最佳方案推荐</h2>
             <div id="best-scheme" class="result-highlight">
-                <button class="btn-secondary btn-copy" onclick="copyBoxQuoteToClipboard()">📋 复制报价给客户</button>
+                <button class="btn-secondary btn-copy" onclick="copyBoxQuoteToClipboard()">📋 复制报价给客户 (并记录)</button>
                 <div class="info-container">
                     <div style="color:var(--accent-blue); font-weight:600; font-size:18px; margin-bottom:15px; padding-right: 140px;">★ 最优省钱用纸：${best.spec}</div>
                     <div style="display: flex; gap: 20px; margin-bottom: 20px;">
-                        <div><div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">单张排版</div><div style="font-size:16px; font-weight:600;">${best.setsPerSheet} 套</div></div>
+                        <div>
+                            <div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">单张排版</div>
+                            <div style="font-size:16px; font-weight:600;">${best.setsPerSheet} 套 ${best.isNested ? '<span class="badge badge-orange" style="margin-left: 5px;">智能插拼</span>' : ''}</div>
+                        </div>
                         <div><div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">纸张利用率</div><div>${getUtilizationBadge(best.utilization)}</div></div>
                     </div>
                     <div style="font-size:14px; color:var(--text-muted); margin-bottom:5px;">整单总报价 (含利润)</div><div class="price-huge">¥${best.finalQuote.toFixed(2)}</div>
@@ -608,21 +816,23 @@
                         <div class="cost-breakdown">
                             <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">不含利润的底层成本拆解：</div>
                             <div class="cost-item"><span>纸张成本 (${best.sheets}张)</span> <span>¥${best.paperCost.toFixed(2)}</span></div>
-                            <div class="cost-item"><span>模切费 (含起步价核算)</span> <span>¥${best.dieCutCost.toFixed(2)}</span></div>
+                            <div class="cost-item"><span>模切费 (含起步价)</span> <span>¥${best.dieCutCost.toFixed(2)}</span></div>
                             <div class="cost-item"><span>刀版费 (${best.setsPerSheet}套连拼)</span> <span>¥${best.dieBoardCost.toFixed(2)}</span></div>
                             <div class="cost-item"><span>底成本合计</span> <span>¥${best.totalCost.toFixed(2)}</span></div>
                         </div>
                     </div>
                 </div>
-                <div class="canvas-container"><div style="font-size:12px; color:#86868b; margin-bottom:5px;">智能排版预览图</div><canvas id="layout-canvas"></canvas></div>
+                <div class="canvas-container">
+                    <div style="font-size:12px; color:#86868b; margin-bottom:5px;">智能排版图 (已扣咬口修边: ${mL}×${mW}mm)</div>
+                    <canvas id="layout-canvas"></canvas>
+                </div>
             </div>`;
 
-        // 处理其他备选方案并加入折叠面板
         if (results.length > 1) {
             html += `
             <details class="alt-schemes-details">
                 <summary>
-                    <span>点击查看其他 ${results.length - 1} 种备选纸张合拼方案</span>
+                    <span>点击查看其他 ${results.length - 1} 种备选排版方案</span>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </summary>
                 <div style="overflow-x: auto; animation: fadeIn 0.3s ease;">
@@ -631,7 +841,7 @@
                         <tbody>`;
             for(let i=1; i<results.length; i++) {
                 const res = results[i];
-                html += `<tr><td style="font-weight:600;">${res.spec}</td><td>${getUtilizationBadge(res.utilization)}</td><td style="color:var(--accent-blue);">拼 ${res.setsPerSheet} 套<br><span style="font-size:12px; color:#86868b;">(${res.sheets}张大纸)</span></td><td><strong style="font-size: 15px;">¥${res.totalCost.toFixed(2)}</strong><div class="mini-breakdown">纸:¥${res.paperCost.toFixed(2)} | 模:¥${res.dieCutCost.toFixed(2)} | 刀:¥${res.dieBoardCost.toFixed(2)}</div></td><td style="font-weight:600; font-size: 16px; color:var(--text-main);">¥${res.finalQuote.toFixed(2)}</td></tr>`;
+                html += `<tr><td style="font-weight:600;">${res.spec}</td><td>${getUtilizationBadge(res.utilization)}</td><td style="color:var(--accent-blue);">拼 ${res.setsPerSheet} 套 ${res.isNested ? '<span style="color:#ff9500; font-size:12px;">(插拼)</span>' : ''}<br><span style="font-size:12px; color:#86868b;">(${res.sheets}张大纸)</span></td><td><strong style="font-size: 15px;">¥${res.totalCost.toFixed(2)}</strong><div class="mini-breakdown">纸:¥${res.paperCost.toFixed(2)} | 模:¥${res.dieCutCost.toFixed(2)} | 刀:¥${res.dieBoardCost.toFixed(2)}</div></td><td style="font-weight:600; font-size: 16px; color:var(--text-main);">¥${res.finalQuote.toFixed(2)}</td></tr>`;
             }
             html += `</tbody></table></div></details>`;
         }
@@ -642,22 +852,83 @@
 
     function drawCanvasLayout(best) {
         const canvas = document.getElementById('layout-canvas'); if(!canvas) return;
-        const ctx = canvas.getContext('2d'); const maxCanvasW = 350; const scale = maxCanvasW / best.matL;
+        const ctx = canvas.getContext('2d'); const maxCanvasW = 350; 
+        const scale = maxCanvasW / best.matL;
         canvas.width = maxCanvasW; canvas.height = best.matW * scale;
-        ctx.fillStyle = '#fdfdfd'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = '#d2d2d7'; ctx.lineWidth = 2; ctx.strokeRect(0, 0, canvas.width, canvas.height);
+        
+        // 1. 画出整张大纸的底色 (浅灰，代表物理纸张边界)
+        ctx.fillStyle = '#f5f5f7'; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 获取居中偏移量
+        const mL = parseFloat(document.getElementById('set-margin-l').value) || 0;
+        const mW = parseFloat(document.getElementById('set-margin-w').value) || 0;
+        const offsetX = (mL / 2) * scale;
+        const offsetY = (mW / 2) * scale;
+        const usableCanvasW = best.usableL * scale;
+        const usableCanvasH = best.usableW * scale;
+
+        // 2. 画出扣除咬口和修边后的 "安全净尺寸区" (白底)
+        ctx.fillStyle = '#ffffff'; 
+        ctx.fillRect(offsetX, offsetY, usableCanvasW, usableCanvasH);
+        
+        // 3. 画出安全区的橙色虚线边框，警示咬口边界
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = '#ff9500'; 
+        ctx.lineWidth = 1; 
+        ctx.strokeRect(offsetX, offsetY, usableCanvasW, usableCanvasH);
+        ctx.setLineDash([]); // 恢复实线
+
         const colors = ['#a0c4ff', '#ffadad', '#caffbf', '#ffd6a5', '#bdb2ff', '#ffc6ff'];
+        
+        // 4. 画出色块 (加上坐标偏移量，限制在安全区内)
         best.packedBlocks.forEach(b => {
-            ctx.fillStyle = colors[(b.id - 1) % colors.length]; ctx.fillRect(b.fit.x * scale, b.fit.y * scale, b.w * scale, b.h * scale);
-            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.strokeRect(b.fit.x * scale, b.fit.y * scale, b.w * scale, b.h * scale);
+            const bx = offsetX + (b.fit.x * scale);
+            const by = offsetY + (b.fit.y * scale);
+            const bw = b.w * scale;
+            const bh = b.h * scale;
+
+            ctx.fillStyle = colors[(b.id - 1) % colors.length] + 'E6'; 
+            ctx.fillRect(bx, by, bw, bh);
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; 
+            ctx.strokeRect(bx, by, bw, bh);
+        });
+
+        // 5. 最后画文字防遮挡
+        best.packedBlocks.forEach(b => {
+            const bx = offsetX + (b.fit.x * scale);
+            const by = offsetY + (b.fit.y * scale);
+            const bw = b.w * scale;
+            const bh = b.h * scale;
+
             ctx.fillStyle = '#1d1d1f'; ctx.font = '11px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(`${b.label}`, (b.fit.x + b.w/2) * scale, (b.fit.y + b.h/2) * scale - 6);
-            ctx.fillText(`${b.origW}x${b.origH}`, (b.fit.x + b.w/2) * scale, (b.fit.y + b.h/2) * scale + 8);
+            ctx.fillText(`${b.label}`, bx + bw/2, by + bh/2 - 6);
+            ctx.fillText(`${b.origW}x${b.origH}`, bx + bw/2, by + bh/2 + 8);
         });
     }
 
-    function loadSettingsToUI() { document.getElementById('set-diecut-under').value = globalBoxSettings.dieCutUnder5k; document.getElementById('set-diecut-over').value = globalBoxSettings.dieCutOver5k; document.getElementById('set-diecut-min').value = globalBoxSettings.dieCutMin; document.getElementById('set-dieboard').value = globalBoxSettings.dieBoardRate; }
-    function saveGlobalSettings() { globalBoxSettings = { dieCutUnder5k: parseFloat(document.getElementById('set-diecut-under').value)||0, dieCutOver5k: parseFloat(document.getElementById('set-diecut-over').value)||0, dieCutMin: parseFloat(document.getElementById('set-diecut-min').value)||0, dieBoardRate: parseFloat(document.getElementById('set-dieboard').value)||0 }; localStorage.setItem('bwSettingsV2', JSON.stringify(globalBoxSettings)); alert('加工费设置已保存！'); }
+    function loadSettingsToUI() { 
+        document.getElementById('set-diecut-under').value = globalBoxSettings.dieCutUnder5k; 
+        document.getElementById('set-diecut-over').value = globalBoxSettings.dieCutOver5k; 
+        document.getElementById('set-diecut-min').value = globalBoxSettings.dieCutMin; 
+        document.getElementById('set-dieboard').value = globalBoxSettings.dieBoardRate; 
+        document.getElementById('set-margin-l').value = globalBoxSettings.marginL; 
+        document.getElementById('set-margin-w').value = globalBoxSettings.marginW; 
+    }
+    
+    function saveGlobalSettings() { 
+        globalBoxSettings = { 
+            dieCutUnder5k: parseFloat(document.getElementById('set-diecut-under').value)||0, 
+            dieCutOver5k: parseFloat(document.getElementById('set-diecut-over').value)||0, 
+            dieCutMin: parseFloat(document.getElementById('set-diecut-min').value)||0, 
+            dieBoardRate: parseFloat(document.getElementById('set-dieboard').value)||0,
+            marginL: parseFloat(document.getElementById('set-margin-l').value)||0,
+            marginW: parseFloat(document.getElementById('set-margin-w').value)||0
+        }; 
+        localStorage.setItem('bwSettingsV2', JSON.stringify(globalBoxSettings)); 
+        alert('加工费及边距设置已保存！'); 
+    }
+    
     function renderMaterialsTable() { const tbody = document.querySelector('#materials-table tbody'); tbody.innerHTML = ''; boxMaterialsDB.forEach((mat, index) => { const tr = document.createElement('tr'); tr.innerHTML = `<td><input type="number" class="mat-l" value="${mat.l}" style="width:80px; padding:6px;"></td><td><input type="number" class="mat-w" value="${mat.w}" style="width:80px; padding:6px;"></td><td><input type="number" class="mat-p" value="${mat.price}" step="0.00001" style="width:100px; padding:6px;"></td><td><button class="btn-danger" onclick="deleteMaterial(${index})">删除</button></td>`; tbody.appendChild(tr); }); }
     function addMaterialRow() { boxMaterialsDB.push({ l: '', w: '', price: '' }); renderMaterialsTable(); }
     function deleteMaterial(index) { boxMaterialsDB.splice(index, 1); renderMaterialsTable(); }
@@ -666,7 +937,6 @@
     // ================== 系统 2：卷标阶梯核价引擎 ==================
     const defaultLabelAddons = { hot: { base: 200, unit: 0.03 }, penma: { base: 50, unit: 0.006 }, zhuanshe: { base: 200, unit: 0.5 } };
     
-    // 恢复了完整的默认15种材质数据库
     const defaultLabelDb = {
         '国产铜板': { '覆膜': [260, 3.2, 3.2, 3.2, 3.2], '逆向+白': [500, 5, 4, 4, 4], '镭射膜': [260, 3.5, 3.5, 3.5, 3.5] },
         '合成纸': { '覆膜': [360, 5, 4.7, 4.5, 4.3], '逆向+白': [500, 5, 4.8, 4.5, 4.3], '镭射膜': [360, 5.3, 5, 3.8, 3.6] },
@@ -846,17 +1116,23 @@
 
         navigator.clipboard.writeText(textToCopy).then(() => {
             const copyBtn = document.getElementById('copyBtn');
-            copyBtn.innerHTML = '✅ 复制成功！发给客户吧'; copyBtn.style.backgroundColor = 'var(--success-color)'; copyBtn.style.color = '#FFF'; copyBtn.style.borderColor = 'var(--success-color)';
-            setTimeout(() => { copyBtn.innerHTML = '📋 复制卖价发给客户 (隐藏底价)'; copyBtn.style.backgroundColor = 'transparent'; copyBtn.style.color = 'var(--primary-color)'; copyBtn.style.borderColor = 'var(--primary-color)'; }, 2000);
+            copyBtn.innerHTML = '✅ 复制成功并已记录！'; copyBtn.style.backgroundColor = 'var(--success-color)'; copyBtn.style.color = '#FFF'; copyBtn.style.borderColor = 'var(--success-color)';
+            
+            // 记录历史
+            saveToHistory('label', textToCopy);
+
+            setTimeout(() => { copyBtn.innerHTML = '📋 复制卖价发给客户 (并记录)'; copyBtn.style.backgroundColor = 'transparent'; copyBtn.style.color = 'var(--primary-color)'; copyBtn.style.borderColor = 'var(--primary-color)'; }, 2000);
         }).catch(err => alert('复制失败，请手动选中文字复制。'));
     }
 
     // ================== 全局初始化 ==================
     window.onload = function() {
         // 白瓦系统初始化
-        loadSettingsToUI(); renderMaterialsTable(); addSizeRow(); addSizeRow();
+        loadSettingsToUI(); renderMaterialsTable(); addSizeRow();
         // 卷标系统初始化
         renderMaterialRadios(); renderEditableTable(); triggerChange();
+        // 历史记录初始化
+        renderHistoryUI();
     };
 </script>
 
