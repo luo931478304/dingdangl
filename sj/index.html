@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>白瓦+卷标定制智能算价</title>
+    <title>白瓦卷标珍珠棉算价</title>
     <style>
-        /* 融合版全局 CSS 变量 */
+        /* ==================== 融合版全局 CSS 变量 ==================== */
         :root {
             --bg-color: #f5f5f7; 
             --card-bg: #ffffff; 
@@ -79,37 +79,56 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ==================== 白瓦系统样式区 ==================== */
-        #box-system .tab-nav { display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; }
-        #box-system .tab-btn { background: transparent; border: none; font-size: 18px; font-weight: 600; color: var(--text-muted); cursor: pointer; padding: 10px 20px; border-radius: 20px; transition: all 0.3s ease; }
-        #box-system .tab-btn.active { color: var(--text-main); background: rgba(0, 0, 0, 0.05); }
-        #box-system .page-section { display: none; }
-        #box-system .page-section.active { display: block; }
-        
-        #box-system .card { background: var(--card-bg); border-radius: 18px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 30px; }
-        #box-system .card h2 { font-size: 20px; margin-top: 0; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        #box-system .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
-        
-        #box-system .input-group { display: flex; flex-direction: column; }
-        #box-system .input-group label { font-size: 14px; font-weight: 500; margin-bottom: 8px; color: var(--text-muted); }
-        #box-system .input-group input { appearance: none; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 16px; font-size: 16px; transition: border-color 0.2s; outline: none; }
-        #box-system .input-group input:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.2); }
-        
-        #box-system .btn-primary { background: var(--accent-blue); color: white; border: none; padding: 14px 24px; border-radius: 10px; font-size: 16px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
-        #box-system .btn-primary:hover { background: var(--accent-hover); }
-        #box-system .btn-secondary { background: #e8e8ed; color: var(--text-main); border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
-        #box-system .btn-secondary:hover { background: #d2d2d7; }
-        #box-system .btn-danger { background: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+        /* 公共组件样式 */
+        .tab-nav { display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; }
+        .tab-btn { background: transparent; border: none; font-size: 18px; font-weight: 600; color: var(--text-muted); cursor: pointer; padding: 10px 20px; border-radius: 20px; transition: all 0.3s ease; }
+        .tab-btn.active { color: var(--text-main); background: rgba(0, 0, 0, 0.05); }
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+        .card { background: var(--card-bg); border-radius: 18px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 30px; }
+        .card h2 { font-size: 20px; margin-top: 0; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .input-group { display: flex; flex-direction: column; }
+        .input-group label { font-size: 14px; font-weight: 500; margin-bottom: 8px; color: var(--text-muted); }
+        .input-group input { appearance: none; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 16px; font-size: 16px; transition: border-color 0.2s; outline: none; }
+        .input-group input:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.2); }
+        .btn-primary { background: var(--accent-blue); color: white; border: none; padding: 14px 24px; border-radius: 10px; font-size: 16px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-secondary { background: #e8e8ed; color: var(--text-main); border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
+        .btn-secondary:hover { background: #d2d2d7; }
+        .btn-danger { background: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+        .badge-green { background: #e5f9e7; color: #248a3d; }
+        .badge-orange { background: #fff4e5; color: #cc7a00; }
+        .badge-red { background: #ffebee; color: #c62828; }
+        .badge-blue { background: #e5f1ff; color: #0066cc; }
+
+        /* ==================== 内托(珍珠棉)系统 新版 Apple 排版样式 ==================== */
+        #epe-system .section-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; display: block; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        #epe-system .selection-group { display: flex; gap: 10px; margin-bottom: 25px; }
+        #epe-system .select-btn { flex: 1; padding: 12px; border-radius: 12px; border: 1.5px solid var(--border-color); background: #fff; cursor: pointer; text-align: center; transition: 0.2s; font-size: 14px; font-weight: 500; color: var(--text-main); }
+        #epe-system .select-btn:hover { border-color: #b0b0b5; }
+        #epe-system .select-btn.active { border-color: var(--accent-blue); background: rgba(0, 113, 227, 0.05); color: var(--accent-blue); }
+        #epe-system .dims-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 15px; }
+        #epe-system .qty-row { margin-bottom: 25px; }
+        #epe-system .input-item { display: flex; flex-direction: column; gap: 6px; }
+        #epe-system .input-item label { font-size: 12px; color: var(--text-muted); padding-left: 2px; }
+        #epe-system .input-item input[type="number"] { background: #fbfbfd; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; font-size: 15px; outline: none; transition: 0.2s; width: 100%; box-sizing: border-box; }
+        #epe-system .input-item input[type="number"]:focus { border-color: var(--accent-blue); background: #fff; box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1); }
+        #epe-system .price-card { background: #fff; border-radius: 16px; padding: 24px; text-align: center; border: 1px solid #f2f2f2; margin-bottom: 20px; }
+        #epe-system .price-value { font-size: 42px; font-weight: 700; color: var(--text-main); margin: 5px 0; }
+        #epe-system .price-unit-info { display: flex; justify-content: center; gap: 15px; font-size: 13px; color: var(--text-muted); margin-top: 10px; }
+        #epe-system .quote-area { width: 100%; height: 110px; border-radius: 12px; border: 1px solid var(--border-color); padding: 12px; font-size: 13px; background: #fbfbfd; resize: none; box-sizing: border-box; font-family: inherit; margin-bottom: 15px; line-height: 1.6; outline: none;}
+        #epe-system .quote-area:focus { border-color: var(--accent-blue); }
+
+        /* ==================== 白瓦系统专属样式 ==================== */
         #box-system .btn-add { background: transparent; color: var(--success-color); border: 1px dashed var(--success-color); padding: 10px 16px; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 20px; font-weight: 500; }
         #box-system .btn-add:hover { background: rgba(52, 199, 89, 0.05); }
-        
         #box-system .size-row { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 15px; padding: 15px; background: #fdfdfd; border: 1px solid #e5e5ea; border-radius: 12px; }
         #box-system .size-row .input-group { flex: 1; margin-bottom: 0; }
-        
         #box-system table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
         #box-system th, #box-system td { text-align: left; padding: 14px; border-bottom: 1px solid var(--border-color); }
         #box-system th { font-weight: 500; color: var(--text-muted); }
-        
         #box-system .result-highlight { background: #fdfdfd; border: 2px solid var(--accent-blue); border-radius: 12px; padding: 20px; margin-top: 20px; display: flex; flex-wrap: wrap; gap: 30px; position: relative; }
         #box-system .price-huge { font-size: 28px; font-weight: 700; color: var(--accent-blue); }
         #box-system .canvas-container { flex: 1; min-width: 300px; text-align: center; }
@@ -119,21 +138,11 @@
         #box-system .cost-item { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; color: #555; }
         #box-system .cost-item:last-child { margin-bottom: 0; padding-top: 4px; border-top: 1px dashed #d2d2d7; font-weight: 600; color: #1d1d1f; }
         #box-system .mini-breakdown { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
-        
         #box-system .error-panel { text-align: center; padding: 40px 20px; background: #fff0f0; border: 1px solid #ffcdd2; border-radius: 12px; margin-top: 20px; }
         #box-system .error-panel h3 { color: var(--danger-color); margin-bottom: 10px; }
         #box-system .error-panel p { color: #555; font-size: 15px; line-height: 1.6; }
-        
-        .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
-        .badge-green { background: #e5f9e7; color: #248a3d; }
-        .badge-orange { background: #fff4e5; color: #cc7a00; }
-        .badge-red { background: #ffebee; color: #c62828; }
-        .badge-blue { background: #e5f1ff; color: #0066cc; }
-
         #box-system .btn-copy { position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 6px; }
         #box-system .btn-copy:active { transform: scale(0.96); }
-
-        /* 备选方案折叠面板样式 */
         .alt-schemes-details { margin-top: 30px; background: #fafafa; border: 1px solid var(--border-color); border-radius: 12px; padding: 15px 20px; transition: all 0.3s ease;}
         .alt-schemes-details summary { font-size: 15px; color: var(--text-main); font-weight: 600; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; outline: none; margin: -5px; padding: 5px; user-select: none; }
         .alt-schemes-details summary::-webkit-details-marker { display: none; }
@@ -141,52 +150,43 @@
         .alt-schemes-details[open] summary svg { transform: rotate(180deg); }
         .alt-schemes-details[open] summary { margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
 
-        /* ==================== 卷标系统样式区 ==================== */
+        /* ==================== 卷标系统专属样式 ==================== */
         #label-system { max-width: 960px; }
         #label-system .app-container { background: var(--card-bg); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); display: flex; flex-direction: column; overflow: hidden; }
         #label-system .header { padding: 24px 24px 16px; border-bottom: 1px solid var(--border-color); background: #FAFAFA;}
         #label-system .header h1 { font-size: 22px; font-weight: 600; text-align: center; margin-bottom: 20px; letter-spacing: -0.5px; }
-        
         #label-system .segmented-control { display: flex; background: var(--border-color); border-radius: 10px; padding: 4px; max-width: 400px; margin: 0 auto;}
         #label-system .segment-btn { flex: 1; padding: 8px 0; text-align: center; font-size: 14px; font-weight: 600; color: var(--text-muted); border-radius: 8px; cursor: pointer; transition: 0.2s; }
         #label-system .segment-btn.active { background: var(--card-bg); color: var(--text-main); box-shadow: var(--shadow-sm); }
-        
         #label-system .content-area { padding: 24px; }
         #label-system .section-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin: 0 0 10px; text-transform: uppercase; }
-        
         #label-system .quote-layout { display: flex; flex-direction: column; gap: 24px; }
         @media (min-width: 768px) {
             #label-system .quote-layout { flex-direction: row; }
             #label-system .quote-left { flex: 1.1; border-right: 1px solid var(--border-color); padding-right: 24px; }
             #label-system .quote-right { flex: 0.9; display: flex; flex-direction: column; }
         }
-        
         #label-system .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;}
         #label-system .input-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
-        
         #label-system input[type="number"]::-webkit-inner-spin-button, 
         #label-system input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         #label-system .input-wrapper { position: relative; display: flex; align-items: center; }
         #label-system .input-wrapper input { width: 100%; padding: 12px 40px 12px 16px; background: #FAFAFA; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 15px; outline: none; transition: 0.2s; font-weight: 500;}
         #label-system .input-wrapper input:focus { background: var(--card-bg); border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15); }
         #label-system .input-wrapper .unit { position: absolute; right: 16px; color: var(--text-muted); font-size: 14px; pointer-events: none; }
-        
         #label-system .tag-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;}
         #label-system .tag-group input[type="radio"], #label-system .tag-group input[type="checkbox"] { display: none; }
         #label-system .tag-group label { padding: 10px 16px; background: var(--bg-color); border: 1px solid transparent; border-radius: 20px; font-size: 14px; cursor: pointer; transition: 0.2s; user-select: none; }
         #label-system .tag-group input[type="radio"]:checked + label, #label-system .tag-group input[type="checkbox"]:checked + label { background: var(--primary-color); color: #FFF; box-shadow: 0 4px 10px rgba(0, 122, 255, 0.3); transform: translateY(-1px); }
         #label-system .tag-group input:disabled + label { background: #E5E5EA; color: #A1A1A6; cursor: not-allowed; text-decoration: line-through; box-shadow: none; transform: none;}
-        
         #label-system .params-display-box { background: #F0F7FF; border: 1px dashed #AECDF2; border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 20px; display: none; }
         #label-system .params-display-box .pd-title { font-size: 13px; color: var(--primary-color); font-weight: 600; margin-bottom: 8px; display: flex; align-items: center;}
         #label-system .params-display-box .pd-title::before { content: ""; display: inline-block; width: 4px; height: 12px; background: var(--primary-color); border-radius: 2px; margin-right: 6px; }
         #label-system .params-display-box .pd-content { font-size: 14px; color: #444; line-height: 1.8; }
         #label-system .params-display-box .pd-highlight { font-weight: 700; color: var(--text-main); margin: 0 2px; }
-        
         #label-system .profit-box { background: #FFF8E1; border: 1px solid #FFECB3; border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 20px; }
         #label-system .alert { display: none; padding: 12px; border-radius: var(--radius-md); font-size: 14px; text-align: center; margin-bottom: 20px; font-weight: 500; }
         #label-system .alert-danger { background: #FFF0F0; color: var(--danger-color); border: 1px solid #FFD6D6; }
-        
         #label-system .btn { width: 100%; padding: 14px; border: none; border-radius: var(--radius-md); font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         #label-system .btn-primary { background: var(--primary-color); color: #FFF; box-shadow: 0 4px 15px rgba(0, 122, 255, 0.2); }
         #label-system .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
@@ -194,7 +194,6 @@
         #label-system .btn-success { background: var(--success-color); color: #FFF; box-shadow: 0 4px 15px rgba(52, 199, 89, 0.2); }
         #label-system .btn-outline { background: transparent; color: var(--primary-color); border: 1.5px solid var(--primary-color); margin-top: 16px;}
         #label-system .btn-outline:hover { background: #F0F7FF; transform: translateY(-1px); }
-        
         #label-system .result-panel { display: none; margin-top: 16px; background: #F8FBFF; border: 1px solid #D6E8FF; border-radius: var(--radius-md); padding: 20px; animation: slideUp 0.3s ease; }
         #label-system .result-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; color: var(--text-muted); }
         #label-system .result-row span:last-child { color: var(--text-main); font-weight: 500; }
@@ -203,10 +202,8 @@
         #label-system .result-total .label { font-size: 16px; font-weight: 600; color: var(--text-main); }
         #label-system .result-total .value { font-size: 26px; font-weight: 700; color: var(--danger-color); line-height: 1; }
         #label-system .result-unit { text-align: right; font-size: 13px; color: var(--primary-color); margin-top: 6px; font-weight: 500;}
-        
         #label-system .max-qty-tip { background: #E8F5E9; border: 1px dashed #A5D6A7; color: #2E7D32; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; line-height: 1.5; display: none; }
         #label-system .max-qty-tip strong { color: #1B5E20; font-size: 15px; }
-        
         #label-system .table-container { width: 100%; overflow-x: auto; background: #FAFAFA; border: 1px solid var(--border-color); border-radius: var(--radius-md); margin-top: 10px; -ms-overflow-style: none; scrollbar-width: none; }
         #label-system .table-container::-webkit-scrollbar { display: none; }
         #label-system .editable-table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; text-align: center; }
@@ -215,13 +212,12 @@
         #label-system .editable-table td:first-child { background: #FFFFFF; font-weight: 600; text-align: left; position: sticky; left: 0; border-right: 2px solid var(--border-color); z-index: 2; box-shadow: 2px 0 5px rgba(0,0,0,0.02);}
         #label-system .cell-input { width: 55px; padding: 6px 2px; font-size: 13px; text-align: center; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--primary-color); font-weight: 500; transition: 0.2s; }
         #label-system .cell-input:focus { border-color: var(--primary-color); background: #FFF; outline: none; box-shadow: 0 0 0 2px rgba(0,122,255,0.1); }
-        
         #label-system .page { display: none; animation: fadeIn 0.3s ease; }
         #label-system .page.active { display: block; }
         #label-system .settings-hint { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; background: #FFF8E1; padding: 12px; border-radius: var(--radius-sm); border-left: 4px solid #FFC107; }
         #label-system .btn-group { display: flex; gap: 12px; margin-top: 24px; }
 
-        /* ==================== 历史记录系统样式区 ==================== */
+        /* ==================== 历史记录系统专属样式 ==================== */
         #history-system { max-width: 960px; }
         .history-card { margin-bottom: 20px; display: flex; flex-direction: column; }
         .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px dashed var(--border-color); padding-bottom: 12px; }
@@ -238,9 +234,10 @@
 <body>
 
 <div class="global-sys-nav">
-    <button id="nav-btn-box" class="active" onclick="switchSystem('box')"> 白瓦算价</button>
-    <button id="nav-btn-label" onclick="switchSystem('label')">🏷️ 卷标不干胶算价</button>
-    <button id="nav-btn-history" onclick="switchSystem('history')">🕒 历史报价记录</button>
+    <button id="nav-btn-box" class="active" onclick="switchSystem('box')">白瓦算价</button>
+    <button id="nav-btn-epe" onclick="switchSystem('epe')">内托算价</button>
+    <button id="nav-btn-label" onclick="switchSystem('label')">卷标算价</button>
+    <button id="nav-btn-history" onclick="switchSystem('history')">报价记录</button>
 </div>
 
 <div id="box-system" class="system-module active">
@@ -284,7 +281,6 @@
                 <div class="input-group"><label>纸张左右修边 (mm)</label><input type="number" id="set-margin-l" value="10"></div>
                 <div class="input-group"><label>纸张上下咬口 (mm)</label><input type="number" id="set-margin-w" value="16"></div>
             </div>
-            <p style="font-size:12px; color:var(--danger-color); margin-top:-10px;">注：排版算法会自动从大纸的长宽中扣除上述数值，保证机器能够正常咬纸和出血。</p>
         </div>
         <div class="card">
             <h2>纸张规格与价格库 <button class="btn-secondary" onclick="addMaterialRow()">+ 添加规格</button></h2>
@@ -293,6 +289,74 @@
                 <tbody></tbody>
             </table>
             <div style="margin-top: 20px; text-align: right;"><button class="btn-primary" onclick="saveMaterials()">保存规格库</button></div>
+        </div>
+    </div>
+</div>
+
+<div id="epe-system" class="system-module">
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchEpeTab('calc')">内托算价器</button>
+        <button class="tab-btn" onclick="switchEpeTab('set')">参数设置</button>
+    </div>
+
+    <div id="epe-view-calc" class="page-section active">
+        <div class="card">
+            <span class="section-title">材质选择</span>
+            <div class="selection-group">
+                <div class="select-btn mat-btn active" onclick="selectEpeMat(this, '珍珠棉')">珍珠棉</div>
+                <div class="select-btn mat-btn" onclick="selectEpeMat(this, 'EVA')">EVA</div>
+                <div class="select-btn mat-btn" onclick="selectEpeMat(this, '软EVA')">软EVA</div>
+            </div>
+
+            <span class="section-title">工艺选择</span>
+            <div class="selection-group">
+                <div id="epe-btn-flock" class="select-btn" onclick="toggleEpeFlock(this)">表面植绒</div>
+                <div style="flex:2; border:none; background:transparent; cursor:default" class="select-btn"></div>
+            </div>
+
+            <span class="section-title">规格参数 (mm)</span>
+            <div class="dims-grid">
+                <div class="input-item"><label>长度 (L)</label><input type="number" id="epe-L" placeholder="0" oninput="autoCalcEpe()"></div>
+                <div class="input-item"><label>宽度 (W)</label><input type="number" id="epe-W" placeholder="0" oninput="autoCalcEpe()"></div>
+                <div class="input-item"><label>高度 (H)</label><input type="number" id="epe-H" placeholder="0" oninput="autoCalcEpe()"></div>
+            </div>
+            
+            <div class="qty-row">
+                <div class="input-item"><label>生产数量 (个)</label><input type="number" id="epe-Qty" placeholder="0" oninput="autoCalcEpe()"></div>
+            </div>
+
+            <div class="price-card">
+                <div style="font-size: 13px; color: var(--text-muted);">最终总报价 (含利润)</div>
+                <div class="price-value">¥ <span id="epe-total-price">0.00</span></div>
+                <div class="price-unit-info">
+                    <span>单价: ¥<span id="epe-unit-price">0.000</span></span>
+                    <span>版费: ¥<span id="epe-plate-fee">0.00</span></span>
+                </div>
+            </div>
+
+            <textarea id="epe-quote-text" class="quote-area" readonly placeholder="输入参数后自动生成报价文案..."></textarea>
+            <button class="btn-primary" style="width: 100%;" onclick="copyEpeQuote()">📋 一键复制报价单 (并记录)</button>
+        </div>
+    </div>
+
+    <div id="epe-view-set" class="page-section">
+        <div class="card">
+            <span class="section-title">材料价格 (元/m³) <button class="btn-secondary" style="float:right; margin-top:-6px;" onclick="saveEpeSettingsBtn()">保存更改</button></span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <div class="input-item"><label>珍珠棉单价</label><input type="number" id="epe-p-epe" oninput="autoCalcEpe()"></div>
+                <div class="input-item"><label>EVA单价</label><input type="number" id="epe-p-eva" oninput="autoCalcEpe()"></div>
+                <div class="input-item"><label>软EVA单价</label><input type="number" id="epe-p-soft" oninput="autoCalcEpe()"></div>
+                <div class="input-item"><label>植绒单价 (元/㎡)</label><input type="number" id="epe-p-flock" oninput="autoCalcEpe()"></div>
+            </div>
+
+            <span class="section-title">算价规则</span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="input-item"><label>起步单价 (元)</label><input type="number" id="epe-p-min-u" oninput="autoCalcEpe()"></div>
+                <div class="input-item"><label>固定版费 (元)</label><input type="number" id="epe-p-fee" oninput="autoCalcEpe()"></div>
+                <div class="input-item"><label>免版费门槛 (元)</label><input type="number" id="epe-p-limit" oninput="autoCalcEpe()"></div>
+                <div class="input-item"><label>起步总价 (元)</label><input type="number" id="epe-p-min-t" oninput="autoCalcEpe()"></div>
+                <div class="input-item"><label>默认利润 (%)</label><input type="number" id="epe-p-profit" oninput="autoCalcEpe()"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -374,7 +438,7 @@
 
                     <div class="result-panel" id="resultPanel">
                         <div class="max-qty-tip" id="maxQtyTip">
-                            💡 <b>省钱方案</b>：当前订单总面积较小，受限于起步价约束。以目前的工艺起步价，相同的钱单款最多可做 <strong id="maxQtyValue">0</strong> 张！(可建议客户加量)
+                            💡 <b>省钱方案</b>：当前订单总面积较小，受限于起步价约束。相同的钱单款最多可做 <strong id="maxQtyValue">0</strong> 张！
                         </div>
 
                         <div class="result-row"><span>纯生产成本 (底价)</span><span id="r_cost">0 元</span></div>
@@ -399,11 +463,7 @@
         </div>
 
         <div class="content-area page" id="page-settings">
-            <div class="settings-hint">
-                💡 <b>阶梯数据持久化存储</b><br>
-                此处为您专属的全局底价。修改后点击底部<b>"永久保存"</b>。留空则代表不支持。
-            </div>
-
+            <div class="settings-hint">💡 <b>阶梯数据持久化存储</b> 此处为您专属的全局底价。修改后点击底部<b>"永久保存"</b>。</div>
             <div class="section-label" style="margin-top: 0;">附加工艺全局参数</div>
             <div class="input-grid" style="grid-template-columns: 1fr 1fr 1fr;">
                 <div class="input-group"><label>烫金起步 (元)</label><div class="input-wrapper"><input type="number" id="globalHotBase" onchange="triggerChange()"></div></div>
@@ -421,9 +481,7 @@
                     <thead>
                         <tr>
                             <th rowspan="2" style="background: #FFFFFF; z-index: 10;">材质</th>
-                            <th colspan="5">覆膜 (单价/㎡)</th>
-                            <th colspan="5">逆向+白 (单价/㎡)</th>
-                            <th colspan="5">镭射膜 (单价/㎡)</th>
+                            <th colspan="5">覆膜 (单价/㎡)</th><th colspan="5">逆向+白 (单价/㎡)</th><th colspan="5">镭射膜 (单价/㎡)</th>
                         </tr>
                         <tr>
                             <th>起步</th><th>&lt;200㎡</th><th>200-500㎡</th><th>500-1000㎡</th><th>≥1000㎡</th>
@@ -431,8 +489,7 @@
                             <th>起步</th><th>&lt;200㎡</th><th>200-500㎡</th><th>500-1000㎡</th><th>≥1000㎡</th>
                         </tr>
                     </thead>
-                    <tbody id="editableTableBody">
-                    </tbody>
+                    <tbody id="editableTableBody"></tbody>
                 </table>
             </div>
 
@@ -445,23 +502,24 @@
 </div>
 
 <div id="history-system" class="system-module">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="margin-bottom: 20px; color: var(--text-main);">已复制的报价记录</h2>
-        <button class="btn-clear-history" onclick="clearAllHistory()">🗑️ 清空所有记录</button>
-    </div>
-    <div id="history-list">
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
+            <h2 style="margin: 0;">已复制的报价记录</h2>
+            <button class="btn-clear-history" onclick="clearAllHistory()" style="margin: 0;">🗑️ 清空所有记录</button>
         </div>
+        <div id="history-list"></div>
+    </div>
 </div>
 
 <script>
-    // ================== 全局系统切换逻辑 ==================
+    // ================== 全局引擎及路由 ==================
     function switchSystem(sysId) {
         document.querySelectorAll('.system-module').forEach(el => el.classList.remove('active'));
         document.getElementById(sysId + '-system').classList.add('active');
         
-        document.getElementById('nav-btn-box').classList.remove('active');
-        document.getElementById('nav-btn-label').classList.remove('active');
-        document.getElementById('nav-btn-history').classList.remove('active');
+        ['box', 'epe', 'label', 'history'].forEach(id => {
+            document.getElementById('nav-btn-' + id).classList.remove('active');
+        });
         document.getElementById('nav-btn-' + sysId).classList.add('active');
 
         if(sysId === 'history') { renderHistoryUI(); }
@@ -474,21 +532,10 @@
         const now = new Date();
         const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
         
-        // 插入到数组最前面
-        globalQuoteHistory.unshift({
-            id: Date.now(),
-            type: type, // 'box' 或 'label'
-            time: timeStr,
-            text: contentText
-        });
-
-        // 限制最多保留 200 条记录
-        if(globalQuoteHistory.length > 200) {
-            globalQuoteHistory.pop();
-        }
-
+        globalQuoteHistory.unshift({ id: Date.now(), type: type, time: timeStr, text: contentText });
+        if(globalQuoteHistory.length > 200) globalQuoteHistory.pop();
         localStorage.setItem('quoteHistoryV1', JSON.stringify(globalQuoteHistory));
-        renderHistoryUI(); // 更新后台渲染
+        renderHistoryUI(); 
     }
 
     function renderHistoryUI() {
@@ -497,7 +544,7 @@
         
         if (globalQuoteHistory.length === 0) {
             listContainer.innerHTML = `
-                <div class="empty-history">
+                <div class="empty-history" style="box-shadow: none;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                     <p>暂无报价记录，去算价并点击"复制给客户"试试吧~</p>
                 </div>`;
@@ -508,11 +555,13 @@
         clearBtn.style.display = 'block';
         let htmlStr = '';
         globalQuoteHistory.forEach((item, index) => {
-            const badgeClass = item.type === 'box' ? 'badge-blue' : 'badge-green';
-            const badgeText = item.type === 'box' ? '📦 包装盒算价' : '🏷️ 卷标算价';
+            let badgeClass = '', badgeText = '';
+            if (item.type === 'box') { badgeClass = 'badge-blue'; badgeText = '📦 包装盒算价'; }
+            else if (item.type === 'label') { badgeClass = 'badge-green'; badgeText = '🏷️ 卷标算价'; }
+            else if (item.type === 'epe') { badgeClass = 'badge-orange'; badgeText = '🧩 内托算价'; }
             
             htmlStr += `
-            <div class="card history-card">
+            <div class="card history-card" style="box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #f2f2f2;">
                 <div class="history-header">
                     <span class="badge ${badgeClass}">${badgeText}</span>
                     <span class="history-time">${item.time}</span>
@@ -528,12 +577,10 @@
     }
 
     function copyHistoryItem(index) {
-        const text = globalQuoteHistory[index].text;
-        navigator.clipboard.writeText(text).then(() => {
+        navigator.clipboard.writeText(globalQuoteHistory[index].text).then(() => {
             alert('✅ 已重新复制到剪贴板！');
         }).catch(err => alert('复制失败，请手动选取文字复制。'));
     }
-
     function deleteHistoryItem(index) {
         if(confirm('确定要删除这条报价记录吗？')) {
             globalQuoteHistory.splice(index, 1);
@@ -541,15 +588,11 @@
             renderHistoryUI();
         }
     }
-
     function clearAllHistory() {
         if(confirm('⚠️ 警告：确定要清空所有已保存的报价记录吗？此操作不可恢复！')) {
-            globalQuoteHistory = [];
-            localStorage.setItem('quoteHistoryV1', JSON.stringify(globalQuoteHistory));
-            renderHistoryUI();
+            globalQuoteHistory = []; localStorage.setItem('quoteHistoryV1', JSON.stringify(globalQuoteHistory)); renderHistoryUI();
         }
     }
-
 
     // ================== 系统 1：白瓦包装拼版引擎 ==================
     class Packer {
@@ -558,25 +601,19 @@
             let n, node, block;
             for (n = 0; n < blocks.length; n++) {
                 block = blocks[n];
-                if (node = this.findNode(this.root, block.w, block.h)) {
-                    block.fit = this.splitNode(node, block.w, block.h);
-                } else if (node = this.findNode(this.root, block.h, block.w)) {
+                if (node = this.findNode(this.root, block.w, block.h)) { block.fit = this.splitNode(node, block.w, block.h); } 
+                else if (node = this.findNode(this.root, block.h, block.w)) {
                     let temp = block.w; block.w = block.h; block.h = temp;
                     block.fit = this.splitNode(node, block.w, block.h);
                 } else { return false; }
-            }
-            return true;
+            } return true;
         }
         findNode(root, w, h) {
             if (root.used) return this.findNode(root.right, w, h) || this.findNode(root.down, w, h);
-            else if ((w <= root.w) && (h <= root.h)) return root;
-            else return null;
+            else if ((w <= root.w) && (h <= root.h)) return root; else return null;
         }
         splitNode(node, w, h) {
-            node.used = true;
-            node.down  = { x: node.x, y: node.y + h, w: node.w, h: node.h - h };
-            node.right = { x: node.x + w, y: node.y, w: node.w - w, h: h };
-            return node;
+            node.used = true; node.down = { x: node.x, y: node.y + h, w: node.w, h: node.h - h }; node.right = { x: node.x + w, y: node.y, w: node.w - w, h: h }; return node;
         }
     }
 
@@ -589,35 +626,20 @@
     ];
 
     let globalBoxSettings = JSON.parse(localStorage.getItem('bwSettingsV2')) || defaultBoxSettings;
-    // 兼容老版本存储没有 margin 设置的情况
-    if(globalBoxSettings.marginL === undefined) globalBoxSettings.marginL = 10;
-    if(globalBoxSettings.marginW === undefined) globalBoxSettings.marginW = 16;
-    
     let boxMaterialsDB = JSON.parse(localStorage.getItem('bwMaterialsV2')) || defaultBoxMaterials;
     let currentBoxQuoteData = null;
 
     function switchBoxTab(tabId) {
         document.querySelectorAll('#box-system .page-section').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('#box-system .tab-btn').forEach(el => el.classList.remove('active'));
-        if(tabId === 'calc') { 
-            document.getElementById('calc-page').classList.add('active'); 
-            document.querySelectorAll('#box-system .tab-btn')[0].classList.add('active'); 
-        } else { 
-            document.getElementById('settings-page').classList.add('active'); 
-            document.querySelectorAll('#box-system .tab-btn')[1].classList.add('active'); 
-        }
+        if(tabId === 'calc') { document.getElementById('calc-page').classList.add('active'); document.querySelectorAll('#box-system .tab-btn')[0].classList.add('active'); } 
+        else { document.getElementById('settings-page').classList.add('active'); document.querySelectorAll('#box-system .tab-btn')[1].classList.add('active'); }
     }
 
     function addSizeRow() {
         const list = document.getElementById('size-list');
-        const row = document.createElement('div');
-        row.className = 'size-row';
-        row.innerHTML = `
-            <div class="input-group"><label>长(L)</label><input type="number" class="val-l" placeholder="mm"></div>
-            <div class="input-group"><label>宽(W)</label><input type="number" class="val-w" placeholder="mm"></div>
-            <div class="input-group"><label>高(H)</label><input type="number" class="val-h" placeholder="mm"></div>
-            <button class="btn-danger" style="margin-bottom: 5px;" onclick="this.parentElement.remove()">移除</button>
-        `;
+        const row = document.createElement('div'); row.className = 'size-row';
+        row.innerHTML = `<div class="input-group"><label>长(L)</label><input type="number" class="val-l" placeholder="mm"></div><div class="input-group"><label>宽(W)</label><input type="number" class="val-w" placeholder="mm"></div><div class="input-group"><label>高(H)</label><input type="number" class="val-h" placeholder="mm"></div><button class="btn-danger" style="margin-bottom: 5px;" onclick="this.parentElement.remove()">移除</button>`;
         list.appendChild(row);
     }
 
@@ -625,105 +647,47 @@
         const qty = parseFloat(document.getElementById('global-qty').value);
         const profitMargin = parseFloat(document.getElementById('global-profit').value) || 0;
         if(!qty || qty <= 0) { alert("请填写正确的套装数量！"); return; }
-
         const rows = document.querySelectorAll('#box-system .size-row');
-        let setBlocks = []; let setAreaM2 = 0; 
-        let singleBoxW = 0; 
-
+        let setBlocks = []; let setAreaM2 = 0; let singleBoxW = 0; 
         rows.forEach((row, index) => {
-            const L = parseFloat(row.querySelector('.val-l').value);
-            const W = parseFloat(row.querySelector('.val-w').value);
-            const H = parseFloat(row.querySelector('.val-h').value);
+            const L = parseFloat(row.querySelector('.val-l').value); const W = parseFloat(row.querySelector('.val-w').value); const H = parseFloat(row.querySelector('.val-h').value);
             if(L && W && H) {
-                const expL = L * 2 + W * 2;
-                const expW = H + W * 2;
+                const expL = L * 2 + W * 2; const expW = H + W * 2;
                 setBlocks.push({ id: index + 1, w: expL, h: expW, origW: expL, origH: expW, inputSize: `${L} x ${W} x ${H}`, label: `款${index+1}` });
-                setAreaM2 += (expL / 1000) * (expW / 1000);
-                singleBoxW = W;
+                setAreaM2 += (expL / 1000) * (expW / 1000); singleBoxW = W;
             }
         });
 
         if(setBlocks.length === 0) { alert("请至少录入一个产品的尺寸！"); return; }
-
-        const isSingleBox = setBlocks.length === 1;
-        let results = [];
-        
-        // 获取最新的咬口和修边设置
-        const marginL = parseFloat(document.getElementById('set-margin-l').value) || 0;
-        const marginW = parseFloat(document.getElementById('set-margin-w').value) || 0;
+        const isSingleBox = setBlocks.length === 1; let results = [];
+        const marginL = parseFloat(document.getElementById('set-margin-l').value) || 0; const marginW = parseFloat(document.getElementById('set-margin-w').value) || 0;
 
         boxMaterialsDB.forEach(mat => {
-            // 计价和计算利用率依然使用整张纸面积
             const paperAreaM2 = (mat.l / 1000) * (mat.w / 1000); 
-            
-            // 🔥 新增：实际排版可用面积 = 大纸长宽 减去 咬口和修边
-            const usableL = mat.l - marginL;
-            const usableW = mat.w - marginW;
-            
-            // 如果可用尺寸出现负数（虽然一般不可能），直接跳过
-            if (usableL <= 0 || usableW <= 0) return;
+            const usableL = mat.l - marginL; const usableW = mat.w - marginW;
+            if (usableL <= 0 || usableW <= 0 || setAreaM2 > (usableL / 1000) * (usableW / 1000)) return;
 
-            const usableAreaM2 = (usableL / 1000) * (usableW / 1000);
-            // 如果单套面积直接大于净用纸面积，也直接跳过
-            if (setAreaM2 > usableAreaM2) return;
-
-            let bestSets = 0; 
-            let bestPackedBlocks = null;
-
+            let bestSets = 0; let bestPackedBlocks = null;
             if (isSingleBox) {
-                // =============== 插拼模式：在净尺寸区域内计算 ===============
-                const b = setBlocks[0];
-                const eL = b.origW; 
-                const eW = b.origH; 
-                const sW = singleBoxW; 
-
-                // 方向1：常规
-                let m1 = Math.floor(usableL / eL);
-                let n1 = usableW >= eW ? Math.floor((usableW - sW) / (eW - sW)) : 0;
-                let total1 = m1 * n1;
-
-                // 方向2：旋转90度
-                let m2 = Math.floor(usableW / eL);
-                let n2 = usableL >= eW ? Math.floor((usableL - sW) / (eW - sW)) : 0;
-                let total2 = m2 * n2;
-
+                const b = setBlocks[0]; const eL = b.origW; const eW = b.origH; const sW = singleBoxW; 
+                let m1 = Math.floor(usableL / eL); let n1 = usableW >= eW ? Math.floor((usableW - sW) / (eW - sW)) : 0; let total1 = m1 * n1;
+                let m2 = Math.floor(usableW / eL); let n2 = usableL >= eW ? Math.floor((usableL - sW) / (eW - sW)) : 0; let total2 = m2 * n2;
                 if (total1 > 0 || total2 > 0) {
                     if (total1 >= total2) {
-                        bestSets = total1;
-                        bestPackedBlocks = [];
-                        for(let i=0; i<m1; i++){
-                            for(let j=0; j<n1; j++){
-                                bestPackedBlocks.push({
-                                    ...b, id: i*n1+j+1,
-                                    fit: {x: i * eL, y: j * (eW - sW)},
-                                    w: eL, h: eW
-                                });
-                            }
-                        }
+                        bestSets = total1; bestPackedBlocks = [];
+                        for(let i=0; i<m1; i++){ for(let j=0; j<n1; j++){ bestPackedBlocks.push({ ...b, id: i*n1+j+1, fit: {x: i * eL, y: j * (eW - sW)}, w: eL, h: eW }); } }
                     } else {
-                        bestSets = total2;
-                        bestPackedBlocks = [];
-                        for(let i=0; i<m2; i++){
-                            for(let j=0; j<n2; j++){
-                                bestPackedBlocks.push({
-                                    ...b, id: i*n2+j+1,
-                                    fit: {x: j * (eW - sW), y: i * eL},
-                                    w: eW, h: eL,
-                                    origW: eW, origH: eL
-                                });
-                            }
-                        }
+                        bestSets = total2; bestPackedBlocks = [];
+                        for(let i=0; i<m2; i++){ for(let j=0; j<n2; j++){ bestPackedBlocks.push({ ...b, id: i*n2+j+1, fit: {x: j * (eW - sW), y: i * eL}, w: eW, h: eL, origW: eW, origH: eL }); } }
                     }
                 }
             } else {
-                // =============== 合拼模式：在净尺寸区域内计算 ===============
-                const maxSetsPossible = Math.floor(usableAreaM2 / setAreaM2);
+                const maxSetsPossible = Math.floor(((usableL / 1000) * (usableW / 1000)) / setAreaM2);
                 if (maxSetsPossible > 0) {
                     for(let M = maxSetsPossible; M >= 1; M--) {
                         let blocksToPack = [];
                         for(let i=0; i<M; i++) setBlocks.forEach(b => blocksToPack.push({ ...b }));
                         blocksToPack.sort((a, b) => Math.max(b.w, b.h) - Math.max(a.w, a.h));
-                        // 约束引擎使用扣除咬口后的尺寸
                         const packer = new Packer(usableL, usableW);
                         if(packer.fit(blocksToPack)) { bestSets = M; bestPackedBlocks = blocksToPack; break; }
                     }
@@ -731,36 +695,22 @@
             }
 
             if(bestSets > 0) {
-                const sheetsNeeded = Math.ceil(qty / bestSets);
-                const paperCost = sheetsNeeded * mat.price;
+                const sheetsNeeded = Math.ceil(qty / bestSets); const paperCost = sheetsNeeded * mat.price;
                 let dieCutCost = sheetsNeeded < 5000 ? sheetsNeeded * globalBoxSettings.dieCutUnder5k : sheetsNeeded * globalBoxSettings.dieCutOver5k;
                 if (dieCutCost < globalBoxSettings.dieCutMin) dieCutCost = globalBoxSettings.dieCutMin;
-                const dieBoardCost = bestSets * globalBoxSettings.dieBoardRate;
-
-                const totalCost = paperCost + dieCutCost + dieBoardCost;
-                const finalQuote = totalCost * (1 + profitMargin / 100);
-                const utilization = ((setAreaM2 * bestSets) / paperAreaM2) * 100;
-
+                const totalUps = bestSets * setBlocks.length; const dieBoardCost = totalUps * globalBoxSettings.dieBoardRate;
+                const totalCost = paperCost + dieCutCost + dieBoardCost; const finalQuote = totalCost * (1 + profitMargin / 100);
                 results.push({
-                    spec: `${mat.l} x ${mat.w}`, matL: mat.l, matW: mat.w,
-                    usableL: usableL, usableW: usableW, // 传递给画图函数
-                    setsPerSheet: bestSets, packedBlocks: bestPackedBlocks,
+                    spec: `${mat.l} x ${mat.w}`, matL: mat.l, matW: mat.w, usableL: usableL, usableW: usableW, 
+                    setsPerSheet: bestSets, packedBlocks: bestPackedBlocks, totalUps: totalUps,
                     sheets: sheetsNeeded, paperCost: paperCost, dieCutCost: dieCutCost, dieBoardCost: dieBoardCost,
-                    totalCost: totalCost, finalQuote: finalQuote, unitPrice: finalQuote / qty, utilization: utilization,
-                    isNested: isSingleBox
+                    totalCost: totalCost, finalQuote: finalQuote, unitPrice: finalQuote / qty, utilization: ((setAreaM2 * bestSets) / paperAreaM2) * 100, isNested: isSingleBox
                 });
             }
         });
 
-        const resultArea = document.getElementById('dynamic-result-area');
-        document.getElementById('result-container').style.display = 'block';
-        document.getElementById('result-container').scrollIntoView({ behavior: 'smooth' });
-
-        if(results.length === 0) {
-            resultArea.innerHTML = `<div class="error-panel"><h3>无法完成排版</h3><p>算上咬口修边后，尺寸超出所有纸张规格，没有任何一张纸能拼下！</p></div>`;
-            return;
-        }
-
+        const resultArea = document.getElementById('dynamic-result-area'); document.getElementById('result-container').style.display = 'block'; document.getElementById('result-container').scrollIntoView({ behavior: 'smooth' });
+        if(results.length === 0) { resultArea.innerHTML = `<div class="error-panel"><h3>无法完成排版</h3><p>算上咬口修边后，尺寸超出所有纸张规格，没有任何一张纸能拼下！</p></div>`; return; }
         results.sort((a, b) => a.finalQuote - b.finalQuote);
         currentBoxQuoteData = { qty: qty, blocks: setBlocks, best: results[0] };
         renderBoxResultsHTML(results, resultArea);
@@ -768,22 +718,10 @@
 
     function copyBoxQuoteToClipboard() {
         if (!currentBoxQuoteData) return;
-        const { qty, blocks, best } = currentBoxQuoteData;
-        let text = `【包装定制排版报价单】\n📦 产品明细：\n`;
+        const { qty, blocks, best } = currentBoxQuoteData; let text = `【包装定制排版报价单】\n📦 产品明细：\n`;
         blocks.forEach(b => { text += ` - ${b.label}：${b.inputSize} mm\n`; });
-        text += `🔢 定制数量：${qty} 套 (${best.isNested ? '单款插拼' : '多款合拼'})\n----------------------\n`;
-        text += `💰 整单总价：¥ ${best.finalQuote.toFixed(2)}\n💎 单套均价：¥ ${best.unitPrice.toFixed(4)}\n----------------------\n* 报价已含材料费、模切加工及刀版费。`;
-
-        navigator.clipboard.writeText(text).then(() => {
-            const btn = document.querySelector('#box-system .btn-copy');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `✓ 复制成功并已记录！`; btn.style.background = '#e5f9e7'; btn.style.color = '#248a3d';
-            
-            // 记录历史
-            saveToHistory('box', text);
-
-            setTimeout(() => { btn.innerHTML = originalText; btn.style.background = '#e8e8ed'; btn.style.color = 'var(--text-main)'; }, 2000);
-        }).catch(err => alert('复制失败，请手动选取文字复制。'));
+        text += `🔢 定制数量：${qty} 套 (${best.isNested ? '单款插拼' : '多款合拼'})\n----------------------\n💰 整单总价：¥ ${best.finalQuote.toFixed(2)}\n💎 单套均价：¥ ${best.unitPrice.toFixed(4)}\n----------------------\n* 报价已含材料费、模切加工及刀版费。`;
+        navigator.clipboard.writeText(text).then(() => { saveToHistory('box', text); alert('复制成功并已记录！'); }).catch(err => alert('复制失败，请手动选取文字复制。'));
     }
 
     function getUtilizationBadge(util) {
@@ -794,165 +732,181 @@
 
     function renderBoxResultsHTML(results, container) {
         const best = results[0];
-        const mL = parseFloat(document.getElementById('set-margin-l').value) || 0;
-        const mW = parseFloat(document.getElementById('set-margin-w').value) || 0;
-
         let html = `<h2>最佳方案推荐</h2>
             <div id="best-scheme" class="result-highlight">
                 <button class="btn-secondary btn-copy" onclick="copyBoxQuoteToClipboard()">📋 复制报价给客户 (并记录)</button>
                 <div class="info-container">
                     <div style="color:var(--accent-blue); font-weight:600; font-size:18px; margin-bottom:15px; padding-right: 140px;">★ 最优省钱用纸：${best.spec}</div>
                     <div style="display: flex; gap: 20px; margin-bottom: 20px;">
-                        <div>
-                            <div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">单张排版</div>
-                            <div style="font-size:16px; font-weight:600;">${best.setsPerSheet} 套 ${best.isNested ? '<span class="badge badge-orange" style="margin-left: 5px;">智能插拼</span>' : ''}</div>
-                        </div>
+                        <div><div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">单张排版</div><div style="font-size:16px; font-weight:600;">${best.setsPerSheet} 套 ${best.isNested ? '<span class="badge badge-orange" style="margin-left: 5px;">智能插拼</span>' : ''}</div></div>
                         <div><div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">纸张利用率</div><div>${getUtilizationBadge(best.utilization)}</div></div>
                     </div>
                     <div style="font-size:14px; color:var(--text-muted); margin-bottom:5px;">整单总报价 (含利润)</div><div class="price-huge">¥${best.finalQuote.toFixed(2)}</div>
                     <div style="margin-top:10px; margin-bottom: 20px;"><span style="font-size:14px; color:var(--text-muted);">单套含利润均价：</span><span style="font-size:20px; font-weight:600;">¥${best.unitPrice.toFixed(4)}</span></div>
-                    <div style="border-top:1px dashed var(--border-color); padding-top:15px;">
-                        <span style="font-size:14px; color:var(--text-muted);">需要大纸总数: </span><strong style="color:var(--text-main); font-size: 16px;">${best.sheets} 张</strong>
-                        <div class="cost-breakdown">
-                            <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">不含利润的底层成本拆解：</div>
-                            <div class="cost-item"><span>纸张成本 (${best.sheets}张)</span> <span>¥${best.paperCost.toFixed(2)}</span></div>
-                            <div class="cost-item"><span>模切费 (含起步价)</span> <span>¥${best.dieCutCost.toFixed(2)}</span></div>
-                            <div class="cost-item"><span>刀版费 (${best.setsPerSheet}套连拼)</span> <span>¥${best.dieBoardCost.toFixed(2)}</span></div>
-                            <div class="cost-item"><span>底成本合计</span> <span>¥${best.totalCost.toFixed(2)}</span></div>
-                        </div>
-                    </div>
                 </div>
                 <div class="canvas-container">
-                    <div style="font-size:12px; color:#86868b; margin-bottom:5px;">智能排版图 (已扣咬口修边: ${mL}×${mW}mm)</div>
+                    <div style="font-size:12px; color:#86868b; margin-bottom:5px;">智能排版图</div>
                     <canvas id="layout-canvas"></canvas>
                 </div>
             </div>`;
-
-        if (results.length > 1) {
-            html += `
-            <details class="alt-schemes-details">
-                <summary>
-                    <span>点击查看其他 ${results.length - 1} 种备选排版方案</span>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </summary>
-                <div style="overflow-x: auto; animation: fadeIn 0.3s ease;">
-                    <table id="batch-results-table">
-                        <thead><tr><th>纸张规格</th><th>利用率</th><th>单张排版</th><th>不含税底成本 (含明细)</th><th>整单报价(含利润)</th></tr></thead>
-                        <tbody>`;
-            for(let i=1; i<results.length; i++) {
-                const res = results[i];
-                html += `<tr><td style="font-weight:600;">${res.spec}</td><td>${getUtilizationBadge(res.utilization)}</td><td style="color:var(--accent-blue);">拼 ${res.setsPerSheet} 套 ${res.isNested ? '<span style="color:#ff9500; font-size:12px;">(插拼)</span>' : ''}<br><span style="font-size:12px; color:#86868b;">(${res.sheets}张大纸)</span></td><td><strong style="font-size: 15px;">¥${res.totalCost.toFixed(2)}</strong><div class="mini-breakdown">纸:¥${res.paperCost.toFixed(2)} | 模:¥${res.dieCutCost.toFixed(2)} | 刀:¥${res.dieBoardCost.toFixed(2)}</div></td><td style="font-weight:600; font-size: 16px; color:var(--text-main);">¥${res.finalQuote.toFixed(2)}</td></tr>`;
-            }
-            html += `</tbody></table></div></details>`;
-        }
-        
-        container.innerHTML = html; 
-        drawCanvasLayout(best);
+        container.innerHTML = html; drawCanvasLayout(best);
     }
 
     function drawCanvasLayout(best) {
         const canvas = document.getElementById('layout-canvas'); if(!canvas) return;
-        const ctx = canvas.getContext('2d'); const maxCanvasW = 350; 
-        const scale = maxCanvasW / best.matL;
+        const ctx = canvas.getContext('2d'); const maxCanvasW = 350; const scale = maxCanvasW / best.matL;
         canvas.width = maxCanvasW; canvas.height = best.matW * scale;
+        ctx.fillStyle = '#f5f5f7'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const mL = parseFloat(document.getElementById('set-margin-l').value) || 0; const mW = parseFloat(document.getElementById('set-margin-w').value) || 0;
+        const offsetX = (mL / 2) * scale; const offsetY = (mW / 2) * scale;
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(offsetX, offsetY, best.usableL * scale, best.usableW * scale);
         
-        // 1. 画出整张大纸的底色 (浅灰，代表物理纸张边界)
-        ctx.fillStyle = '#f5f5f7'; 
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // 获取居中偏移量
-        const mL = parseFloat(document.getElementById('set-margin-l').value) || 0;
-        const mW = parseFloat(document.getElementById('set-margin-w').value) || 0;
-        const offsetX = (mL / 2) * scale;
-        const offsetY = (mW / 2) * scale;
-        const usableCanvasW = best.usableL * scale;
-        const usableCanvasH = best.usableW * scale;
-
-        // 2. 画出扣除咬口和修边后的 "安全净尺寸区" (白底)
-        ctx.fillStyle = '#ffffff'; 
-        ctx.fillRect(offsetX, offsetY, usableCanvasW, usableCanvasH);
-        
-        // 3. 画出安全区的橙色虚线边框，警示咬口边界
-        ctx.setLineDash([4, 4]);
-        ctx.strokeStyle = '#ff9500'; 
-        ctx.lineWidth = 1; 
-        ctx.strokeRect(offsetX, offsetY, usableCanvasW, usableCanvasH);
-        ctx.setLineDash([]); // 恢复实线
-
         const colors = ['#a0c4ff', '#ffadad', '#caffbf', '#ffd6a5', '#bdb2ff', '#ffc6ff'];
-        
-        // 4. 画出色块 (加上坐标偏移量，限制在安全区内)
         best.packedBlocks.forEach(b => {
-            const bx = offsetX + (b.fit.x * scale);
-            const by = offsetY + (b.fit.y * scale);
-            const bw = b.w * scale;
-            const bh = b.h * scale;
-
-            ctx.fillStyle = colors[(b.id - 1) % colors.length] + 'E6'; 
-            ctx.fillRect(bx, by, bw, bh);
-            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; 
-            ctx.strokeRect(bx, by, bw, bh);
-        });
-
-        // 5. 最后画文字防遮挡
-        best.packedBlocks.forEach(b => {
-            const bx = offsetX + (b.fit.x * scale);
-            const by = offsetY + (b.fit.y * scale);
-            const bw = b.w * scale;
-            const bh = b.h * scale;
-
+            const bx = offsetX + (b.fit.x * scale); const by = offsetY + (b.fit.y * scale); const bw = b.w * scale; const bh = b.h * scale;
+            ctx.fillStyle = colors[(b.id - 1) % colors.length] + 'E6'; ctx.fillRect(bx, by, bw, bh);
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.strokeRect(bx, by, bw, bh);
             ctx.fillStyle = '#1d1d1f'; ctx.font = '11px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(`${b.label}`, bx + bw/2, by + bh/2 - 6);
-            ctx.fillText(`${b.origW}x${b.origH}`, bx + bw/2, by + bh/2 + 8);
+            ctx.fillText(`${b.label}`, bx + bw/2, by + bh/2 - 6); ctx.fillText(`${b.origW}x${b.origH}`, bx + bw/2, by + bh/2 + 8);
         });
     }
 
     function loadSettingsToUI() { 
-        document.getElementById('set-diecut-under').value = globalBoxSettings.dieCutUnder5k; 
-        document.getElementById('set-diecut-over').value = globalBoxSettings.dieCutOver5k; 
-        document.getElementById('set-diecut-min').value = globalBoxSettings.dieCutMin; 
-        document.getElementById('set-dieboard').value = globalBoxSettings.dieBoardRate; 
-        document.getElementById('set-margin-l').value = globalBoxSettings.marginL; 
-        document.getElementById('set-margin-w').value = globalBoxSettings.marginW; 
+        document.getElementById('set-diecut-under').value = globalBoxSettings.dieCutUnder5k; document.getElementById('set-diecut-over').value = globalBoxSettings.dieCutOver5k; 
+        document.getElementById('set-diecut-min').value = globalBoxSettings.dieCutMin; document.getElementById('set-dieboard').value = globalBoxSettings.dieBoardRate; 
+        document.getElementById('set-margin-l').value = globalBoxSettings.marginL; document.getElementById('set-margin-w').value = globalBoxSettings.marginW; 
     }
-    
     function saveGlobalSettings() { 
         globalBoxSettings = { 
-            dieCutUnder5k: parseFloat(document.getElementById('set-diecut-under').value)||0, 
-            dieCutOver5k: parseFloat(document.getElementById('set-diecut-over').value)||0, 
-            dieCutMin: parseFloat(document.getElementById('set-diecut-min').value)||0, 
-            dieBoardRate: parseFloat(document.getElementById('set-dieboard').value)||0,
-            marginL: parseFloat(document.getElementById('set-margin-l').value)||0,
-            marginW: parseFloat(document.getElementById('set-margin-w').value)||0
+            dieCutUnder5k: parseFloat(document.getElementById('set-diecut-under').value)||0, dieCutOver5k: parseFloat(document.getElementById('set-diecut-over').value)||0, 
+            dieCutMin: parseFloat(document.getElementById('set-diecut-min').value)||0, dieBoardRate: parseFloat(document.getElementById('set-dieboard').value)||0,
+            marginL: parseFloat(document.getElementById('set-margin-l').value)||0, marginW: parseFloat(document.getElementById('set-margin-w').value)||0
         }; 
-        localStorage.setItem('bwSettingsV2', JSON.stringify(globalBoxSettings)); 
-        alert('加工费及边距设置已保存！'); 
+        localStorage.setItem('bwSettingsV2', JSON.stringify(globalBoxSettings)); alert('加工费及边距设置已保存！'); 
     }
-    
     function renderMaterialsTable() { const tbody = document.querySelector('#materials-table tbody'); tbody.innerHTML = ''; boxMaterialsDB.forEach((mat, index) => { const tr = document.createElement('tr'); tr.innerHTML = `<td><input type="number" class="mat-l" value="${mat.l}" style="width:80px; padding:6px;"></td><td><input type="number" class="mat-w" value="${mat.w}" style="width:80px; padding:6px;"></td><td><input type="number" class="mat-p" value="${mat.price}" step="0.00001" style="width:100px; padding:6px;"></td><td><button class="btn-danger" onclick="deleteMaterial(${index})">删除</button></td>`; tbody.appendChild(tr); }); }
     function addMaterialRow() { boxMaterialsDB.push({ l: '', w: '', price: '' }); renderMaterialsTable(); }
     function deleteMaterial(index) { boxMaterialsDB.splice(index, 1); renderMaterialsTable(); }
     function saveMaterials() { const rows = document.querySelectorAll('#materials-table tbody tr'); let newMaterials = []; rows.forEach(row => { const l = parseFloat(row.querySelector('.mat-l').value); const w = parseFloat(row.querySelector('.mat-w').value); const p = parseFloat(row.querySelector('.mat-p').value); if(l && w && p) newMaterials.push({ l, w, price: p }); }); boxMaterialsDB = newMaterials; localStorage.setItem('bwMaterialsV2', JSON.stringify(boxMaterialsDB)); alert('规格库已更新保存！'); renderMaterialsTable(); }
 
-    // ================== 系统 2：卷标阶梯核价引擎 ==================
+    // ================== 系统 2：内托(珍珠棉/EVA)算价引擎 ==================
+    const defaultEpeSettings = { pEpe: 450, pEva: 1600, pSoft: 1300, pFlock: 6, minU: 0.1, fee: 30, limit: 1000, minT: 200, profit: 20 };
+    let epeSettings = JSON.parse(localStorage.getItem('epeSettingsV1')) || defaultEpeSettings;
+    let currentEpeMaterial = '珍珠棉';
+    let currentEpeFinalQuoteText = '';
+    let epeIsFlocking = false;
+
+    function switchEpeTab(type) {
+        document.querySelectorAll('#epe-system .page-section').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('#epe-system .tab-btn').forEach(el => el.classList.remove('active'));
+        if (type === 'calc') { document.getElementById('epe-view-calc').classList.add('active'); document.querySelectorAll('#epe-system .tab-btn')[0].classList.add('active'); }
+        else { document.getElementById('epe-view-set').classList.add('active'); document.querySelectorAll('#epe-system .tab-btn')[1].classList.add('active'); }
+    }
+
+    function selectEpeMat(el, name) {
+        document.querySelectorAll('#epe-system .mat-btn').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        currentEpeMaterial = name;
+        autoCalcEpe();
+    }
+
+    function toggleEpeFlock(el) {
+        epeIsFlocking = !epeIsFlocking;
+        el.classList.toggle('active', epeIsFlocking);
+        autoCalcEpe();
+    }
+
+    function autoCalcEpe() {
+        const L = parseFloat(document.getElementById('epe-L').value) || 0;
+        const W = parseFloat(document.getElementById('epe-W').value) || 0;
+        const H = parseFloat(document.getElementById('epe-H').value) || 0;
+        const Qty = parseInt(document.getElementById('epe-Qty').value) || 0;
+        const isFlock = epeIsFlocking;
+
+        if (!L || !W || !H || !Qty) {
+            document.getElementById('epe-total-price').innerText = '0.00';
+            document.getElementById('epe-unit-price').innerText = '0.000';
+            document.getElementById('epe-plate-fee').innerText = '0.00';
+            document.getElementById('epe-quote-text').value = '';
+            currentEpeFinalQuoteText = '';
+            return;
+        }
+
+        const pEPE = parseFloat(document.getElementById('epe-p-epe').value) || epeSettings.pEpe;
+        const pEVA = parseFloat(document.getElementById('epe-p-eva').value) || epeSettings.pEva;
+        const pSOFT = parseFloat(document.getElementById('epe-p-soft').value) || epeSettings.pSoft;
+        const pFlock = parseFloat(document.getElementById('epe-p-flock').value) || epeSettings.pFlock;
+        const minU = parseFloat(document.getElementById('epe-p-min-u').value) || epeSettings.minU;
+        const fee = parseFloat(document.getElementById('epe-p-fee').value) || epeSettings.fee;
+        const limit = parseFloat(document.getElementById('epe-p-limit').value) || epeSettings.limit;
+        const minT = parseFloat(document.getElementById('epe-p-min-t').value) || epeSettings.minT;
+        const profit = parseFloat(document.getElementById('epe-p-profit').value) || epeSettings.profit;
+
+        let matPrice = currentEpeMaterial === '珍珠棉' ? pEPE : (currentEpeMaterial === 'EVA' ? pEVA : pSOFT);
+        let unitCost = (L * W * H / 1000000000) * matPrice;
+        if (isFlock) unitCost += (L * W / 1000000) * pFlock;
+        
+        if (unitCost < minU) unitCost = minU;
+        let totalCost = unitCost * Qty;
+        let currentFee = totalCost > limit ? 0 : fee;
+        
+        let finalTotal = (totalCost + currentFee) * (1 + profit / 100);
+        if (finalTotal < minT) finalTotal = minT;
+        const finalUnit = finalTotal / Qty;
+
+        document.getElementById('epe-total-price').innerText = finalTotal.toFixed(2);
+        document.getElementById('epe-unit-price').innerText = finalUnit.toFixed(4);
+        document.getElementById('epe-plate-fee').innerText = currentFee.toFixed(2);
+
+        const quoteStr = `【内托定制报价单】\n🧩 材质：${currentEpeMaterial}${isFlock?' + 表面植绒':''}\n📏 规格：${L} * ${W} * ${H} mm\n🔢 数量：${Qty} 个\n-------------------\n💰 总价：¥ ${finalTotal.toFixed(2)}\n💎 单价：¥ ${finalUnit.toFixed(4)}\n🎫 版费：¥ ${currentFee.toFixed(2)}`;
+        currentEpeFinalQuoteText = quoteStr;
+        document.getElementById('epe-quote-text').value = quoteStr;
+    }
+
+    function saveEpeSettingsBtn() {
+        epeSettings = {
+            pEpe: parseFloat(document.getElementById('epe-p-epe').value)||0,
+            pEva: parseFloat(document.getElementById('epe-p-eva').value)||0,
+            pSoft: parseFloat(document.getElementById('epe-p-soft').value)||0,
+            pFlock: parseFloat(document.getElementById('epe-p-flock').value)||0,
+            minU: parseFloat(document.getElementById('epe-p-min-u').value)||0,
+            fee: parseFloat(document.getElementById('epe-p-fee').value)||0,
+            limit: parseFloat(document.getElementById('epe-p-limit').value)||0,
+            minT: parseFloat(document.getElementById('epe-p-min-t').value)||0,
+            profit: parseFloat(document.getElementById('epe-p-profit').value)||0
+        };
+        localStorage.setItem('epeSettingsV1', JSON.stringify(epeSettings));
+        alert('内托底价设置已保存！');
+        autoCalcEpe();
+    }
+
+    function loadEpeSettingsToUI() {
+        document.getElementById('epe-p-epe').value = epeSettings.pEpe;
+        document.getElementById('epe-p-eva').value = epeSettings.pEva;
+        document.getElementById('epe-p-soft').value = epeSettings.pSoft;
+        document.getElementById('epe-p-flock').value = epeSettings.pFlock;
+        document.getElementById('epe-p-min-u').value = epeSettings.minU;
+        document.getElementById('epe-p-fee').value = epeSettings.fee;
+        document.getElementById('epe-p-limit').value = epeSettings.limit;
+        document.getElementById('epe-p-min-t').value = epeSettings.minT;
+        document.getElementById('epe-p-profit').value = epeSettings.profit;
+    }
+
+    function copyEpeQuote() {
+        if (!currentEpeFinalQuoteText) { alert("请先输入完整的参数进行计算！"); return; }
+        navigator.clipboard.writeText(currentEpeFinalQuoteText).then(() => {
+            saveToHistory('epe', currentEpeFinalQuoteText);
+            alert('✅ 报价已成功复制并记录！');
+        }).catch(err => alert('复制失败，请重试。'));
+    }
+
+    // ================== 系统 3：卷标阶梯核价引擎 ==================
     const defaultLabelAddons = { hot: { base: 200, unit: 0.03 }, penma: { base: 50, unit: 0.006 }, zhuanshe: { base: 200, unit: 0.5 } };
-    
     const defaultLabelDb = {
         '国产铜板': { '覆膜': [260, 3.2, 3.2, 3.2, 3.2], '逆向+白': [500, 5, 4, 4, 4], '镭射膜': [260, 3.5, 3.5, 3.5, 3.5] },
         '合成纸': { '覆膜': [360, 5, 4.7, 4.5, 4.3], '逆向+白': [500, 5, 4.8, 4.5, 4.3], '镭射膜': [360, 5.3, 5, 3.8, 3.6] },
         '艾利格底铜板': { '覆膜': [360, 4, 3.8, 3.5, 3.3], '逆向+白': [500, 5, 4.8, 4.5, 4.3], '镭射膜': [360, 4.3, 4.1, 3.8, 3.6] },
-        '素面镭射': { '覆膜': [360, 6.5, 6.2, 6, 5.6], '逆向+白': [500, 7, 6.8, 6.5, 6.2], '镭射膜': [360, 6.8, 6.5, 6.3, 5.9] },
-        '合成亮银': { '覆膜': [360, 7.5, 7.3, 7, 6.8], '逆向+白': [500, 8, 7.5, 7, 6.7], '镭射膜': [360, 7.8, 7.6, 7.3, 7.1] },
-        '合成镭射': { '覆膜': [360, 7.5, 7.3, 7, 6.8], '逆向+白': [500, 8, 7.5, 7, 6.7], '镭射膜': [360, 7.8, 7.6, 7.3, 7.1] },
-        '5丝透明': { '覆膜': [360, 6, 5.8, 5.5, 5], '逆向+白': [null, null, null, null, null], '镭射膜': [360, 6.3, 6.1, 5.8, 5.3] },
-        '亮银': { '覆膜': [360, 6, 5.8, 5.6, 5.3], '逆向+白': [500, 6.5, 6.1, 5.8, 5.5], '镭射膜': [360, 6.3, 6.1, 5.9, 5.6] },
-        '珠光膜': { '覆膜': [360, 4.8, 4.5, 4.2, 3.8], '逆向+白': [null, null, null, null, null], '镭射膜': [360, 5.1, 4.1, 3.8, 3.6] },
-        '光白PVC': { '覆膜': [360, 8, 7.5, 7, 6.5], '逆向+白': [null, null, null, null, null], '镭射膜': [360, 8.3, 7.8, 7.3, 6.8] },
-        '光白PET': { '覆膜': [360, 7, 6.5, 6.3, 6], '逆向+白': [null, null, null, null, null], '镭射膜': [360, 7.3, 6.8, 6.6, 6.3] },
-        '铜板可移胶': { '覆膜': [360, 7, 6.5, 6.2, 6], '逆向+白': [null, null, null, null, null], '镭射膜': [360, 7.3, 6.8, 6.5, 6.3] },
-        '铜板冷冻胶': { '覆膜': [360, 5, 4.7, 4.5, 4.2], '逆向+白': [null, null, null, null, null], '镭射膜': [360, 5.3, 5, 4.8, 4.5] },
-        '拉丝银': { '覆膜': [360, 8.25, 8.25, 8.25, 8.25], '逆向+白': [null, null, null, null, null], '镭射膜': [360, 8.55, 8.55, 8.55, 8.55] },
-        '拉丝金': { '覆膜': [360, 8.5, 8.5, 8.5, 8.5], '逆向+白': [null, null, null, null, null], '镭射膜': [360, 8.8, 8.8, 8.8, 8.8] }
+        '素面镭射': { '覆膜': [360, 6.5, 6.2, 6, 5.6], '逆向+白': [500, 7, 6.8, 6.5, 6.2], '镭射膜': [360, 6.8, 6.5, 6.3, 5.9] }
     };
 
     let labelAddons = JSON.parse(localStorage.getItem('labelCalcAddonData_v6')) || JSON.parse(JSON.stringify(defaultLabelAddons));
@@ -967,17 +921,8 @@
         if(tabId === 'quote') triggerChange(); 
     }
 
-    function saveLabelToLocal() {
-        localStorage.setItem('labelCalcAddonData_v6', JSON.stringify(labelAddons));
-        localStorage.setItem('labelCalcDbData_v6', JSON.stringify(labelDb));
-        alert("✅ 卷标数据库与附加工艺参数已成功保存！"); switchLabelTab('quote'); 
-    }
-
-    function resetLabelToDefault() {
-        if(confirm("⚠️ 确定要恢复卷标初始默认的报价数据吗？")) {
-            localStorage.removeItem('labelCalcAddonData_v6'); localStorage.removeItem('labelCalcDbData_v6'); location.reload(); 
-        }
-    }
+    function saveLabelToLocal() { localStorage.setItem('labelCalcAddonData_v6', JSON.stringify(labelAddons)); localStorage.setItem('labelCalcDbData_v6', JSON.stringify(labelDb)); alert("✅ 卷标数据库与附加工艺参数已成功保存！"); switchLabelTab('quote'); }
+    function resetLabelToDefault() { if(confirm("⚠️ 确定要恢复卷标初始默认的报价数据吗？")) { localStorage.removeItem('labelCalcAddonData_v6'); localStorage.removeItem('labelCalcDbData_v6'); location.reload(); } }
 
     function renderMaterialRadios() {
         const matGroup = document.getElementById('materialGroup'); matGroup.innerHTML = ''; let isFirst = true;
@@ -997,26 +942,13 @@
             htmlStr += `<tr><td>${mat}</td>`;
             procs.forEach(proc => {
                 let vals = labelDb[mat][proc] || [null, null, null, null, null];
-                for (let i = 0; i < 5; i++) {
-                    let v = vals[i] !== null ? vals[i] : '';
-                    htmlStr += `<td><input type="number" class="cell-input" placeholder="-" value="${v}" onchange="updateDbVal('${mat}', '${proc}', ${i}, this.value)"></td>`;
-                }
-            });
-            htmlStr += `</tr>`;
-        }
-        tbody.innerHTML = htmlStr;
+                for (let i = 0; i < 5; i++) { let v = vals[i] !== null ? vals[i] : ''; htmlStr += `<td><input type="number" class="cell-input" placeholder="-" value="${v}" onchange="updateDbVal('${mat}', '${proc}', ${i}, this.value)"></td>`; }
+            }); htmlStr += `</tr>`;
+        } tbody.innerHTML = htmlStr;
     }
 
-    function updateDbVal(mat, proc, index, valStr) {
-        let val = parseFloat(valStr); if (isNaN(val)) val = null; 
-        if (!labelDb[mat]) labelDb[mat] = {};
-        if (!labelDb[mat][proc]) labelDb[mat][proc] = [null, null, null, null, null];
-        labelDb[mat][proc][index] = val; triggerChange();
-    }
-
-    function getUnitPriceByArea(area, vals) {
-        if (area < 200) return vals[1]; else if (area < 500) return vals[2]; else if (area < 1000) return vals[3]; else return vals[4];
-    }
+    function updateDbVal(mat, proc, index, valStr) { let val = parseFloat(valStr); if (isNaN(val)) val = null; if (!labelDb[mat]) labelDb[mat] = {}; if (!labelDb[mat][proc]) labelDb[mat][proc] = [null, null, null, null, null]; labelDb[mat][proc][index] = val; triggerChange(); }
+    function getUnitPriceByArea(area, vals) { if (area < 200) return vals[1]; else if (area < 500) return vals[2]; else if (area < 1000) return vals[3]; else return vals[4]; }
 
     function triggerChange() {
         labelAddons.hot.base = parseFloat(document.getElementById('globalHotBase').value) || 0; labelAddons.hot.unit = parseFloat(document.getElementById('globalHotUnit').value) || 0;
@@ -1038,18 +970,13 @@
         document.getElementById('disp_penma_line').style.display = isPenma ? 'block' : 'none'; document.getElementById('disp_penma_base').innerText = labelAddons.penma.base; document.getElementById('disp_penma_unit').innerText = labelAddons.penma.unit;
         document.getElementById('disp_zhuanshe_line').style.display = isZhuanshe ? 'block' : 'none'; document.getElementById('disp_zhuanshe_base').innerText = labelAddons.zhuanshe.base; document.getElementById('disp_zhuanshe_unit').innerText = labelAddons.zhuanshe.unit;
 
-        const L = parseFloat(document.getElementById('length').value) || 0; const W = parseFloat(document.getElementById('width').value) || 0; const Q = parseFloat(document.getElementById('quantity').value) || 0; 
-        const Lb = L + 4; const Wb = W + 4;
-
+        const L = parseFloat(document.getElementById('length').value) || 0; const W = parseFloat(document.getElementById('width').value) || 0; const Q = parseFloat(document.getElementById('quantity').value) || 0; const Lb = L + 4; const Wb = W + 4;
         const errorSizeMsg = document.getElementById('errorSizeMsg'); const errorMsgQuote = document.getElementById('errorMsgQuote'); const calcBtn = document.getElementById('calcBtn'); const paramsDisplayBox = document.getElementById('paramsDisplayBox');
 
-        if (L > 0 && W > 0 && (Lb > 340 || Wb > 300)) {
-            errorSizeMsg.style.display = 'block'; errorMsgQuote.style.display = 'none'; paramsDisplayBox.style.display = 'none'; calcBtn.disabled = true; document.getElementById('resultPanel').style.display = 'none'; return;
-        } else { errorSizeMsg.style.display = 'none'; }
+        if (L > 0 && W > 0 && (Lb > 340 || Wb > 300)) { errorSizeMsg.style.display = 'block'; errorMsgQuote.style.display = 'none'; paramsDisplayBox.style.display = 'none'; calcBtn.disabled = true; document.getElementById('resultPanel').style.display = 'none'; return; } else { errorSizeMsg.style.display = 'none'; }
 
         let maxPerRun = 0; if (Wb > 0) { maxPerRun = Math.floor(300 / Wb); }
         globalLabelRuns = maxPerRun > 0 ? Math.ceil(V / maxPerRun) : 1;
-
         document.getElementById('disp_max_per_run').innerText = maxPerRun; document.getElementById('disp_runs').innerText = globalLabelRuns;
         const totalArea = ((Lb * Wb) / 1000000) * Q * V;
         let tierText = totalArea < 200 ? "面积 < 200㎡" : (totalArea < 500 ? "200㎡ ≤ 面积 < 500㎡" : (totalArea < 1000 ? "500㎡ ≤ 面积 < 1000㎡" : "面积 ≥ 1000㎡"));
@@ -1059,27 +986,22 @@
         if (vals && vals[0] !== null && getUnitPriceByArea(totalArea, vals) !== null) {
             document.getElementById('disp_base').innerText = vals[0]; document.getElementById('disp_unit').innerText = getUnitPriceByArea(totalArea, vals);
             errorMsgQuote.style.display = 'none'; paramsDisplayBox.style.display = 'block'; calcBtn.disabled = false; calculateLabelQuote(true); 
-        } else {
-            errorMsgQuote.style.display = 'block'; paramsDisplayBox.style.display = 'none'; calcBtn.disabled = true; document.getElementById('resultPanel').style.display = 'none';
-        }
+        } else { errorMsgQuote.style.display = 'block'; paramsDisplayBox.style.display = 'none'; calcBtn.disabled = true; document.getElementById('resultPanel').style.display = 'none'; }
     }
 
     function calculateLabelQuote(isAuto = false) {
         const L = parseFloat(document.getElementById('length').value); const W = parseFloat(document.getElementById('width').value);
         const V = parseInt(document.getElementById('variants').value) || 1; const Q = parseFloat(document.getElementById('quantity').value); 
         const profitRate = parseFloat(document.getElementById('profitRate').value) || 0;
-        
         const mat = document.querySelector('input[name="material"]:checked').value; const proc = document.querySelector('input[name="process"]:checked').value;
         const isHot = document.getElementById('add_hot').checked; const isPenma = document.getElementById('add_penma').checked; const isZhuanshe = document.getElementById('add_zhuanshe').checked;
 
         if(!L || !W || !Q || !V) { if(!isAuto) alert("请确保尺寸、款数和数量已填写完整！"); document.getElementById('resultPanel').style.display = 'none'; return; }
-
         const vals = labelDb[mat][proc]; if(!vals || vals[0] === null) return; 
 
         const bPrice = vals[0] * globalLabelRuns;
         const areaPerLabel = ((L + 4) * (W + 4)) / 1000000; const totalQty = Q * V; const totalArea = areaPerLabel * totalQty;
-        const uPrice = getUnitPriceByArea(totalArea, vals);
-        const processFee = Math.max(bPrice, totalArea * uPrice);
+        const uPrice = getUnitPriceByArea(totalArea, vals); const processFee = Math.max(bPrice, totalArea * uPrice);
 
         const maxQtyTip = document.getElementById('maxQtyTip');
         if (processFee === bPrice) {
@@ -1095,8 +1017,7 @@
         if (isPenma) { penmaFee = Math.max(labelAddons.penma.base, totalQty * labelAddons.penma.unit); document.getElementById('r_penmaLine').style.display = 'flex'; document.getElementById('r_penma').innerText = penmaFee.toFixed(2) + " 元"; } else { document.getElementById('r_penmaLine').style.display = 'none'; }
         if (isZhuanshe) { zhuansheFee = Math.max(labelAddons.zhuanshe.base * globalLabelRuns, totalArea * labelAddons.zhuanshe.unit); document.getElementById('r_zhuansheLine').style.display = 'flex'; document.getElementById('r_zhuanshe').innerText = zhuansheFee.toFixed(2) + " 元"; } else { document.getElementById('r_zhuansheLine').style.display = 'none'; }
 
-        const rawCost = processFee + hotFee + penmaFee + zhuansheFee;
-        const profitAmt = rawCost * (profitRate / 100); const finalPrice = rawCost + profitAmt;
+        const rawCost = processFee + hotFee + penmaFee + zhuansheFee; const profitAmt = rawCost * (profitRate / 100); const finalPrice = rawCost + profitAmt;
 
         document.getElementById('r_cost').innerText = rawCost.toFixed(2) + " 元";
         document.getElementById('r_profit_rate_show').innerText = profitRate; document.getElementById('r_profit_amt').innerText = "+ " + profitAmt.toFixed(2) + " 元";
@@ -1111,16 +1032,12 @@
         let addons = []; if(document.getElementById('add_hot').checked) addons.push('加烫金'); if(document.getElementById('add_penma').checked) addons.push('加喷码'); if(document.getElementById('add_zhuanshe').checked) addons.push('加专色');
         const addonLine = addons.length > 0 ? `\n附加工艺：${addons.join('、')}` : ''; 
         const totalStr = document.getElementById('r_total').innerText.replace(/\s*元/, ''); const unitStr = document.getElementById('r_unit').innerText.replace('折合对外单张：', '');
-
         const textToCopy = `【不干胶标签定制报价】\n材质：${mat}\n工艺：${proc}${addonLine}\n尺寸：${L}mm(长) × ${W}mm(宽)\n款式：共 ${V} 款\n数量：每款 ${Q} 张 (总计 ${totalQty} 张)\n-------------------\n总计报价：${totalStr} 元\n单价约合：${unitStr}`;
 
         navigator.clipboard.writeText(textToCopy).then(() => {
+            saveToHistory('label', textToCopy);
             const copyBtn = document.getElementById('copyBtn');
             copyBtn.innerHTML = '✅ 复制成功并已记录！'; copyBtn.style.backgroundColor = 'var(--success-color)'; copyBtn.style.color = '#FFF'; copyBtn.style.borderColor = 'var(--success-color)';
-            
-            // 记录历史
-            saveToHistory('label', textToCopy);
-
             setTimeout(() => { copyBtn.innerHTML = '📋 复制卖价发给客户 (并记录)'; copyBtn.style.backgroundColor = 'transparent'; copyBtn.style.color = 'var(--primary-color)'; copyBtn.style.borderColor = 'var(--primary-color)'; }, 2000);
         }).catch(err => alert('复制失败，请手动选中文字复制。'));
     }
@@ -1129,9 +1046,11 @@
     window.onload = function() {
         // 白瓦系统初始化
         loadSettingsToUI(); renderMaterialsTable(); addSizeRow();
+        // 内托(珍珠棉)系统初始化
+        loadEpeSettingsToUI();
         // 卷标系统初始化
         renderMaterialRadios(); renderEditableTable(); triggerChange();
-        // 历史记录初始化
+        // 历史系统初始化
         renderHistoryUI();
     };
 </script>
