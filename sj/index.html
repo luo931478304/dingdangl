@@ -2,697 +2,850 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>审核系统 | Supabase云端版</title>
-    <!-- 引入 Supabase SDK -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>包装定制智能算价综合系统</title>
     <style>
-        /* --- 1. 设计变量 (Aurora UI) --- */
+        /* 融合版全局 CSS 变量 */
         :root {
-            --primary: #6366f1;
-            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
-            --orange-gradient: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
-            --pink-gradient: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
-            --bg-body: #f0f2f5;
-            --glass-bg: rgba(255, 255, 255, 0.85);
-            --glass-border: 1px solid rgba(255, 255, 255, 0.8);
-            --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.05);
-            --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.1);
-            --text-main: #1e293b; --text-sub: #64748b; --radius-card: 20px;
+            --bg-color: #f5f5f7; 
+            --card-bg: #ffffff; 
+            --text-main: #1d1d1f; 
+            --text-muted: #86868b;
+            --accent-blue: #0071e3; 
+            --accent-hover: #0077ed; 
+            --primary-color: #007AFF;
+            --primary-hover: #0056b3;
+            --border-color: #d2d2d7;
+            --danger-color: #ff3b30; 
+            --success-color: #34c759; 
+            --warning-color: #ff9500;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.08);
         }
 
-        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            -webkit-font-smoothing: antialiased; 
+            min-height: 100vh;
+        }
+
+        /* --- 全局系统切换导航 --- */
+        .global-sys-nav {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            width: 100%;
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 9999;
+            margin-bottom: 20px;
+        }
+        .global-sys-nav button {
+            background: #e8e8ed;
+            color: var(--text-main);
+            border: none;
+            padding: 10px 24px;
+            margin: 0 10px;
+            border-radius: 20px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .global-sys-nav button.active {
+            background: var(--text-main);
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .system-module { display: none; width: 100%; max-width: 1100px; padding: 0 20px 40px; box-sizing: border-box; animation: fadeIn 0.4s ease; }
+        .system-module.active { display: block; }
         
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0; padding: 20px; color: var(--text-main); min-height: 100vh;
-            background-color: var(--bg-body);
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 40%);
-            background-attachment: fixed;
-        }
-
-        .container { max-width: 1000px; margin: 0 auto; padding-bottom: 40px; }
-
-        /* 导航 */
-        .nav-wrapper { display: flex; justify-content: center; margin-bottom: 30px; }
-        .nav-tabs {
-            background: rgba(255,255,255,0.8); backdrop-filter: blur(12px);
-            padding: 5px; border-radius: 99px; border: var(--glass-border);
-            box-shadow: var(--shadow-sm); display: inline-flex; gap: 4px;
-        }
-        .nav-btn {
-            border: none; background: transparent; padding: 10px 24px; border-radius: 99px;
-            font-size: 14px; font-weight: 700; color: var(--text-sub); cursor: pointer; transition: 0.3s;
-        }
-        .nav-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-
-        /* 页面切换 */
-        .page-section { display: none; animation: fadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        .page-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 卡片风格 */
-        .glass-card {
-            background: var(--glass-bg); backdrop-filter: blur(20px);
-            border: var(--glass-border); border-radius: var(--radius-card);
-            padding: 30px; box-shadow: var(--shadow-sm); margin-bottom: 24px;
-        }
-
-        h2 { margin: 0 0 24px 0; font-size: 22px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
-        h2::before { content:''; width: 6px; height: 24px; background: var(--primary-gradient); border-radius: 10px; display: block; }
-
-        /* KPI 指标卡 */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 24px; }
-        .kpi-card {
-            background: white; border-radius: 16px; padding: 20px;
-            box-shadow: var(--shadow-sm); border: 1px solid rgba(255,255,255,0.5);
-            display: flex; flex-direction: column; justify-content: space-between;
-            transition: transform 0.2s;
-        }
-        .kpi-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
-        .kpi-icon-wrap {
-            width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
-            font-size: 20px; margin-bottom: 12px;
-        }
-        .kpi-label { font-size: 13px; color: var(--text-sub); font-weight: 600; text-transform: uppercase; }
-        .kpi-value { font-size: 26px; font-weight: 800; color: var(--text-main); margin-top: 4px; letter-spacing: -1px; }
-        .kpi-trend { font-size: 12px; margin-top: 8px; font-weight: 500; }
+        /* ==================== 白瓦系统样式区 ==================== */
+        #box-system .tab-nav { display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; }
+        #box-system .tab-btn { background: transparent; border: none; font-size: 18px; font-weight: 600; color: var(--text-muted); cursor: pointer; padding: 10px 20px; border-radius: 20px; transition: all 0.3s ease; }
+        #box-system .tab-btn.active { color: var(--text-main); background: rgba(0, 0, 0, 0.05); }
+        #box-system .page-section { display: none; }
+        #box-system .page-section.active { display: block; }
         
-        .theme-blue .kpi-icon-wrap { background: #eff6ff; color: #3b82f6; }
-        .theme-purple .kpi-icon-wrap { background: #f5f3ff; color: #8b5cf6; }
-        .theme-orange .kpi-icon-wrap { background: #fff7ed; color: #f97316; }
-        .theme-pink .kpi-icon-wrap { background: #fdf2f8; color: #ec4899; }
-
-        /* 图表区域 */
-        .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 24px; margin-bottom: 24px; }
-        .chart-card { background: white; border-radius: var(--radius-card); padding: 24px; box-shadow: var(--shadow-sm); }
-        .chart-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: 700; font-size: 15px; }
+        #box-system .card { background: var(--card-bg); border-radius: 18px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 30px; }
+        #box-system .card h2 { font-size: 20px; margin-top: 0; margin-bottom: 24px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        #box-system .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
         
-        .bar-group { margin-bottom: 16px; }
-        .bar-info { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; font-weight: 600; }
-        .bar-bg { height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
-        .bar-fill { height: 100%; border-radius: 4px; width: 0; transition: width 1s ease-out; }
-        .fill-1 { background: var(--primary-gradient); }
-        .fill-2 { background: var(--accent-gradient); }
-        .fill-3 { background: var(--orange-gradient); }
-        .fill-other { background: #cbd5e1; }
-
-        .rank-list { counter-reset: rank; }
-        .rank-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px dashed #f1f5f9; }
-        .rank-idx { 
-            width: 24px; height: 24px; border-radius: 6px; background: #f1f5f9; color: #64748b;
-            display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; margin-right: 12px;
-        }
-        .rank-row:nth-child(1) .rank-idx { background: #fef3c7; color: #d97706; } 
-        .rank-name { flex: 1; font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .rank-val { font-weight: 700; color: var(--text-main); background: #f8fafc; padding: 2px 8px; border-radius: 6px; font-size: 12px; }
-
-        /* 表单 */
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; }
-        .form-control {
-            width: 100%; padding: 14px; font-size: 15px; border: 1px solid #e2e8f0; border-radius: 12px;
-            background: rgba(255,255,255,0.8); transition: 0.2s;
-        }
-        textarea.form-control { min-height: 100px; }
-
-        .upload-zone {
-            border: 2px dashed #cbd5e1; border-radius: 16px; padding: 30px; text-align: center; cursor: pointer;
-            background: rgba(248, 250, 252, 0.5); transition: 0.3s;
-        }
-        .upload-zone:hover { border-color: var(--primary); background: #eef2ff; }
+        #box-system .input-group { display: flex; flex-direction: column; }
+        #box-system .input-group label { font-size: 14px; font-weight: 500; margin-bottom: 8px; color: var(--text-muted); }
+        #box-system .input-group input { appearance: none; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 16px; font-size: 16px; transition: border-color 0.2s; outline: none; }
+        #box-system .input-group input:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.2); }
         
-        .btn-main {
-            width: 100%; padding: 16px; border: none; border-radius: 14px;
-            background: var(--primary-gradient); color: white; font-size: 16px; font-weight: 700;
-            cursor: pointer; box-shadow: 0 8px 20px -5px rgba(99, 102, 241, 0.4); transition: 0.2s;
+        #box-system .btn-primary { background: var(--accent-blue); color: white; border: none; padding: 14px 24px; border-radius: 10px; font-size: 16px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+        #box-system .btn-primary:hover { background: var(--accent-hover); }
+        #box-system .btn-secondary { background: #e8e8ed; color: var(--text-main); border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: background 0.2s; }
+        #box-system .btn-secondary:hover { background: #d2d2d7; }
+        #box-system .btn-danger { background: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+        #box-system .btn-add { background: transparent; color: var(--success-color); border: 1px dashed var(--success-color); padding: 10px 16px; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 20px; font-weight: 500; }
+        #box-system .btn-add:hover { background: rgba(52, 199, 89, 0.05); }
+        
+        #box-system .size-row { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 15px; padding: 15px; background: #fdfdfd; border: 1px solid #e5e5ea; border-radius: 12px; }
+        #box-system .size-row .input-group { flex: 1; margin-bottom: 0; }
+        
+        #box-system table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        #box-system th, #box-system td { text-align: left; padding: 14px; border-bottom: 1px solid var(--border-color); }
+        #box-system th { font-weight: 500; color: var(--text-muted); }
+        
+        #box-system .result-highlight { background: #fdfdfd; border: 2px solid var(--accent-blue); border-radius: 12px; padding: 20px; margin-top: 20px; display: flex; flex-wrap: wrap; gap: 30px; position: relative; }
+        #box-system .price-huge { font-size: 28px; font-weight: 700; color: var(--accent-blue); }
+        #box-system .canvas-container { flex: 1; min-width: 300px; text-align: center; }
+        #box-system canvas { max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        #box-system .info-container { flex: 1; min-width: 300px; }
+        #box-system .cost-breakdown { background: #f5f5f7; padding: 12px; border-radius: 8px; margin-top: 10px; }
+        #box-system .cost-item { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; color: #555; }
+        #box-system .cost-item:last-child { margin-bottom: 0; padding-top: 4px; border-top: 1px dashed #d2d2d7; font-weight: 600; color: #1d1d1f; }
+        #box-system .mini-breakdown { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+        
+        #box-system .error-panel { text-align: center; padding: 40px 20px; background: #fff0f0; border: 1px solid #ffcdd2; border-radius: 12px; margin-top: 20px; }
+        #box-system .error-panel h3 { color: var(--danger-color); margin-bottom: 10px; }
+        #box-system .error-panel p { color: #555; font-size: 15px; line-height: 1.6; }
+        
+        #box-system .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+        #box-system .badge-green { background: #e5f9e7; color: #248a3d; }
+        #box-system .badge-orange { background: #fff4e5; color: #cc7a00; }
+        #box-system .badge-red { background: #ffebee; color: #c62828; }
+        #box-system .btn-copy { position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 6px; }
+        #box-system .btn-copy:active { transform: scale(0.96); }
+
+        /* 备选方案折叠面板样式 */
+        .alt-schemes-details { margin-top: 30px; background: #fafafa; border: 1px solid var(--border-color); border-radius: 12px; padding: 15px 20px; transition: all 0.3s ease;}
+        .alt-schemes-details summary { font-size: 15px; color: var(--text-main); font-weight: 600; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; outline: none; margin: -5px; padding: 5px; user-select: none; }
+        .alt-schemes-details summary::-webkit-details-marker { display: none; }
+        .alt-schemes-details summary svg { transition: transform 0.3s ease; color: var(--text-muted); }
+        .alt-schemes-details[open] summary svg { transform: rotate(180deg); }
+        .alt-schemes-details[open] summary { margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+
+        /* ==================== 卷标系统样式区 ==================== */
+        #label-system { max-width: 960px; }
+        #label-system .app-container { background: var(--card-bg); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); display: flex; flex-direction: column; overflow: hidden; }
+        #label-system .header { padding: 24px 24px 16px; border-bottom: 1px solid var(--border-color); background: #FAFAFA;}
+        #label-system .header h1 { font-size: 22px; font-weight: 600; text-align: center; margin-bottom: 20px; letter-spacing: -0.5px; }
+        
+        #label-system .segmented-control { display: flex; background: var(--border-color); border-radius: 10px; padding: 4px; max-width: 400px; margin: 0 auto;}
+        #label-system .segment-btn { flex: 1; padding: 8px 0; text-align: center; font-size: 14px; font-weight: 600; color: var(--text-muted); border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        #label-system .segment-btn.active { background: var(--card-bg); color: var(--text-main); box-shadow: var(--shadow-sm); }
+        
+        #label-system .content-area { padding: 24px; }
+        #label-system .section-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin: 0 0 10px; text-transform: uppercase; }
+        
+        #label-system .quote-layout { display: flex; flex-direction: column; gap: 24px; }
+        @media (min-width: 768px) {
+            #label-system .quote-layout { flex-direction: row; }
+            #label-system .quote-left { flex: 1.1; border-right: 1px solid var(--border-color); padding-right: 24px; }
+            #label-system .quote-right { flex: 0.9; display: flex; flex-direction: column; }
         }
-        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 12px 25px -5px rgba(99, 102, 241, 0.5); }
-
-        /* 筛选与表格 */
-        .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: flex-end; }
-        .btn-tool { padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid transparent; background: white; }
-        .btn-export { background: #ecfdf5; color: #047857; }
-
-        .table-box { background: white; border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-sm); }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 16px; background: #f8fafc; font-size: 12px; color: var(--text-sub); font-weight: 700; text-transform: uppercase; }
-        td { padding: 16px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
-        .badge-auditor { background: #eff6ff; color: #2563eb; }
-        .badge-resp { background: #fff1f2; color: #e11d48; }
-
-        /* 组件 */
-        #loadingMask { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.8); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        #toast { position: fixed; top: 20px; right: 20px; z-index: 5000; background: white; padding: 16px 24px; border-radius: 14px; box-shadow: var(--shadow-lg); border-left: 5px solid var(--primary); transform: translateX(150%); transition: 0.4s; }
-        #toast.show { transform: translateX(0); }
         
-        #uniModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 4000; justify-content: center; align-items: center; }
-        .modal-body { background: white; padding: 30px; border-radius: 20px; text-align: center; width: 90%; max-width: 350px; }
-        .modal-input { width: 100%; padding: 10px; margin: 15px 0; border: 2px solid #e2e8f0; border-radius: 8px; text-align: center; }
-        .modal-btns { display: flex; gap: 10px; margin-top: 15px; }
-        .modal-btn { flex: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
-        .btn-confirm { background: var(--primary); color: white; }
-
-        .preview-box { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
-        .thumb-wrap { position: relative; width: 70px; height: 70px; border-radius: 10px; overflow: hidden; }
-        .thumb-wrap img { width: 100%; height: 100%; object-fit: cover; }
-        .thumb-rm { position: absolute; inset: 0; background: rgba(0,0,0,0.5); color: white; display: flex; justify-content: center; align-items: center; opacity: 0; cursor: pointer; }
-        .thumb-wrap:hover .thumb-rm { opacity: 1; }
+        #label-system .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;}
+        #label-system .input-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
         
-        #imgModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 5000; justify-content: center; align-items: center; }
-        #imgModal img { max-width: 90%; max-height: 90%; border-radius: 10px; }
-
-        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
-        .tag { background: #f1f5f9; padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: default; }
-        .tag span { color: #94a3b8; margin-left: 6px; cursor: pointer; font-weight: bold; }
-        .tag span:hover { color: #ef4444; }
-
-        @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } .glass-card { padding: 20px; } }
+        #label-system input[type="number"]::-webkit-inner-spin-button, 
+        #label-system input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        #label-system .input-wrapper { position: relative; display: flex; align-items: center; }
+        #label-system .input-wrapper input { width: 100%; padding: 12px 40px 12px 16px; background: #FAFAFA; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 15px; outline: none; transition: 0.2s; font-weight: 500;}
+        #label-system .input-wrapper input:focus { background: var(--card-bg); border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15); }
+        #label-system .input-wrapper .unit { position: absolute; right: 16px; color: var(--text-muted); font-size: 14px; pointer-events: none; }
+        
+        #label-system .tag-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;}
+        #label-system .tag-group input[type="radio"], #label-system .tag-group input[type="checkbox"] { display: none; }
+        #label-system .tag-group label { padding: 10px 16px; background: var(--bg-color); border: 1px solid transparent; border-radius: 20px; font-size: 14px; cursor: pointer; transition: 0.2s; user-select: none; }
+        #label-system .tag-group input[type="radio"]:checked + label, #label-system .tag-group input[type="checkbox"]:checked + label { background: var(--primary-color); color: #FFF; box-shadow: 0 4px 10px rgba(0, 122, 255, 0.3); transform: translateY(-1px); }
+        #label-system .tag-group input:disabled + label { background: #E5E5EA; color: #A1A1A6; cursor: not-allowed; text-decoration: line-through; box-shadow: none; transform: none;}
+        
+        #label-system .params-display-box { background: #F0F7FF; border: 1px dashed #AECDF2; border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 20px; display: none; }
+        #label-system .params-display-box .pd-title { font-size: 13px; color: var(--primary-color); font-weight: 600; margin-bottom: 8px; display: flex; align-items: center;}
+        #label-system .params-display-box .pd-title::before { content: ""; display: inline-block; width: 4px; height: 12px; background: var(--primary-color); border-radius: 2px; margin-right: 6px; }
+        #label-system .params-display-box .pd-content { font-size: 14px; color: #444; line-height: 1.8; }
+        #label-system .params-display-box .pd-highlight { font-weight: 700; color: var(--text-main); margin: 0 2px; }
+        
+        #label-system .profit-box { background: #FFF8E1; border: 1px solid #FFECB3; border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 20px; }
+        #label-system .alert { display: none; padding: 12px; border-radius: var(--radius-md); font-size: 14px; text-align: center; margin-bottom: 20px; font-weight: 500; }
+        #label-system .alert-danger { background: #FFF0F0; color: var(--danger-color); border: 1px solid #FFD6D6; }
+        
+        #label-system .btn { width: 100%; padding: 14px; border: none; border-radius: var(--radius-md); font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        #label-system .btn-primary { background: var(--primary-color); color: #FFF; box-shadow: 0 4px 15px rgba(0, 122, 255, 0.2); }
+        #label-system .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        #label-system .btn-primary:disabled { background: #A1C6EA; cursor: not-allowed; box-shadow: none; transform: none; }
+        #label-system .btn-success { background: var(--success-color); color: #FFF; box-shadow: 0 4px 15px rgba(52, 199, 89, 0.2); }
+        #label-system .btn-outline { background: transparent; color: var(--primary-color); border: 1.5px solid var(--primary-color); margin-top: 16px;}
+        #label-system .btn-outline:hover { background: #F0F7FF; transform: translateY(-1px); }
+        
+        #label-system .result-panel { display: none; margin-top: 16px; background: #F8FBFF; border: 1px solid #D6E8FF; border-radius: var(--radius-md); padding: 20px; animation: slideUp 0.3s ease; }
+        #label-system .result-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 14px; color: var(--text-muted); }
+        #label-system .result-row span:last-child { color: var(--text-main); font-weight: 500; }
+        #label-system .result-divider { height: 1px; background: #D6E8FF; margin: 16px 0; }
+        #label-system .result-total { display: flex; justify-content: space-between; align-items: flex-end; }
+        #label-system .result-total .label { font-size: 16px; font-weight: 600; color: var(--text-main); }
+        #label-system .result-total .value { font-size: 26px; font-weight: 700; color: var(--danger-color); line-height: 1; }
+        #label-system .result-unit { text-align: right; font-size: 13px; color: var(--primary-color); margin-top: 6px; font-weight: 500;}
+        
+        #label-system .max-qty-tip { background: #E8F5E9; border: 1px dashed #A5D6A7; color: #2E7D32; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; line-height: 1.5; display: none; }
+        #label-system .max-qty-tip strong { color: #1B5E20; font-size: 15px; }
+        
+        #label-system .table-container { width: 100%; overflow-x: auto; background: #FAFAFA; border: 1px solid var(--border-color); border-radius: var(--radius-md); margin-top: 10px; -ms-overflow-style: none; scrollbar-width: none; }
+        #label-system .table-container::-webkit-scrollbar { display: none; }
+        #label-system .editable-table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; text-align: center; }
+        #label-system .editable-table th, #label-system .editable-table td { padding: 6px 4px; border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
+        #label-system .editable-table th { background: #F0F7FF; color: var(--text-main); font-weight: 600; font-size: 12px; }
+        #label-system .editable-table td:first-child { background: #FFFFFF; font-weight: 600; text-align: left; position: sticky; left: 0; border-right: 2px solid var(--border-color); z-index: 2; box-shadow: 2px 0 5px rgba(0,0,0,0.02);}
+        #label-system .cell-input { width: 55px; padding: 6px 2px; font-size: 13px; text-align: center; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--primary-color); font-weight: 500; transition: 0.2s; }
+        #label-system .cell-input:focus { border-color: var(--primary-color); background: #FFF; outline: none; box-shadow: 0 0 0 2px rgba(0,122,255,0.1); }
+        
+        #label-system .page { display: none; animation: fadeIn 0.3s ease; }
+        #label-system .page.active { display: block; }
+        #label-system .settings-hint { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; background: #FFF8E1; padding: 12px; border-radius: var(--radius-sm); border-left: 4px solid #FFC107; }
+        #label-system .btn-group { display: flex; gap: 12px; margin-top: 24px; }
     </style>
 </head>
 <body>
 
-<!-- Loading -->
-<div id="loadingMask">
-    <div class="spinner"></div>
-    <div style="margin-top:15px; font-weight:600; color:#64748b;">数据同步中...</div>
+<div class="global-sys-nav">
+    <button id="nav-btn-box" class="active" onclick="switchSystem('box')">📦 包装盒多拼智能算价</button>
+    <button id="nav-btn-label" onclick="switchSystem('label')">🏷️ 卷标不干胶阶梯核价</button>
 </div>
 
-<div class="container">
-    <div class="nav-wrapper">
-        <div class="nav-tabs">
-            <button class="nav-btn active" onclick="switchTab('add')">✏️ 问题登记</button>
-            <button class="nav-btn" onclick="switchTab('list')">☁️ 云端数据</button>
-            <button class="nav-btn" onclick="switchTab('settings')">⚙️ 全局配置</button>
+<div id="box-system" class="system-module active">
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchBoxTab('calc')">多尺寸合拼算价</button>
+        <button class="tab-btn" onclick="switchBoxTab('settings')">参数设置</button>
+    </div>
+
+    <div id="calc-page" class="page-section active">
+        <div class="card">
+            <h2>订单总计参数</h2>
+            <div class="form-grid">
+                <div class="input-group"><label>需求套装数 (套)</label><input type="number" id="global-qty" placeholder="每款各需要多少个" value="1000"></div>
+                <div class="input-group"><label>期望利润率 (%)</label><input type="number" id="global-profit" value="20"></div>
+            </div>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:-10px;">注：1套 = 下方录入的所有产品各1个。系统会自动将它们拼在一张纸上计算。</p>
+        </div>
+
+        <div class="card">
+            <h2>录入合拼尺寸 (mm)</h2>
+            <div id="size-list"></div>
+            <button class="btn-add" onclick="addSizeRow()">+ 添加需合拼的产品</button>
+            <button class="btn-primary" style="width: 100%;" onclick="calculateComboQuote()">智能拼版并计算报价</button>
+        </div>
+
+        <div class="card" id="result-container" style="display: none;">
+            <div id="dynamic-result-area"></div>
         </div>
     </div>
 
-    <!-- 1. 登记 -->
-    <div id="page-add" class="page-section active">
-        <div class="glass-card">
-            <h2>问题登记</h2>
-            <form id="auditForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>审核人员</label>
-                        <select id="selectAuditor" class="form-control" required><option value="">加载中...</option></select>
-                    </div>
-                    <div class="form-group">
-                        <label>责任归属</label>
-                        <select id="selectResponsible" class="form-control" required><option value="">加载中...</option></select>
-                    </div>
-                </div>
-                <div class="form-group" style="margin-bottom:20px;">
-                    <label>异常详情</label>
-                    <textarea id="inputReason" class="form-control" placeholder="请详细描述..." required></textarea>
-                </div>
-                <div class="form-group" style="margin-bottom:30px;">
-                    <label>凭证上传 (云端同步)</label>
-                    <input type="file" id="fileInput" multiple accept="image/*" style="display:none;" onchange="handleFiles(this.files)">
-                    <div class="upload-zone" id="pasteArea" onclick="document.getElementById('fileInput').click()">
-                        📸 点击上传 或 Ctrl+V 粘贴
-                    </div>
-                    <div class="preview-box" id="previewContainer"></div>
-                </div>
-                <button type="submit" class="btn-main">提交到云端</button>
-            </form>
+    <div id="settings-page" class="page-section">
+        <div class="card">
+            <h2>加工费设置 <button class="btn-secondary" onclick="saveGlobalSettings()">保存更改</button></h2>
+            <div class="form-grid">
+                <div class="input-group"><label>模切 (<5000张) 元/张</label><input type="number" id="set-diecut-under" step="0.01"></div>
+                <div class="input-group"><label>模切 (≥5000张) 元/张</label><input type="number" id="set-diecut-over" step="0.01"></div>
+                <div class="input-group"><label>模切起步价 (元)</label><input type="number" id="set-diecut-min" step="1"></div>
+                <div class="input-group"><label>刀版费单价 (元/连)</label><input type="number" id="set-dieboard" step="1"></div>
+            </div>
+        </div>
+        <div class="card">
+            <h2>纸张规格与价格库 <button class="btn-secondary" onclick="addMaterialRow()">+ 添加规格</button></h2>
+            <table id="materials-table">
+                <thead><tr><th>长(mm)</th><th>宽(mm)</th><th>单价(元/张)</th><th>操作</th></tr></thead>
+                <tbody></tbody>
+            </table>
+            <div style="margin-top: 20px; text-align: right;"><button class="btn-primary" onclick="saveMaterials()">保存规格库</button></div>
         </div>
     </div>
+</div>
 
-    <!-- 2. 数据 -->
-    <div id="page-list" class="page-section">
-        <div class="kpi-grid" id="kpiArea"></div>
-        <div class="chart-grid" id="chartArea" style="display:none;">
-            <div class="chart-card">
-                <div class="chart-header">🏆 责任占比</div>
-                <div id="statProgressArea"></div>
-            </div>
-            <div class="chart-card">
-                <div class="chart-header">🔥 高频问题</div>
-                <div id="statReasonList" class="rank-list"></div>
+<div id="label-system" class="system-module">
+    <div class="app-container">
+        <div class="header">
+            <h1>卷标智能核价系统 (PC旗舰版)</h1>
+            <div class="segmented-control">
+                <div class="segment-btn active" id="tab-quote" onclick="switchLabelTab('quote')">首页核价工作台</div>
+                <div class="segment-btn" id="tab-settings" onclick="switchLabelTab('settings')">全局底价数据库</div>
             </div>
         </div>
-        <div class="glass-card">
-            <div class="filter-bar">
-                <div style="flex:1"><input type="date" id="filterDateStart" class="form-control"></div>
-                <div style="flex:1"><input type="date" id="filterDateEnd" class="form-control"></div>
-                <div style="flex:1"><input type="text" id="filterKeyword" class="form-control" placeholder="搜索..."></div>
-                <button class="btn-tool" onclick="fetchCloudData()">🔄 刷新</button>
-                <button class="btn-tool btn-export" onclick="exportToExcel()">📥 导出</button>
+
+        <div class="content-area page active" id="page-quote">
+            <div class="quote-layout">
+                <div class="quote-left">
+                    <div class="section-label" style="display:flex; justify-content: space-between;">
+                        <span>净尺寸与数量</span>
+                        <span style="font-weight:normal; font-size:12px; color:var(--danger-color);">机器最大走纸: 长340 × 宽300</span>
+                    </div>
+                    <div class="input-grid">
+                        <div class="input-group"><label>长 (走纸方向)</label><div class="input-wrapper"><input type="number" id="length" value="90" oninput="triggerChange()"><span class="unit">mm</span></div></div>
+                        <div class="input-group"><label>宽 (拼版方向)</label><div class="input-wrapper"><input type="number" id="width" value="90" oninput="triggerChange()"><span class="unit">mm</span></div></div>
+                        <div class="input-group"><label>定做款数</label><div class="input-wrapper"><input type="number" id="variants" value="3" oninput="triggerChange()"><span class="unit">款</span></div></div>
+                        <div class="input-group"><label>单款数量</label><div class="input-wrapper"><input type="number" id="quantity" value="1000" oninput="triggerChange()"><span class="unit">张</span></div></div>
+                    </div>
+
+                    <div class="section-label">卷标材质</div>
+                    <div class="tag-group" id="materialGroup"></div>
+
+                    <div class="section-label">表面处理工艺</div>
+                    <div class="tag-group">
+                        <input type="radio" name="process" id="p_fumo" value="覆膜" checked onchange="triggerChange()"><label for="p_fumo">覆膜</label>
+                        <input type="radio" name="process" id="p_nixiang" value="逆向+白" onchange="triggerChange()"><label for="p_nixiang">逆向+白</label>
+                        <input type="radio" name="process" id="p_leishe" value="镭射膜" onchange="triggerChange()"><label for="p_leishe">镭射膜</label>
+                    </div>
+
+                    <div class="section-label" style="display:flex; justify-content: space-between; align-items:center;">
+                        <span>附加工艺 (可多选叠加)</span>
+                        <span id="addonLimitTip" style="font-weight:normal; font-size:11px; color:var(--danger-color); display:none;">⚠️ 多款拼版时禁止选专色/烫金</span>
+                    </div>
+                    <div class="tag-group" style="margin-bottom: 0;">
+                        <input type="checkbox" id="add_hot" value="hot" onchange="triggerChange()"><label for="add_hot" id="lbl_add_hot">加烫金</label>
+                        <input type="checkbox" id="add_penma" value="penma" onchange="triggerChange()"><label for="add_penma">加喷码</label>
+                        <input type="checkbox" id="add_zhuanshe" value="zhuanshe" onchange="triggerChange()"><label for="add_zhuanshe" id="lbl_add_zhuanshe">加专色</label>
+                    </div>
+                </div>
+
+                <div class="quote-right">
+                    <div class="section-label">最终售价利润设定</div>
+                    <div class="profit-box">
+                        <div class="input-wrapper">
+                            <span style="font-size: 14px; font-weight: 600; color: #E65100; margin-right: 15px;">利润加成</span>
+                            <input type="number" id="profitRate" value="15" oninput="triggerChange()" style="background: #FFF; border-color: #FFB300;">
+                            <span class="unit">%</span>
+                        </div>
+                    </div>
+
+                    <div class="params-display-box" id="paramsDisplayBox">
+                        <div class="pd-title">系统抓取规则与智能拼版 <span id="disp_tier_text" style="color: var(--text-muted); font-weight: normal; margin-left: 8px;"></span></div>
+                        <div class="pd-content">
+                            主工艺起步价: <span class="pd-highlight" id="disp_base">0</span> 元 | 平方单价: <span class="pd-highlight" id="disp_unit">0</span> 元/㎡
+                            <div id="disp_addon_wrapper" style="display:none; border-top: 1px dashed #AECDF2; margin-top: 6px; padding-top: 6px; font-size: 13px;">
+                                <div id="disp_hot_line" style="display:none;">▪ 烫金起步: <span class="pd-highlight" id="disp_hot_base">0</span> 元 | 单价: <span class="pd-highlight" id="disp_hot_unit">0</span> 元/张</div>
+                                <div id="disp_penma_line" style="display:none;">▪ 喷码起步: <span class="pd-highlight" id="disp_penma_base">0</span> 元 | 单价: <span class="pd-highlight" id="disp_penma_unit">0</span> 元/张</div>
+                                <div id="disp_zhuanshe_line" style="display:none;">▪ 专色起步: <span class="pd-highlight" id="disp_zhuanshe_base">0</span> 元 | 单价: <span class="pd-highlight" id="disp_zhuanshe_unit">0</span> 元/㎡</div>
+                            </div>
+                            <div id="disp_imposition_line" style="border-top: 1px dashed #AECDF2; margin-top: 6px; padding-top: 6px; font-size: 13px; color: var(--success-color); font-weight: 600;">
+                                ✅ 智能拼版：单排最多可并排 <span id="disp_max_per_run">0</span> 款，<br>共需收取 <span id="disp_runs" style="font-size:16px;">0</span> 份起步价！
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-danger" id="errorSizeMsg">⚠️ 尺寸超限：最大过纸宽度限制为300mm，长度限制为340mm (含4mm出血)。请检查输入！</div>
+                    <div class="alert alert-danger" id="errorMsgQuote">⚠️ 当前选中的材质暂不支持该主工艺！</div>
+
+                    <button class="btn btn-primary" id="calcBtn" onclick="calculateLabelQuote(false)">手动刷新报价</button>
+
+                    <div class="result-panel" id="resultPanel">
+                        <div class="max-qty-tip" id="maxQtyTip">
+                            💡 <b>省钱方案</b>：当前订单总面积较小，受限于起步价约束。以目前的工艺起步价，相同的钱单款最多可做 <strong id="maxQtyValue">0</strong> 张！(可建议客户加量)
+                        </div>
+
+                        <div class="result-row"><span>纯生产成本 (底价)</span><span id="r_cost">0 元</span></div>
+                        <div id="r_addons_list" style="padding-left: 10px; border-left: 2px solid #E5E5EA; margin-bottom: 10px; display: none;">
+                            <div class="result-row" id="r_hotLine" style="margin-bottom:4px; font-size: 12px;"><span style="color:#888;">├ 烫金附加费</span><span id="r_hot">0 元</span></div>
+                            <div class="result-row" id="r_penmaLine" style="margin-bottom:4px; font-size: 12px;"><span style="color:#888;">├ 喷码附加费</span><span id="r_penma">0 元</span></div>
+                            <div class="result-row" id="r_zhuansheLine" style="margin-bottom:4px; font-size: 12px;"><span style="color:#888;">└ 专色附加费</span><span id="r_zhuanshe">0 元</span></div>
+                        </div>
+
+                        <div class="result-row"><span>设定利润额 (<span id="r_profit_rate_show">0</span>%)</span><span id="r_profit_amt" style="color:var(--success-color);">+ 0 元</span></div>
+                        <div class="result-divider"></div>
+                        <div class="result-total">
+                            <span class="label">对外最终报价</span>
+                            <span class="value" id="r_total">0.00 <span style="font-size:16px;">元</span></span>
+                        </div>
+                        <div class="result-unit" id="r_unit">折合对外单张：0 元</div>
+                        
+                        <button class="btn btn-outline" id="copyBtn" onclick="copyLabelQuote()">📋 复制卖价发给客户 (隐藏底价)</button>
+                    </div>
+                </div>
             </div>
-            <div style="overflow-x: auto;">
-                <table id="dataTable">
-                    <thead><tr><th>时间</th><th>审核人</th><th>责任人</th><th>详情</th><th>图</th><th>操作</th></tr></thead>
-                    <tbody id="tableBody"></tbody>
+        </div>
+
+        <div class="content-area page" id="page-settings">
+            <div class="settings-hint">
+                💡 <b>阶梯数据持久化存储</b><br>
+                此处为您专属的全局底价。修改后点击底部<b>"永久保存"</b>。留空则代表不支持。
+            </div>
+
+            <div class="section-label" style="margin-top: 0;">附加工艺全局参数</div>
+            <div class="input-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                <div class="input-group"><label>烫金起步 (元)</label><div class="input-wrapper"><input type="number" id="globalHotBase" onchange="triggerChange()"></div></div>
+                <div class="input-group"><label>烫金单价 (元/张)</label><div class="input-wrapper"><input type="number" id="globalHotUnit" onchange="triggerChange()" step="0.01"></div></div>
+                <div></div> <div class="input-group"><label>喷码起步 (元)</label><div class="input-wrapper"><input type="number" id="globalPenmaBase" onchange="triggerChange()"></div></div>
+                <div class="input-group"><label>喷码单价 (元/张)</label><div class="input-wrapper"><input type="number" id="globalPenmaUnit" onchange="triggerChange()" step="0.001"></div></div>
+                <div></div> <div class="input-group"><label>专色起步 (元)</label><div class="input-wrapper"><input type="number" id="globalZhuansheBase" onchange="triggerChange()"></div></div>
+                <div class="input-group"><label>专色单价 (元/㎡)</label><div class="input-wrapper"><input type="number" id="globalZhuansheUnit" onchange="triggerChange()" step="0.1"></div></div>
+                <div></div> 
+            </div>
+
+            <div class="section-label">材质阶梯矩阵表 (左右滑动编辑)</div>
+            <div class="table-container">
+                <table class="editable-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" style="background: #FFFFFF; z-index: 10;">材质</th>
+                            <th colspan="5">覆膜 (单价/㎡)</th>
+                            <th colspan="5">逆向+白 (单价/㎡)</th>
+                            <th colspan="5">镭射膜 (单价/㎡)</th>
+                        </tr>
+                        <tr>
+                            <th>起步</th><th>&lt;200㎡</th><th>200-500㎡</th><th>500-1000㎡</th><th>≥1000㎡</th>
+                            <th>起步</th><th>&lt;200㎡</th><th>200-500㎡</th><th>500-1000㎡</th><th>≥1000㎡</th>
+                            <th>起步</th><th>&lt;200㎡</th><th>200-500㎡</th><th>500-1000㎡</th><th>≥1000㎡</th>
+                        </tr>
+                    </thead>
+                    <tbody id="editableTableBody">
+                    </tbody>
                 </table>
-                <div id="emptyTip" style="text-align:center; padding:30px; display:none;">暂无数据</div>
             </div>
-        </div>
-    </div>
 
-    <!-- 3. 配置 -->
-    <div id="page-settings" class="page-section">
-        <div class="glass-card">
-            <h3>👥 审核人名单 (云同步)</h3>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="newAuditorInput" class="form-control" placeholder="输入姓名">
-                <button class="btn-tool" style="background:black; color:white;" onclick="addSetting('auditor')">＋</button>
+            <div class="btn-group">
+                <button class="btn btn-success" style="flex: 2; margin-top:0;" onclick="saveLabelToLocal()">💾 永久保存并返回</button>
+                <button class="btn" style="flex: 1; margin-top:0; background: #E5E5EA; color: #1D1D1F;" onclick="resetLabelToDefault()">🔄 恢复默认</button>
             </div>
-            <div id="auditorList" class="tag-list"></div>
-        </div>
-        <div class="glass-card" style="margin-top:20px;">
-            <h3>👤 责任人名单 (云同步)</h3>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="newResponsibleInput" class="form-control" placeholder="输入姓名">
-                <button class="btn-tool" style="background:black; color:white;" onclick="addSetting('responsible')">＋</button>
-            </div>
-            <div id="responsibleList" class="tag-list"></div>
         </div>
     </div>
 </div>
-
-<!-- 弹窗组件 -->
-<div id="uniModal">
-    <div class="modal-body">
-        <h3 id="modalTitle">提示</h3>
-        <p id="modalDesc">内容</p>
-        <input type="password" id="modalInput" class="modal-input" placeholder="输入管理员密码" style="display:none;">
-        <div class="modal-btns">
-            <button class="modal-btn" style="background:#f1f5f9;" onclick="closeModal()">取消</button>
-            <button class="modal-btn btn-confirm" id="modalConfirmBtn">确定</button>
-        </div>
-    </div>
-</div>
-<div id="imgModal" onclick="this.style.display='none'"><img id="modalImg" src=""></div>
-<div id="toast"></div>
 
 <script>
-    /* ================= ⚠️ 配置区域 ⚠️ ================= */
-    // 请将下方的信息替换为你 Supabase 的 API URL 和 anon Key
-    const SUPABASE_URL = 'https://yakxvfpsbivghmzqinft.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_MeGabPIgWg4Rx2H1holX4Q_Uqk0__oK';
-    const ADMIN_PASSWORD = "xinyunchu";  // 删除密码
+    // ================== 全局系统切换逻辑 ==================
+    function switchSystem(sysId) {
+        document.querySelectorAll('.system-module').forEach(el => el.classList.remove('active'));
+        document.getElementById(sysId + '-system').classList.add('active');
+        
+        document.getElementById('nav-btn-box').classList.remove('active');
+        document.getElementById('nav-btn-label').classList.remove('active');
+        document.getElementById('nav-btn-' + sysId).classList.add('active');
+    }
 
-    // =======================================================
-    const { createClient } = supabase;
-    let db = null;
-    let currentFiles = []; 
-    let localPreviewUrls = [];
-    let cloudData = [];
-    let cloudSettings = { auditors: [], responsibles: [] };
-    let settingsRowId = null;
+    // ================== 系统 1：白瓦包装合拼引擎 ==================
+    class Packer {
+        constructor(w, h) { this.root = { x: 0, y: 0, w: w, h: h }; }
+        fit(blocks) {
+            let n, node, block;
+            for (n = 0; n < blocks.length; n++) {
+                block = blocks[n];
+                if (node = this.findNode(this.root, block.w, block.h)) {
+                    block.fit = this.splitNode(node, block.w, block.h);
+                } else if (node = this.findNode(this.root, block.h, block.w)) {
+                    let temp = block.w; block.w = block.h; block.h = temp;
+                    block.fit = this.splitNode(node, block.w, block.h);
+                } else { return false; }
+            }
+            return true;
+        }
+        findNode(root, w, h) {
+            if (root.used) return this.findNode(root.right, w, h) || this.findNode(root.down, w, h);
+            else if ((w <= root.w) && (h <= root.h)) return root;
+            else return null;
+        }
+        splitNode(node, w, h) {
+            node.used = true;
+            node.down  = { x: node.x, y: node.y + h, w: node.w, h: node.h - h };
+            node.right = { x: node.x + w, y: node.y, w: node.w - w, h: h };
+            return node;
+        }
+    }
 
-    document.addEventListener('DOMContentLoaded', async () => {
-        // 检查配置
-        if(SUPABASE_URL.includes('你的Project')) {
-            alert('❌ 请用记事本打开文件，填入你的 Supabase URL 和 Key！');
-            document.getElementById('loadingMask').style.display='none';
+    const defaultBoxSettings = { dieCutUnder5k: 0.10, dieCutOver5k: 0.05, dieCutMin: 60, dieBoardRate: 20 };
+    const defaultBoxMaterials = [
+        { l: 889, w: 500, price: 0.82677 }, { l: 889, w: 550, price: 0.909447 }, { l: 889, w: 600, price: 0.992124 }, { l: 889, w: 650, price: 1.074801 },
+        { l: 787, w: 500, price: 0.73191 }, { l: 787, w: 550, price: 0.805101 }, { l: 787, w: 600, price: 0.878292 }, { l: 787, w: 650, price: 0.951483 },
+        { l: 440, w: 500, price: 0.4092 }, { l: 440, w: 550, price: 0.45012 }, { l: 440, w: 600, price: 0.49104 }, { l: 440, w: 650, price: 0.53196 },
+        { l: 390, w: 500, price: 0.3627 }, { l: 390, w: 550, price: 0.39897 }, { l: 390, w: 600, price: 0.43524 }, { l: 390, w: 650, price: 0.47151 }
+    ];
+
+    let globalBoxSettings = JSON.parse(localStorage.getItem('bwSettingsV2')) || defaultBoxSettings;
+    let boxMaterialsDB = JSON.parse(localStorage.getItem('bwMaterialsV2')) || defaultBoxMaterials;
+    let currentBoxQuoteData = null;
+
+    function switchBoxTab(tabId) {
+        document.querySelectorAll('#box-system .page-section').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('#box-system .tab-btn').forEach(el => el.classList.remove('active'));
+        if(tabId === 'calc') { 
+            document.getElementById('calc-page').classList.add('active'); 
+            document.querySelectorAll('#box-system .tab-btn')[0].classList.add('active'); 
+        } else { 
+            document.getElementById('settings-page').classList.add('active'); 
+            document.querySelectorAll('#box-system .tab-btn')[1].classList.add('active'); 
+        }
+    }
+
+    function addSizeRow() {
+        const list = document.getElementById('size-list');
+        const row = document.createElement('div');
+        row.className = 'size-row';
+        row.innerHTML = `
+            <div class="input-group"><label>长(L)</label><input type="number" class="val-l" placeholder="mm"></div>
+            <div class="input-group"><label>宽(W)</label><input type="number" class="val-w" placeholder="mm"></div>
+            <div class="input-group"><label>高(H)</label><input type="number" class="val-h" placeholder="mm"></div>
+            <button class="btn-danger" style="margin-bottom: 5px;" onclick="this.parentElement.remove()">移除</button>
+        `;
+        list.appendChild(row);
+    }
+
+    function calculateComboQuote() {
+        const qty = parseFloat(document.getElementById('global-qty').value);
+        const profitMargin = parseFloat(document.getElementById('global-profit').value) || 0;
+        if(!qty || qty <= 0) { alert("请填写正确的套装数量！"); return; }
+
+        const rows = document.querySelectorAll('#box-system .size-row');
+        let setBlocks = []; let setAreaM2 = 0; 
+        rows.forEach((row, index) => {
+            const L = parseFloat(row.querySelector('.val-l').value);
+            const W = parseFloat(row.querySelector('.val-w').value);
+            const H = parseFloat(row.querySelector('.val-h').value);
+            if(L && W && H) {
+                const expL = L * 2 + W * 2;
+                const expW = H + W * 2;
+                setBlocks.push({ id: index + 1, w: expL, h: expW, origW: expL, origH: expW, inputSize: `${L} x ${W} x ${H}`, label: `款${index+1}` });
+                setAreaM2 += (expL / 1000) * (expW / 1000);
+            }
+        });
+
+        if(setBlocks.length === 0) { alert("请至少录入一个产品的尺寸！"); return; }
+
+        let results = [];
+        boxMaterialsDB.forEach(mat => {
+            const paperAreaM2 = (mat.l / 1000) * (mat.w / 1000);
+            if (setAreaM2 > paperAreaM2) return;
+            const maxSetsPossible = Math.floor(paperAreaM2 / setAreaM2);
+            if (maxSetsPossible === 0) return;
+
+            let bestSets = 0; let bestPackedBlocks = null;
+            for(let M = maxSetsPossible; M >= 1; M--) {
+                let blocksToPack = [];
+                for(let i=0; i<M; i++) setBlocks.forEach(b => blocksToPack.push({ ...b }));
+                blocksToPack.sort((a, b) => Math.max(b.w, b.h) - Math.max(a.w, a.h));
+                const packer = new Packer(mat.l, mat.w);
+                if(packer.fit(blocksToPack)) { bestSets = M; bestPackedBlocks = blocksToPack; break; }
+            }
+
+            if(bestSets > 0) {
+                const sheetsNeeded = Math.ceil(qty / bestSets);
+                const paperCost = sheetsNeeded * mat.price;
+                let dieCutCost = sheetsNeeded < 5000 ? sheetsNeeded * globalBoxSettings.dieCutUnder5k : sheetsNeeded * globalBoxSettings.dieCutOver5k;
+                if (dieCutCost < globalBoxSettings.dieCutMin) dieCutCost = globalBoxSettings.dieCutMin;
+                const dieBoardCost = bestSets * globalBoxSettings.dieBoardRate;
+
+                const totalCost = paperCost + dieCutCost + dieBoardCost;
+                const finalQuote = totalCost * (1 + profitMargin / 100);
+                const utilization = ((setAreaM2 * bestSets) / paperAreaM2) * 100;
+
+                results.push({
+                    spec: `${mat.l} x ${mat.w}`, matL: mat.l, matW: mat.w,
+                    setsPerSheet: bestSets, packedBlocks: bestPackedBlocks,
+                    sheets: sheetsNeeded, paperCost: paperCost, dieCutCost: dieCutCost, dieBoardCost: dieBoardCost,
+                    totalCost: totalCost, finalQuote: finalQuote, unitPrice: finalQuote / qty, utilization: utilization
+                });
+            }
+        });
+
+        const resultArea = document.getElementById('dynamic-result-area');
+        document.getElementById('result-container').style.display = 'block';
+        document.getElementById('result-container').scrollIntoView({ behavior: 'smooth' });
+
+        if(results.length === 0) {
+            resultArea.innerHTML = `<div class="error-panel"><h3>无法完成合拼</h3><p>您录入的产品尺寸总和过大，没有任何一张纸能拼下！</p></div>`;
             return;
         }
 
-        try {
-            db = createClient(SUPABASE_URL, SUPABASE_KEY);
-            showLoading(true);
-            await fetchSettings();
-            updateFormSelects();
-            setupPasteEvent();
-            setupFilterListeners();
-            showLoading(false);
-            showToast('✅ 云端连接成功');
-        } catch(e) {
-            alert('连接失败：' + e.message);
-            showLoading(false);
-        }
-    });
+        results.sort((a, b) => a.finalQuote - b.finalQuote);
+        currentBoxQuoteData = { qty: qty, blocks: setBlocks, best: results[0] };
+        renderBoxResultsHTML(results, resultArea);
+    }
 
-    /* ================= Supabase 核心逻辑 ================= */
+    function copyBoxQuoteToClipboard() {
+        if (!currentBoxQuoteData) return;
+        const { qty, blocks, best } = currentBoxQuoteData;
+        let text = `【包装定制合拼报价单】\n📦 产品明细：\n`;
+        blocks.forEach(b => { text += ` - ${b.label}：${b.inputSize} mm\n`; });
+        text += `🔢 定制数量：${qty} 套 (合拼加工)\n----------------------\n`;
+        text += `💰 整单总价：¥ ${best.finalQuote.toFixed(2)}\n💎 单套均价：¥ ${best.unitPrice.toFixed(4)}\n----------------------\n* 报价已含材料费、模切加工及刀版费。`;
 
-    // 1. 获取配置
-    async function fetchSettings() {
-        const { data, error } = await db.from('audit_settings').select('*').limit(1);
-        if(error) { console.error(error); return; }
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.querySelector('#box-system .btn-copy');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `✓ 复制成功！`; btn.style.background = '#e5f9e7'; btn.style.color = '#248a3d';
+            setTimeout(() => { btn.innerHTML = originalText; btn.style.background = '#e8e8ed'; btn.style.color = 'var(--text-main)'; }, 2000);
+        }).catch(err => alert('复制失败，请手动选取文字复制。'));
+    }
 
-        if(data && data.length > 0) {
-            cloudSettings = {
-                auditors: data[0].auditors || [],
-                responsibles: data[0].responsibles || []
-            };
-            settingsRowId = data[0].id;
-        } else {
-            // 初始化
-            const init = { auditors: ["张三", "李四"], responsibles: ["打包组", "王五"] };
-            const { data: newData } = await db.from('audit_settings').insert([init]).select();
-            if(newData) {
-                cloudSettings = init;
-                settingsRowId = newData[0].id;
+    function getUtilizationBadge(util) {
+        if (util >= 85) return `<span class="badge badge-green">${util.toFixed(1)}% (极佳)</span>`;
+        if (util >= 70) return `<span class="badge badge-orange">${util.toFixed(1)}% (良好)</span>`;
+        return `<span class="badge badge-red">${util.toFixed(1)}% (浪费偏高)</span>`;
+    }
+
+    function renderBoxResultsHTML(results, container) {
+        const best = results[0];
+        let html = `<h2>最佳合拼方案推荐</h2>
+            <div id="best-scheme" class="result-highlight">
+                <button class="btn-secondary btn-copy" onclick="copyBoxQuoteToClipboard()">📋 复制报价给客户</button>
+                <div class="info-container">
+                    <div style="color:var(--accent-blue); font-weight:600; font-size:18px; margin-bottom:15px; padding-right: 140px;">★ 最优省钱用纸：${best.spec}</div>
+                    <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+                        <div><div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">单张排版</div><div style="font-size:16px; font-weight:600;">${best.setsPerSheet} 套</div></div>
+                        <div><div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">纸张利用率</div><div>${getUtilizationBadge(best.utilization)}</div></div>
+                    </div>
+                    <div style="font-size:14px; color:var(--text-muted); margin-bottom:5px;">整单总报价 (含利润)</div><div class="price-huge">¥${best.finalQuote.toFixed(2)}</div>
+                    <div style="margin-top:10px; margin-bottom: 20px;"><span style="font-size:14px; color:var(--text-muted);">单套含利润均价：</span><span style="font-size:20px; font-weight:600;">¥${best.unitPrice.toFixed(4)}</span></div>
+                    <div style="border-top:1px dashed var(--border-color); padding-top:15px;">
+                        <span style="font-size:14px; color:var(--text-muted);">需要大纸总数: </span><strong style="color:var(--text-main); font-size: 16px;">${best.sheets} 张</strong>
+                        <div class="cost-breakdown">
+                            <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">不含利润的底层成本拆解：</div>
+                            <div class="cost-item"><span>纸张成本 (${best.sheets}张)</span> <span>¥${best.paperCost.toFixed(2)}</span></div>
+                            <div class="cost-item"><span>模切费 (含起步价核算)</span> <span>¥${best.dieCutCost.toFixed(2)}</span></div>
+                            <div class="cost-item"><span>刀版费 (${best.setsPerSheet}套连拼)</span> <span>¥${best.dieBoardCost.toFixed(2)}</span></div>
+                            <div class="cost-item"><span>底成本合计</span> <span>¥${best.totalCost.toFixed(2)}</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="canvas-container"><div style="font-size:12px; color:#86868b; margin-bottom:5px;">智能排版预览图</div><canvas id="layout-canvas"></canvas></div>
+            </div>`;
+
+        // 处理其他备选方案并加入折叠面板
+        if (results.length > 1) {
+            html += `
+            <details class="alt-schemes-details">
+                <summary>
+                    <span>点击查看其他 ${results.length - 1} 种备选纸张合拼方案</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </summary>
+                <div style="overflow-x: auto; animation: fadeIn 0.3s ease;">
+                    <table id="batch-results-table">
+                        <thead><tr><th>纸张规格</th><th>利用率</th><th>单张排版</th><th>不含税底成本 (含明细)</th><th>整单报价(含利润)</th></tr></thead>
+                        <tbody>`;
+            for(let i=1; i<results.length; i++) {
+                const res = results[i];
+                html += `<tr><td style="font-weight:600;">${res.spec}</td><td>${getUtilizationBadge(res.utilization)}</td><td style="color:var(--accent-blue);">拼 ${res.setsPerSheet} 套<br><span style="font-size:12px; color:#86868b;">(${res.sheets}张大纸)</span></td><td><strong style="font-size: 15px;">¥${res.totalCost.toFixed(2)}</strong><div class="mini-breakdown">纸:¥${res.paperCost.toFixed(2)} | 模:¥${res.dieCutCost.toFixed(2)} | 刀:¥${res.dieBoardCost.toFixed(2)}</div></td><td style="font-weight:600; font-size: 16px; color:var(--text-main);">¥${res.finalQuote.toFixed(2)}</td></tr>`;
             }
+            html += `</tbody></table></div></details>`;
         }
-        renderSettingsUI();
-    }
-
-    // 2. 保存配置
-    async function saveSettingsToCloud() {
-        if (!settingsRowId) return;
-        showLoading(true);
-        const { error } = await db.from('audit_settings').update({
-            auditors: cloudSettings.auditors,
-            responsibles: cloudSettings.responsibles
-        }).eq('id', settingsRowId);
-
-        if(error) showToast('同步配置失败', 'error');
-        else {
-            updateFormSelects();
-            showToast('配置已同步');
-        }
-        showLoading(false);
-    }
-
-    // 3. 提交记录 (转Base64存储)
-    async function submitRecord(auditor, responsible, reason) {
-        showLoading(true);
-        try {
-            let imageUrls = [];
-            // 转 Base64
-            if (currentFiles.length > 0) {
-                const promises = currentFiles.map(file => {
-                    return new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onload = e => resolve(e.target.result);
-                        reader.readAsDataURL(file);
-                    });
-                });
-                imageUrls = await Promise.all(promises);
-            }
-
-            const { error } = await db.from('audit_record').insert([{
-                auditor, responsible, reason, images: imageUrls
-            }]);
-
-            if(error) throw error;
-            
-            document.getElementById('auditForm').reset();
-            currentFiles = [];
-            localPreviewUrls = [];
-            renderPreviews();
-            showToast('提交成功！');
-        } catch (error) {
-            console.error(error);
-            showToast('提交失败', 'error');
-        }
-        showLoading(false);
-    }
-
-    // 4. 获取数据
-    async function fetchCloudData() {
-        showLoading(true);
-        const { data, error } = await db.from('audit_record').select('*').order('created_at', { ascending: false }).limit(500);
         
-        if (error) {
-            showToast('获取数据失败', 'error');
-        } else {
-            cloudData = data.map(item => ({
-                id: item.id,
-                date: item.created_at,
-                auditor: item.auditor,
-                responsible: item.responsible,
-                reason: item.reason,
-                images: item.images || []
-            }));
-            applyFilters();
-            showToast('数据已刷新');
-        }
-        showLoading(false);
+        container.innerHTML = html; 
+        drawCanvasLayout(best);
     }
 
-    // 5. 删除数据
-    async function deleteCloudRecord(id) {
-        showLoading(true);
-        const { error } = await db.from('audit_record').delete().eq('id', id);
-        if (error) {
-            showToast('删除失败', 'error');
-        } else {
-            cloudData = cloudData.filter(i => i.id !== id);
-            applyFilters();
-            showToast('已删除');
-        }
-        showLoading(false);
-    }
-
-    /* ================= UI 逻辑 ================= */
-    
-    // Tab 切换
-    window.switchTab = async function(tab) {
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
-        document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
-        document.getElementById('page-' + tab).classList.add('active');
-        if (tab === 'list') {
-            if (cloudData.length === 0) await fetchCloudData();
-            else applyFilters(); 
-        }
-    }
-
-    // 提交
-    document.getElementById('auditForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const aud = document.getElementById('selectAuditor').value;
-        const res = document.getElementById('selectResponsible').value;
-        const rsn = document.getElementById('inputReason').value;
-
-        if (currentFiles.length === 0) {
-            showDialog({ title: '确认', text: '未上传图片，确定提交吗？', onConfirm: () => {
-                closeModal(); submitRecord(aud, res, rsn);
-            }});
-        } else {
-            submitRecord(aud, res, rsn);
-        }
-    });
-
-    // 筛选
-    function setupFilterListeners() {
-        ['filterDateStart', 'filterDateEnd', 'filterKeyword'].forEach(id => {
-            document.getElementById(id).addEventListener('input', applyFilters);
+    function drawCanvasLayout(best) {
+        const canvas = document.getElementById('layout-canvas'); if(!canvas) return;
+        const ctx = canvas.getContext('2d'); const maxCanvasW = 350; const scale = maxCanvasW / best.matL;
+        canvas.width = maxCanvasW; canvas.height = best.matW * scale;
+        ctx.fillStyle = '#fdfdfd'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#d2d2d7'; ctx.lineWidth = 2; ctx.strokeRect(0, 0, canvas.width, canvas.height);
+        const colors = ['#a0c4ff', '#ffadad', '#caffbf', '#ffd6a5', '#bdb2ff', '#ffc6ff'];
+        best.packedBlocks.forEach(b => {
+            ctx.fillStyle = colors[(b.id - 1) % colors.length]; ctx.fillRect(b.fit.x * scale, b.fit.y * scale, b.w * scale, b.h * scale);
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.strokeRect(b.fit.x * scale, b.fit.y * scale, b.w * scale, b.h * scale);
+            ctx.fillStyle = '#1d1d1f'; ctx.font = '11px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(`${b.label}`, (b.fit.x + b.w/2) * scale, (b.fit.y + b.h/2) * scale - 6);
+            ctx.fillText(`${b.origW}x${b.origH}`, (b.fit.x + b.w/2) * scale, (b.fit.y + b.h/2) * scale + 8);
         });
     }
 
-    function applyFilters() {
-        const start = document.getElementById('filterDateStart').value;
-        const end = document.getElementById('filterDateEnd').value;
-        const kw = document.getElementById('filterKeyword').value.toLowerCase();
+    function loadSettingsToUI() { document.getElementById('set-diecut-under').value = globalBoxSettings.dieCutUnder5k; document.getElementById('set-diecut-over').value = globalBoxSettings.dieCutOver5k; document.getElementById('set-diecut-min').value = globalBoxSettings.dieCutMin; document.getElementById('set-dieboard').value = globalBoxSettings.dieBoardRate; }
+    function saveGlobalSettings() { globalBoxSettings = { dieCutUnder5k: parseFloat(document.getElementById('set-diecut-under').value)||0, dieCutOver5k: parseFloat(document.getElementById('set-diecut-over').value)||0, dieCutMin: parseFloat(document.getElementById('set-diecut-min').value)||0, dieBoardRate: parseFloat(document.getElementById('set-dieboard').value)||0 }; localStorage.setItem('bwSettingsV2', JSON.stringify(globalBoxSettings)); alert('加工费设置已保存！'); }
+    function renderMaterialsTable() { const tbody = document.querySelector('#materials-table tbody'); tbody.innerHTML = ''; boxMaterialsDB.forEach((mat, index) => { const tr = document.createElement('tr'); tr.innerHTML = `<td><input type="number" class="mat-l" value="${mat.l}" style="width:80px; padding:6px;"></td><td><input type="number" class="mat-w" value="${mat.w}" style="width:80px; padding:6px;"></td><td><input type="number" class="mat-p" value="${mat.price}" step="0.00001" style="width:100px; padding:6px;"></td><td><button class="btn-danger" onclick="deleteMaterial(${index})">删除</button></td>`; tbody.appendChild(tr); }); }
+    function addMaterialRow() { boxMaterialsDB.push({ l: '', w: '', price: '' }); renderMaterialsTable(); }
+    function deleteMaterial(index) { boxMaterialsDB.splice(index, 1); renderMaterialsTable(); }
+    function saveMaterials() { const rows = document.querySelectorAll('#materials-table tbody tr'); let newMaterials = []; rows.forEach(row => { const l = parseFloat(row.querySelector('.mat-l').value); const w = parseFloat(row.querySelector('.mat-w').value); const p = parseFloat(row.querySelector('.mat-p').value); if(l && w && p) newMaterials.push({ l, w, price: p }); }); boxMaterialsDB = newMaterials; localStorage.setItem('bwMaterialsV2', JSON.stringify(boxMaterialsDB)); alert('规格库已更新保存！'); renderMaterialsTable(); }
 
-        const filtered = cloudData.filter(item => {
-            const t = new Date(item.date).getTime();
-            if (start && t < new Date(start).setHours(0,0,0,0)) return false;
-            if (end && t > new Date(end).setHours(23,59,59,999)) return false;
-            if (kw && !item.auditor.includes(kw) && !item.responsible.includes(kw) && !item.reason.includes(kw)) return false;
-            return true;
-        });
+    // ================== 系统 2：卷标阶梯核价引擎 ==================
+    const defaultLabelAddons = { hot: { base: 200, unit: 0.03 }, penma: { base: 50, unit: 0.006 }, zhuanshe: { base: 200, unit: 0.5 } };
+    const defaultLabelDb = {
+        '国产铜板': { '覆膜': [260, 3.2, 3.2, 3.2, 3.2], '逆向+白': [500, 5, 4, 4, 4], '镭射膜': [260, 3.5, 3.5, 3.5, 3.5] },
+        '合成纸': { '覆膜': [360, 5, 4.7, 4.5, 4.3], '逆向+白': [500, 5, 4.8, 4.5, 4.3], '镭射膜': [360, 5.3, 5, 3.8, 3.6] },
+        '艾利格底铜板': { '覆膜': [360, 4, 3.8, 3.5, 3.3], '逆向+白': [500, 5, 4.8, 4.5, 4.3], '镭射膜': [360, 4.3, 4.1, 3.8, 3.6] }
+        // 数据库已省略部分默认项保持排版整洁，可自行在界面增补修改。
+    };
 
-        renderTable(filtered);
-        renderStats(filtered);
+    let labelAddons = JSON.parse(localStorage.getItem('labelCalcAddonData_v6')) || JSON.parse(JSON.stringify(defaultLabelAddons));
+    let labelDb = JSON.parse(localStorage.getItem('labelCalcDbData_v6')) || JSON.parse(JSON.stringify(defaultLabelDb));
+    let globalLabelRuns = 1; 
+
+    function switchLabelTab(tabId) {
+        document.querySelectorAll('#label-system .page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('#label-system .segment-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('page-' + tabId).classList.add('active');
+        document.getElementById('tab-' + tabId).classList.add('active');
+        if(tabId === 'quote') triggerChange(); 
     }
 
-    function renderTable(data) {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
-        document.getElementById('emptyTip').style.display = data.length === 0 ? 'block' : 'none';
-
-        data.forEach(item => {
-            const d = new Date(item.date);
-            const dateStr = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-            const imgs = item.images.map(src => `<img src="${src}" style="width:30px; height:30px; border-radius:4px; margin-right:4px; cursor:zoom-in; object-fit:cover;" onclick="showBigImg('${src}')">`).join('');
-            
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td style="color:#64748b; font-size:12px;">${dateStr}</td>
-                <td><span class="badge badge-auditor">${item.auditor}</span></td>
-                <td><span class="badge badge-resp">${item.responsible}</span></td>
-                <td>${item.reason}</td>
-                <td><div style="display:flex;">${imgs||'-'}</div></td>
-                <td><button onclick="confirmDelete('${item.id}')" style="cursor:pointer; border:none; background:none; font-size:16px;">🗑</button></td>
-            `;
-            tbody.appendChild(tr);
-        });
+    function saveLabelToLocal() {
+        localStorage.setItem('labelCalcAddonData_v6', JSON.stringify(labelAddons));
+        localStorage.setItem('labelCalcDbData_v6', JSON.stringify(labelDb));
+        alert("✅ 卷标数据库与附加工艺参数已成功保存！"); switchLabelTab('quote'); 
     }
 
-    function renderStats(data) {
-        if (!data.length) { 
-            document.getElementById('kpiArea').style.display='none'; 
-            document.getElementById('chartArea').style.display='none'; 
-            return; 
+    function resetLabelToDefault() {
+        if(confirm("⚠️ 确定要恢复卷标初始默认的报价数据吗？")) {
+            localStorage.removeItem('labelCalcAddonData_v6'); localStorage.removeItem('labelCalcDbData_v6'); location.reload(); 
         }
-        document.getElementById('kpiArea').style.display='grid';
-        document.getElementById('chartArea').style.display='grid';
-
-        const total = data.length;
-        const respCount = {};
-        data.forEach(i => respCount[i.responsible] = (respCount[i.responsible]||0)+1);
-        const sortedResp = Object.entries(respCount).sort((a,b) => b[1]-a[1]);
-
-        const reasonCount = {};
-        data.forEach(i => reasonCount[i.reason] = (reasonCount[i.reason]||0)+1);
-        const sortedReason = Object.entries(reasonCount).sort((a,b) => b[1]-a[1]);
-
-        const topResp = sortedResp[0] ? sortedResp[0][0] : '-';
-        const topReason = sortedReason[0] ? sortedReason[0][0] : '-';
-        
-        document.getElementById('kpiArea').innerHTML = `
-            <div class="kpi-card theme-blue">
-                <div><div class="kpi-icon-wrap">📄</div><div class="kpi-label">总记录数</div><div class="kpi-value">${total}</div></div>
-                <div class="kpi-trend">历史累计</div>
-            </div>
-            <div class="kpi-card theme-purple">
-                <div><div class="kpi-icon-wrap">📅</div><div class="kpi-label">今日新增</div><div class="kpi-value">${data.filter(i=>new Date(i.date).toDateString()===new Date().toDateString()).length}</div></div>
-                <div class="kpi-trend" style="color:#10b981">实时更新</div>
-            </div>
-            <div class="kpi-card theme-orange">
-                <div><div class="kpi-icon-wrap">👤</div><div class="kpi-label">头号责任人</div><div class="kpi-value" style="font-size:20px;">${topResp}</div></div>
-                <div class="kpi-trend">占比 ${(sortedResp[0] ? (sortedResp[0][1]/total*100).toFixed(0):0)}%</div>
-            </div>
-            <div class="kpi-card theme-pink">
-                <div><div class="kpi-icon-wrap">🔥</div><div class="kpi-label">高频问题</div><div class="kpi-value" style="font-size:18px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${topReason}</div></div>
-                <div class="kpi-trend">出现 ${sortedReason[0]?sortedReason[0][1]:0} 次</div>
-            </div>
-        `;
-
-        document.getElementById('statProgressArea').innerHTML = sortedResp.slice(0,5).map((item, idx) => {
-            const pct = ((item[1]/total)*100).toFixed(1);
-            const fillClass = idx < 4 ? `fill-${idx+1}` : 'fill-other';
-            return `<div class="bar-group"><div class="bar-info"><span>${item[0]}</span><span>${item[1]}</span></div><div class="bar-bg"><div class="bar-fill ${fillClass}" style="width:${pct}%"></div></div></div>`;
-        }).join('');
-
-        document.getElementById('statReasonList').innerHTML = sortedReason.slice(0,5).map((item,idx) => `
-            <div class="rank-row">
-                <div class="rank-idx">${idx+1}</div>
-                <div class="rank-name">${item[0]}</div>
-                <div class="rank-val">${item[1]}次</div>
-            </div>
-        `).join('');
-        
-        setTimeout(() => document.querySelectorAll('.bar-fill').forEach(e => { const w=e.style.width; e.style.width='0'; setTimeout(()=>e.style.width=w,50) }), 100);
     }
 
-    // 设置逻辑
-    window.addSetting = function(type) {
-        const id = type==='auditor'?'newAuditorInput':'newResponsibleInput';
-        const val = document.getElementById(id).value.trim();
-        if(!val) return showToast('请输入内容', 'error');
-        const list = type==='auditor' ? cloudSettings.auditors : cloudSettings.responsibles;
-        if(list.includes(val)) return showToast('已存在', 'error');
-        
-        list.push(val);
-        saveSettingsToCloud();
-        renderSettingsUI();
-        document.getElementById(id).value = '';
-    }
-    window.removeSetting = function(type, name) {
-        showDialog({ title: '确认移除', text: `确定移除 "${name}" 吗？`, onConfirm: () => {
-            const list = type==='auditor' ? cloudSettings.auditors : cloudSettings.responsibles;
-            const idx = list.indexOf(name);
-            if(idx>-1) list.splice(idx,1);
-            saveSettingsToCloud();
-            renderSettingsUI();
-            closeModal();
-        }});
-    }
-    function renderSettingsUI() {
-        const render = (arr, t) => (arr||[]).map(n => `<div class="tag">${n}<span onclick="removeSetting('${t}','${n}')">×</span></div>`).join('');
-        document.getElementById('auditorList').innerHTML = render(cloudSettings.auditors, 'auditor');
-        document.getElementById('responsibleList').innerHTML = render(cloudSettings.responsibles, 'responsible');
-    }
-    function updateFormSelects() {
-        const fill = (id, arr) => document.getElementById(id).innerHTML = '<option value="">-- 选择 --</option>' + (arr||[]).map(v=>`<option value="${v}">${v}</option>`).join('');
-        fill('selectAuditor', cloudSettings.auditors);
-        fill('selectResponsible', cloudSettings.responsibles);
+    function renderMaterialRadios() {
+        const matGroup = document.getElementById('materialGroup'); matGroup.innerHTML = ''; let isFirst = true;
+        for (let mat in labelDb) {
+            let checkedStr = isFirst ? 'checked' : '';
+            matGroup.innerHTML += `<input type="radio" name="material" id="m_${mat}" value="${mat}" ${checkedStr} onchange="triggerChange()"><label for="m_${mat}">${mat}</label>`;
+            isFirst = false;
+        }
     }
 
-    // 文件处理
-    function setupPasteEvent() {
-        document.addEventListener('paste', e => {
-            if(!document.getElementById('page-add').classList.contains('active')) return;
-            const items = (e.clipboardData||e.originalEvent.clipboardData).items;
-            for(let i of items) if(i.kind==='file' && i.type.startsWith('image/')) processFile(i.getAsFile());
-        });
-    }
-    window.handleFiles = function(files) { for(let f of files) processFile(f); }
-    function processFile(file) {
-        currentFiles.push(file);
-        const url = URL.createObjectURL(file);
-        localPreviewUrls.push(url);
-        renderPreviews();
-    }
-    function renderPreviews() {
-        document.getElementById('previewContainer').innerHTML = localPreviewUrls.map((src,i) => 
-            `<div class="thumb-wrap"><img src="${src}"><div class="thumb-rm" onclick="removeFile(${i})">×</div></div>`
-        ).join('');
-    }
-    window.removeFile = function(i) {
-        currentFiles.splice(i,1); localPreviewUrls.splice(i,1); renderPreviews();
-    }
-
-    // 删除验证
-    window.confirmDelete = function(id) {
-        showDialog({
-            title: '安全验证', text: '删除不可恢复，请输入密码：', type: 'password',
-            onConfirm: (pwd) => {
-                if (pwd === ADMIN_PASSWORD) {
-                    deleteCloudRecord(id);
-                    closeModal();
-                } else {
-                    showToast('密码错误', 'error');
+    function renderEditableTable() {
+        document.getElementById('globalHotBase').value = labelAddons.hot.base; document.getElementById('globalHotUnit').value = labelAddons.hot.unit;
+        document.getElementById('globalPenmaBase').value = labelAddons.penma.base; document.getElementById('globalPenmaUnit').value = labelAddons.penma.unit;
+        document.getElementById('globalZhuansheBase').value = labelAddons.zhuanshe.base; document.getElementById('globalZhuansheUnit').value = labelAddons.zhuanshe.unit;
+        const tbody = document.getElementById('editableTableBody'); let htmlStr = ''; const procs = ['覆膜', '逆向+白', '镭射膜'];
+        for (let mat in labelDb) {
+            htmlStr += `<tr><td>${mat}</td>`;
+            procs.forEach(proc => {
+                let vals = labelDb[mat][proc] || [null, null, null, null, null];
+                for (let i = 0; i < 5; i++) {
+                    let v = vals[i] !== null ? vals[i] : '';
+                    htmlStr += `<td><input type="number" class="cell-input" placeholder="-" value="${v}" onchange="updateDbVal('${mat}', '${proc}', ${i}, this.value)"></td>`;
                 }
-            }
-        });
+            });
+            htmlStr += `</tr>`;
+        }
+        tbody.innerHTML = htmlStr;
     }
 
-    // 工具函数
-    function showLoading(show) { document.getElementById('loadingMask').style.display = show ? 'flex' : 'none'; }
-    function showToast(msg, type='success') {
-        const t = document.getElementById('toast');
-        t.innerText = (type==='success'?'✅ ':'⛔ ') + msg;
-        t.className = type==='success'?'show':'show error';
-        setTimeout(()=>t.className='', 3000);
+    function updateDbVal(mat, proc, index, valStr) {
+        let val = parseFloat(valStr); if (isNaN(val)) val = null; 
+        if (!labelDb[mat]) labelDb[mat] = {};
+        if (!labelDb[mat][proc]) labelDb[mat][proc] = [null, null, null, null, null];
+        labelDb[mat][proc][index] = val; triggerChange();
     }
-    window.showDialog = function({title, text, type='confirm', onConfirm}) {
-        document.getElementById('modalTitle').innerText = title;
-        document.getElementById('modalDesc').innerText = text;
-        const inp = document.getElementById('modalInput');
-        inp.value=''; inp.style.display=type==='password'?'block':'none';
-        document.getElementById('uniModal').style.display='flex';
-        const btn = document.getElementById('modalConfirmBtn');
-        const newBtn = btn.cloneNode(true); btn.parentNode.replaceChild(newBtn, btn);
-        newBtn.onclick = () => type==='password'?onConfirm(inp.value):onConfirm();
-        if(type==='password') inp.focus();
+
+    function getUnitPriceByArea(area, vals) {
+        if (area < 200) return vals[1]; else if (area < 500) return vals[2]; else if (area < 1000) return vals[3]; else return vals[4];
     }
-    window.closeModal = function() { document.getElementById('uniModal').style.display='none'; }
-    window.showBigImg = function(s) { document.getElementById('modalImg').src=s; document.getElementById('imgModal').style.display='flex'; }
-    window.fetchCloudData = fetchCloudData; 
-    window.exportToExcel = function() {
-        if(!cloudData.length) return showToast('无数据', 'error');
-        let csv = "\uFEFF时间,审核人,责任人,详情,图\n";
-        // 使用当前筛选后的数据
-        const start = document.getElementById('filterDateStart').value;
-        const end = document.getElementById('filterDateEnd').value;
-        const kw = document.getElementById('filterKeyword').value.toLowerCase();
-        const filtered = cloudData.filter(item => {
-            const t = new Date(item.date).getTime();
-            if (start && t < new Date(start).setHours(0,0,0,0)) return false;
-            if (end && t > new Date(end).setHours(23,59,59,999)) return false;
-            if (kw && !item.auditor.includes(kw) && !item.responsible.includes(kw) && !item.reason.includes(kw)) return false;
-            return true;
-        });
-        filtered.forEach(i => csv += `${new Date(i.date).toLocaleString()},${i.auditor},${i.responsible},"${i.reason.replace(/"/g,'""')}",${i.images.length}\n`);
-        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-        a.download = `Export_${new Date().toISOString().split('T')[0]}.csv`; a.click();
+
+    function triggerChange() {
+        labelAddons.hot.base = parseFloat(document.getElementById('globalHotBase').value) || 0; labelAddons.hot.unit = parseFloat(document.getElementById('globalHotUnit').value) || 0;
+        labelAddons.penma.base = parseFloat(document.getElementById('globalPenmaBase').value) || 0; labelAddons.penma.unit = parseFloat(document.getElementById('globalPenmaUnit').value) || 0;
+        labelAddons.zhuanshe.base = parseFloat(document.getElementById('globalZhuansheBase').value) || 0; labelAddons.zhuanshe.unit = parseFloat(document.getElementById('globalZhuansheUnit').value) || 0;
+
+        const V = parseInt(document.getElementById('variants').value) || 1;
+        const cbHot = document.getElementById('add_hot'); const cbZhuanshe = document.getElementById('add_zhuanshe'); const tipLimit = document.getElementById('addonLimitTip');
+
+        if (V > 1) { cbHot.disabled = true; cbZhuanshe.disabled = true; cbHot.checked = false; cbZhuanshe.checked = false; tipLimit.style.display = 'inline'; } 
+        else { cbHot.disabled = false; cbZhuanshe.disabled = false; tipLimit.style.display = 'none'; }
+
+        const matElem = document.querySelector('input[name="material"]:checked'); if(!matElem) return; 
+        const mat = matElem.value; const proc = document.querySelector('input[name="process"]:checked').value;
+        const isHot = cbHot.checked; const isPenma = document.getElementById('add_penma').checked; const isZhuanshe = cbZhuanshe.checked;
+
+        document.getElementById('disp_addon_wrapper').style.display = (isHot || isPenma || isZhuanshe) ? 'block' : 'none';
+        document.getElementById('disp_hot_line').style.display = isHot ? 'block' : 'none'; document.getElementById('disp_hot_base').innerText = labelAddons.hot.base; document.getElementById('disp_hot_unit').innerText = labelAddons.hot.unit;
+        document.getElementById('disp_penma_line').style.display = isPenma ? 'block' : 'none'; document.getElementById('disp_penma_base').innerText = labelAddons.penma.base; document.getElementById('disp_penma_unit').innerText = labelAddons.penma.unit;
+        document.getElementById('disp_zhuanshe_line').style.display = isZhuanshe ? 'block' : 'none'; document.getElementById('disp_zhuanshe_base').innerText = labelAddons.zhuanshe.base; document.getElementById('disp_zhuanshe_unit').innerText = labelAddons.zhuanshe.unit;
+
+        const L = parseFloat(document.getElementById('length').value) || 0; const W = parseFloat(document.getElementById('width').value) || 0; const Q = parseFloat(document.getElementById('quantity').value) || 0; 
+        const Lb = L + 4; const Wb = W + 4;
+
+        const errorSizeMsg = document.getElementById('errorSizeMsg'); const errorMsgQuote = document.getElementById('errorMsgQuote'); const calcBtn = document.getElementById('calcBtn'); const paramsDisplayBox = document.getElementById('paramsDisplayBox');
+
+        if (L > 0 && W > 0 && (Lb > 340 || Wb > 300)) {
+            errorSizeMsg.style.display = 'block'; errorMsgQuote.style.display = 'none'; paramsDisplayBox.style.display = 'none'; calcBtn.disabled = true; document.getElementById('resultPanel').style.display = 'none'; return;
+        } else { errorSizeMsg.style.display = 'none'; }
+
+        let maxPerRun = 0; if (Wb > 0) { maxPerRun = Math.floor(300 / Wb); }
+        globalLabelRuns = maxPerRun > 0 ? Math.ceil(V / maxPerRun) : 1;
+
+        document.getElementById('disp_max_per_run').innerText = maxPerRun; document.getElementById('disp_runs').innerText = globalLabelRuns;
+        const totalArea = ((Lb * Wb) / 1000000) * Q * V;
+        let tierText = totalArea < 200 ? "面积 < 200㎡" : (totalArea < 500 ? "200㎡ ≤ 面积 < 500㎡" : (totalArea < 1000 ? "500㎡ ≤ 面积 < 1000㎡" : "面积 ≥ 1000㎡"));
+        document.getElementById('disp_tier_text').innerText = `(当前判定: ${tierText})`;
+
+        let vals = labelDb[mat] && labelDb[mat][proc] ? labelDb[mat][proc] : null;
+        if (vals && vals[0] !== null && getUnitPriceByArea(totalArea, vals) !== null) {
+            document.getElementById('disp_base').innerText = vals[0]; document.getElementById('disp_unit').innerText = getUnitPriceByArea(totalArea, vals);
+            errorMsgQuote.style.display = 'none'; paramsDisplayBox.style.display = 'block'; calcBtn.disabled = false; calculateLabelQuote(true); 
+        } else {
+            errorMsgQuote.style.display = 'block'; paramsDisplayBox.style.display = 'none'; calcBtn.disabled = true; document.getElementById('resultPanel').style.display = 'none';
+        }
     }
+
+    function calculateLabelQuote(isAuto = false) {
+        const L = parseFloat(document.getElementById('length').value); const W = parseFloat(document.getElementById('width').value);
+        const V = parseInt(document.getElementById('variants').value) || 1; const Q = parseFloat(document.getElementById('quantity').value); 
+        const profitRate = parseFloat(document.getElementById('profitRate').value) || 0;
+        
+        const mat = document.querySelector('input[name="material"]:checked').value; const proc = document.querySelector('input[name="process"]:checked').value;
+        const isHot = document.getElementById('add_hot').checked; const isPenma = document.getElementById('add_penma').checked; const isZhuanshe = document.getElementById('add_zhuanshe').checked;
+
+        if(!L || !W || !Q || !V) { if(!isAuto) alert("请确保尺寸、款数和数量已填写完整！"); document.getElementById('resultPanel').style.display = 'none'; return; }
+
+        const vals = labelDb[mat][proc]; if(!vals || vals[0] === null) return; 
+
+        const bPrice = vals[0] * globalLabelRuns;
+        const areaPerLabel = ((L + 4) * (W + 4)) / 1000000; const totalQty = Q * V; const totalArea = areaPerLabel * totalQty;
+        const uPrice = getUnitPriceByArea(totalArea, vals);
+        const processFee = Math.max(bPrice, totalArea * uPrice);
+
+        const maxQtyTip = document.getElementById('maxQtyTip');
+        if (processFee === bPrice) {
+            let maxArea = 0; const singleRunBase = vals[0]; 
+            if (singleRunBase / vals[1] < 200) maxArea = bPrice / vals[1]; else if (singleRunBase / vals[2] < 500) maxArea = bPrice / vals[2]; else if (singleRunBase / vals[3] < 1000) maxArea = bPrice / vals[3]; else maxArea = bPrice / vals[4];
+            const maxQperV = Math.floor(Math.floor(maxArea / areaPerLabel) / V);
+            if (maxQperV > Q) { maxQtyTip.style.display = 'block'; document.getElementById('maxQtyValue').innerText = maxQperV; } else { maxQtyTip.style.display = 'none'; }
+        } else { maxQtyTip.style.display = 'none'; }
+
+        let hotFee = 0, penmaFee = 0, zhuansheFee = 0;
+        document.getElementById('r_addons_list').style.display = (isHot || isPenma || isZhuanshe) ? 'block' : 'none';
+        if (isHot) { hotFee = Math.max(labelAddons.hot.base * globalLabelRuns, totalQty * labelAddons.hot.unit); document.getElementById('r_hotLine').style.display = 'flex'; document.getElementById('r_hot').innerText = hotFee.toFixed(2) + " 元"; } else { document.getElementById('r_hotLine').style.display = 'none'; }
+        if (isPenma) { penmaFee = Math.max(labelAddons.penma.base, totalQty * labelAddons.penma.unit); document.getElementById('r_penmaLine').style.display = 'flex'; document.getElementById('r_penma').innerText = penmaFee.toFixed(2) + " 元"; } else { document.getElementById('r_penmaLine').style.display = 'none'; }
+        if (isZhuanshe) { zhuansheFee = Math.max(labelAddons.zhuanshe.base * globalLabelRuns, totalArea * labelAddons.zhuanshe.unit); document.getElementById('r_zhuansheLine').style.display = 'flex'; document.getElementById('r_zhuanshe').innerText = zhuansheFee.toFixed(2) + " 元"; } else { document.getElementById('r_zhuansheLine').style.display = 'none'; }
+
+        const rawCost = processFee + hotFee + penmaFee + zhuansheFee;
+        const profitAmt = rawCost * (profitRate / 100); const finalPrice = rawCost + profitAmt;
+
+        document.getElementById('r_cost').innerText = rawCost.toFixed(2) + " 元";
+        document.getElementById('r_profit_rate_show').innerText = profitRate; document.getElementById('r_profit_amt').innerText = "+ " + profitAmt.toFixed(2) + " 元";
+        document.getElementById('r_total').innerHTML = finalPrice.toFixed(2) + ' <span style="font-size:16px;">元</span>';
+        document.getElementById('r_unit').innerText = "折合对外单张：" + (finalPrice / totalQty).toFixed(4) + " 元/张";
+        document.getElementById('resultPanel').style.display = 'block';
+    }
+
+    function copyLabelQuote() {
+        const L = document.getElementById('length').value; const W = document.getElementById('width').value; const V = document.getElementById('variants').value; const Q = document.getElementById('quantity').value; const totalQty = parseInt(V) * parseInt(Q);
+        const mat = document.querySelector('input[name="material"]:checked').value; const proc = document.querySelector('input[name="process"]:checked').value;
+        let addons = []; if(document.getElementById('add_hot').checked) addons.push('加烫金'); if(document.getElementById('add_penma').checked) addons.push('加喷码'); if(document.getElementById('add_zhuanshe').checked) addons.push('加专色');
+        const addonLine = addons.length > 0 ? `\n附加工艺：${addons.join('、')}` : ''; 
+        const totalStr = document.getElementById('r_total').innerText.replace(/\s*元/, ''); const unitStr = document.getElementById('r_unit').innerText.replace('折合对外单张：', '');
+
+        const textToCopy = `【不干胶标签定制报价】\n材质：${mat}\n工艺：${proc}${addonLine}\n尺寸：${L}mm(长) × ${W}mm(宽)\n款式：共 ${V} 款\n数量：每款 ${Q} 张 (总计 ${totalQty} 张)\n-------------------\n总计报价：${totalStr} 元\n单价约合：${unitStr}`;
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            const copyBtn = document.getElementById('copyBtn');
+            copyBtn.innerHTML = '✅ 复制成功！发给客户吧'; copyBtn.style.backgroundColor = 'var(--success-color)'; copyBtn.style.color = '#FFF'; copyBtn.style.borderColor = 'var(--success-color)';
+            setTimeout(() => { copyBtn.innerHTML = '📋 复制卖价发给客户 (隐藏底价)'; copyBtn.style.backgroundColor = 'transparent'; copyBtn.style.color = 'var(--primary-color)'; copyBtn.style.borderColor = 'var(--primary-color)'; }, 2000);
+        }).catch(err => alert('复制失败，请手动选中文字复制。'));
+    }
+
+    // ================== 全局初始化 ==================
+    window.onload = function() {
+        // 白瓦系统初始化
+        loadSettingsToUI(); renderMaterialsTable(); addSizeRow(); addSizeRow();
+        // 卷标系统初始化
+        renderMaterialRadios(); renderEditableTable(); triggerChange();
+    };
 </script>
+
 </body>
 </html>
