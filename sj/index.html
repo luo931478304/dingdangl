@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>配套算价综合系统</title>
+    <title>包装配套算价</title>
     <style>
         /* ==================== 融合版全局 CSS 变量 ==================== */
         :root {
@@ -72,6 +72,15 @@
             background: var(--text-main);
             color: #fff;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .global-sys-nav button.btn-reset-all {
+            background: transparent;
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+            margin-left: 15px;
+        }
+        .global-sys-nav button.btn-reset-all:hover {
+            background: #fff0f0;
         }
         .system-module { display: none; width: 100%; max-width: 1100px; padding: 0 20px 40px; box-sizing: border-box; animation: fadeIn 0.4s ease; }
         .system-module.active { display: block; }
@@ -283,10 +292,11 @@
 <body>
 
 <div class="global-sys-nav">
-    <button id="nav-btn-box" class="active" onclick="switchSystem('box')">白瓦算价</button>
-    <button id="nav-btn-epe" onclick="switchSystem('epe')">珍珠棉+EVA算价</button>
-    <button id="nav-btn-label" onclick="switchSystem('label')">卷标算价</button>
+    <button id="nav-btn-box" class="active" onclick="switchSystem('box')">白瓦</button>
+    <button id="nav-btn-epe" onclick="switchSystem('epe')">珍珠棉+EVA</button>
+    <button id="nav-btn-label" onclick="switchSystem('label')">卷标不干胶</button>
     <button id="nav-btn-history" onclick="switchSystem('history')">报价记录</button>
+    <button id="nav-btn-reset" class="btn-reset-all" onclick="resetAllSettings()">还原参数</button>
 </div>
 
 <div id="box-system" class="system-module active">
@@ -656,7 +666,7 @@
 
             <div class="btn-group">
                 <button class="btn btn-success" style="flex: 2; margin-top:0;" onclick="saveLabelToLocal()">永久保存并返回</button>
-                <button class="btn" style="flex: 1; margin-top:0; background: #E5E5EA; color: #1D1D1F;" onclick="resetLabelToDefault()">恢复默认</button>
+                <button class="btn" style="flex: 1; margin-top:0; background: #E5E5EA; color: #1D1D1F;" onclick="resetLabelToDefault()">恢复默认（仅卷标）</button>
             </div>
         </div>
     </div>
@@ -683,6 +693,27 @@
         document.getElementById('nav-btn-' + sysId).classList.add('active');
 
         if(sysId === 'history') { renderHistoryUI(); }
+    }
+
+    // ================== 全局参数恢复默认 ==================
+    function resetAllSettings() {
+        if(confirm('确定要将所有系统（白瓦、内托、卷标）的算价参数恢复到最初的默认状态吗？\n注意：此操作不会删除您的报价历史记录。')) {
+            // 清除白瓦系统本地存储
+            localStorage.removeItem('bwSettingsV2');
+            localStorage.removeItem('bwMaterialsV2');
+            
+            // 清除内托系统本地存储
+            EPE_SETTING_KEYS.forEach(key => {
+                localStorage.removeItem(key);
+            });
+            
+            // 清除卷标系统本地存储
+            localStorage.removeItem('labelCalcAddonData_v6');
+            localStorage.removeItem('labelCalcDbData_v6');
+            
+            alert('所有参数已恢复为默认状态！系统将重新加载。');
+            location.reload();
+        }
     }
 
     // ================== 历史记录管理引擎 ==================
