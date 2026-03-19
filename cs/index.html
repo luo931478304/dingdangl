@@ -1,47 +1,52 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="antialiased scroll-smooth">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ProBox 订单协作系统 (Premium)</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.4.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <script src="https://cdn.staticfile.org/sweetalert2/11.7.32/sweetalert2.all.min.js"></script>
-    <script src="https://cdn.staticfile.org/compressorjs/1.2.1/compressor.min.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.15.0/dist/av-min.js"></script>
 
-    <script>
-        // 核心切换逻辑
+<html class="antialiased scroll-smooth" lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<title>ProBox 订单协作系统 (Premium)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdn.staticfile.org/font-awesome/6.4.2/css/all.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.staticfile.org/sweetalert2/11.7.32/sweetalert2.all.min.js"></script>
+<script src="https://cdn.staticfile.org/compressorjs/1.2.1/compressor.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.15.0/dist/av-min.js"></script>
+<script>
+        // 核心切换逻辑 - 修复了语法错误和样式覆盖问题
         window.switchApp = function(app) {
             try {
-                ['app-calculator', 'app-order-form', 'app-order-list'].forEach(id => {
-                    const el = document.getElementById(id);
+                // 1. 隐藏所有页面并移除动画类
+                const apps = ['calculator', 'order-form', 'order-list'];
+                apps.forEach(id => {
+                    const el = document.getElementById('app-' + id);
                     if(el) {
                         el.classList.add('hidden');
                         el.classList.remove('animate-fade-in-up');
                     }
                 });
 
+                // 2. 显示目标页面并重新触发动画
                 const target = document.getElementById('app-' + app);
                 if(target) {
                     target.classList.remove('hidden');
-                    void target.offsetWidth; 
+                    void target.offsetWidth; // 强制重绘
                     target.classList.add('animate-fade-in-up');
                 }
 
-                ['calculator', 'order-form', 'order-list'].forEach(id => {
+                // 3. 更新导航按钮状态
+                const navs = ['calculator', 'order-form', 'order-list'];
+                navs.forEach(id => {
                     const btn = document.getElementById('nav-' + id);
                     if(!btn) return;
                     
+                    // 恢复基础样式
                     btn.className = "nav-item px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2";
                     
                     if(id === app) {
+                        // 激活状态样式
                         btn.classList.add('bg-white', 'text-slate-900', 'shadow-sm', 'dark:bg-slate-700', 'dark:text-white');
                     } else {
+                        // 未激活状态样式
                         btn.classList.add('text-slate-500', 'hover:text-slate-800', 'hover:bg-slate-200/50');
                     }
                 });
@@ -73,11 +78,11 @@
             }
         }
     </script>
-
-    <style>
+<style>
         /* 全局高级样式重写 */
         body { background-color: #f3f4f6; color: #1e293b; letter-spacing: -0.01em; }
         
+        /* 玻璃拟态与卡片 */
         .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.5); }
         .dark .glass-panel { background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.05); }
         
@@ -85,11 +90,13 @@
         .dark .pro-card { background: #1e293b; border-color: #334155; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.3); }
         .pro-card:hover { transform: translateY(-2px); box-shadow: 0 20px 40px -12px rgba(0,0,0,0.1); }
         
+        /* 输入框美化 */
         .pro-input { width: 100%; background: #f8fafc; border: 2px solid transparent; border-radius: 14px; padding: 12px 16px; font-weight: 500; transition: all 0.2s; color: #334155; }
         .dark .pro-input { background: #0f172a; color: #f1f5f9; }
         .pro-input:focus { background: white; border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); outline: none; }
         .dark .pro-input:focus { background: #1e293b; border-color: #6366f1; }
         
+        /* 按钮美化 */
         .btn { border-radius: 12px; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s; border: none; letter-spacing: 0.02em; }
         .btn:active { transform: scale(0.96); }
         .btn-primary { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3); }
@@ -98,6 +105,7 @@
         .btn-secondary { background: white; border: 1px solid #e2e8f0; color: #64748b; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .btn-secondary:hover { border-color: #cbd5e1; color: #334155; background: #f8fafc; }
 
+        /* 发货按钮优化 - 更紧凑 */
         .btn-action-ship { 
             background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); 
             color: white; 
@@ -113,6 +121,7 @@
         .btn-action-ship:hover { box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3); transform: translateY(-1px); }
         .btn-action-ship:active { transform: scale(0.95); }
 
+        /* 标签页与状态 */
         .tab-btn { flex: 1; padding: 10px; font-size: 14px; font-weight: 600; text-align: center; cursor: pointer; z-index: 10; position: relative; color: #94a3b8; transition: color 0.3s; }
         .tab-btn.active { color: #1e293b; }
         .dark .tab-btn.active { color: white; }
@@ -124,30 +133,43 @@
         .pill-issue { background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; animation: pulse-red 2s infinite; }
         @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
-        .modern-table { border-collapse: separate; border-spacing: 0 8px; width: 100%; table-layout: auto; }
+        /* 表格优化 - 解决抖动问题 */
+        .modern-table { table-layout: auto; border-collapse: separate; border-spacing: 0 8px; width: 100%; }
         .modern-table thead th { font-size: 12px; text-transform: uppercase; color: #94a3b8; font-weight: 700; padding: 0 24px 12px; border: none; letter-spacing: 0.05em; }
         .modern-table tbody tr { background: white; transition: background-color 0.2s, box-shadow 0.2s; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
         .modern-table tbody tr td:first-child { border-top-left-radius: 16px; border-bottom-left-radius: 16px; }
         .modern-table tbody tr td:last-child { border-top-right-radius: 16px; border-bottom-right-radius: 16px; }
-        .modern-table tbody tr:hover { background-color: #fcfcfc; box-shadow: 0 6px 16px rgba(0,0,0,0.06); transform: none !important; position: relative; z-index: 10; }
+        
+        .modern-table tbody tr:hover { 
+            background-color: #fcfcfc;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.06); 
+            transform: none !important; 
+            position: relative; 
+            z-index: 10; 
+        }
+        
         .modern-table tbody td { padding: 16px 24px; vertical-align: middle; border: none; color: #475569; }
         .dark .modern-table tbody tr { background: #1e293b; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
         .dark .modern-table tbody tr:hover { background-color: #273548; }
         
+        /* 缩略图与图库 */
         .upload-thumb { width: 72px; height: 72px; object-fit: cover; border-radius: 12px; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .table-thumb { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; border: 2px solid white; cursor: zoom-in; background: #f1f5f9; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.2s; }
         .table-thumb:hover { transform: scale(1.5); z-index: 50; }
         
+        /* 提示框 Toast - 顶部醒目 */
         #toastContainer { position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 10000; pointer-events: none; width: auto; min-width: 300px; display: flex; flex-direction: column-reverse; gap: 10px; }
         .toast-msg { background: white; color: #1e293b; padding: 14px 24px; border-radius: 16px; font-size: 14px; font-weight: 600; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.15), 0 4px 6px -2px rgba(0,0,0,0.05); opacity: 0; transform: translateY(-20px) scale(0.95); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 12px; border-left: 4px solid #6366f1; pointer-events: auto; }
         .toast-msg.show { opacity: 1; transform: translateY(0) scale(1); }
         .toast-msg i { font-size: 18px; }
         
+        /* 自定义滚动条 */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
+        /* Mobile Optimization */
         @media (max-width: 768px) {
             header .flex.bg-slate-100\/50 { overflow-x: auto; max-width: 200px; -webkit-overflow-scrolling: touch; }
             .modern-table thead { display: none; }
@@ -158,579 +180,514 @@
             .modern-table tbody td:last-child { justify-content: flex-end; padding-top: 16px; border-top: 1px dashed #e2e8f0; margin-top: 12px; }
         }
 
+        /* Lightbox Navigation */
         .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); color: white; background: rgba(255,255,255,0.1); backdrop-filter: blur(4px); padding: 24px 12px; cursor: pointer; transition: 0.2s; border-radius: 12px; z-index: 20; border: 1px solid rgba(255,255,255,0.1); }
         .lb-nav:hover { background: rgba(255,255,255,0.2); transform: translateY(-50%) scale(1.1); }
         .lb-prev { left: 24px; } .lb-next { right: 24px; }
         
+        /* 自定义复选框 */
         .custom-checkbox { accent-color: #0f172a; width: 18px; height: 18px; cursor: pointer; }
-
-        /* ================= 新增与优化：报价台专属样式 ================= */
-        /* 1. 精准错误震动动画 */
-        .animate-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake { 
-            10%, 90% { transform: translate3d(-2px, 0, 0); } 
-            20%, 80% { transform: translate3d(4px, 0, 0); } 
-            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 
-            40%, 60% { transform: translate3d(6px, 0, 0); } 
-        }
-        .input-error { border-color: #ef4444 !important; background-color: #fef2f2 !important; color: #b91c1c !important; }
-
-        /* 2. 刀模图尺寸联动高亮 */
-        .dim-group line, .dim-group text { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .dim-highlight line { stroke: #4f46e5 !important; stroke-width: 2.5px !important; }
-        .dim-highlight text { fill: #4f46e5 !important; font-weight: 800 !important; font-size: 14px !important; }
-        
-        /* 3. 拼版边缘废料区 (咬口警示纹理) */
-        .margin-hatch { background: repeating-linear-gradient(45deg, rgba(239, 68, 68, 0.05), rgba(239, 68, 68, 0.05) 10px, rgba(239, 68, 68, 0.1) 10px, rgba(239, 68, 68, 0.1) 20px); }
     </style>
 </head>
 <body class="pb-safe-area min-h-screen flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-900">
-
-    <div id="loadingMask" class="fixed inset-0 bg-white/80 dark:bg-slate-900/90 z-[9999] hidden flex-col justify-center items-center backdrop-blur-md">
-        <div class="relative">
-            <div class="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
-            <div class="absolute inset-0 flex items-center justify-center text-indigo-600">
-                <i class="fas fa-cube text-xl animate-pulse"></i>
-            </div>
-        </div>
-        <div id="loadingText" class="text-sm font-bold text-slate-500 mt-4 tracking-widest uppercase animate-pulse">系统处理中...</div>
-    </div>
-    
-    <div id="loginModal" class="fixed inset-0 z-[10002] bg-slate-900/40 backdrop-blur-md flex justify-center items-center p-4 hidden">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-3xl p-10 shadow-2xl relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
-            <div class="text-center mb-10">
-                <div class="w-16 h-16 bg-slate-900 dark:bg-white rounded-2xl flex items-center justify-center text-white dark:text-slate-900 text-2xl mx-auto mb-6 shadow-xl shadow-slate-900/20 transform rotate-3"><i class="fas fa-user-astronaut"></i></div>
-                <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">ProBox 登录</h2>
-                <p class="text-sm text-slate-400 mt-2 font-medium">企业级订单协作系统</p>
-            </div>
-            <div class="space-y-5">
-                <div class="relative group">
-                    <i class="fas fa-user absolute left-4 top-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors"></i>
-                    <input id="loginUser" class="pro-input h-12 pl-12" placeholder="输入用户名">
-                </div>
-                <div class="relative group">
-                    <i class="fas fa-lock absolute left-4 top-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors"></i>
-                    <input id="loginPass" type="password" class="pro-input h-12 pl-12" placeholder="输入密码">
-                </div>
-                <button onclick="Auth.login()" class="btn btn-primary w-full h-12 text-sm shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 transform hover:-translate-y-0.5 transition-all mt-2">立即登录 <i class="fas fa-arrow-right"></i></button>
-                <div class="flex justify-between items-center mt-6 pt-6 border-t border-slate-100 dark:border-slate-700">
-                    <button onclick="Auth.guestLogin()" class="text-xs font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">访客浏览模式</button>
-                    <button onclick="Auth.register()" class="text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors">注册新账号</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="toastContainer"></div>
-
-    <div id="lightbox" class="fixed inset-0 z-[10001] bg-black/95 hidden flex items-center justify-center p-4 cursor-pointer select-none backdrop-blur-xl" onclick="if(event.target === this) UI.closeLightbox()">
-        <button onclick="UI.closeLightbox()" class="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all z-20"><i class="fas fa-times text-xl"></i></button>
-        <div class="lb-nav lb-prev" onclick="UI.prevImage(); event.stopPropagation()"><i class="fas fa-chevron-left text-2xl"></i></div>
-        <img id="lightboxImg" class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl animate-fade-in cursor-default ring-1 ring-white/10" onclick="event.stopPropagation()">
-        <div class="lb-nav lb-next" onclick="UI.nextImage(); event.stopPropagation()"><i class="fas fa-chevron-right text-2xl"></i></div>
-        <div id="lightboxCounter" class="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/80 text-sm font-bold tracking-widest bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">1 / 1</div>
-    </div>
-
-    <header class="sticky top-4 z-40 mx-4 md:mx-auto max-w-7xl">
-        <div class="glass-panel rounded-2xl px-4 md:px-6 h-16 md:h-20 flex items-center justify-between shadow-xl shadow-slate-200/40 dark:shadow-none">
-            <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-gradient-to-br from-slate-800 to-black dark:from-white dark:to-slate-200 rounded-xl flex items-center justify-center text-white dark:text-slate-900 text-xl shadow-lg shadow-slate-900/20 transform hover:rotate-6 transition-transform duration-500 cursor-pointer">
-                    <i class="fas fa-cube"></i>
-                </div>
-                <div class="leading-none hidden sm:block">
-                    <h1 class="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white">ProBox <span class="text-indigo-500">MAX</span></h1>
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Order System</span>
-                </div>
-            </div>
-            
-            <div class="flex bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-xl gap-1 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700">
-                <button onclick="switchApp('calculator')" id="nav-calculator" class="nav-item px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"><i class="fas fa-calculator"></i> <span class="hidden md:inline">打样</span></button>
-                <button onclick="switchApp('order-form')" id="nav-order-form" class="nav-item px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"><i class="fas fa-plus-circle"></i> <span class="hidden md:inline">下单</span></button>
-                <button onclick="switchApp('order-list')" id="nav-order-list" class="nav-item px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2"><i class="fas fa-tasks"></i> <span class="hidden md:inline">记录</span></button>
-            </div>
-            
-            <div class="flex items-center gap-4">
-                <div id="currentUserDisplay" class="text-xs font-bold text-slate-500 hidden md:block px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700">Guest</div>
-                <button onclick="Auth.logout()" class="w-10 h-10 rounded-full bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-50 transition-all flex items-center justify-center border border-slate-200 hover:border-red-200" title="退出登录"><i class="fas fa-power-off"></i></button>
-            </div>
-        </div>
-    </header>
-
-    <main class="flex-grow max-w-7xl mx-auto px-4 py-6 md:py-10 w-full space-y-8">
-        
-        <div id="app-calculator" class="animate-fade-in-up">
-             <div class="flex justify-between items-center mb-8">
-                <div>
-                    <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">智能报价台</h2>
-                    <p class="text-slate-400 text-sm mt-1 font-medium">快速计算盒型成本与排版</p>
-                </div>
-                <button id="btnQuickSettings" class="text-xs font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 py-3 rounded-xl shadow-sm hover:shadow-lg transition-all auth-guard-admin group">
-                    <i class="fas fa-sliders-h group-hover:rotate-180 transition-transform duration-500"></i> <span>参数配置</span><span class="w-px h-3 bg-slate-300 mx-1"></span><span id="displayPaperSize" class="font-mono text-slate-400">读取中...</span>
-                </button>
-            </div>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                <div class="lg:col-span-5 space-y-6">
-                    <div class="pro-card p-8">
-                        <div class="bg-slate-100 dark:bg-slate-900 p-1.5 rounded-xl flex w-full mb-8 relative border border-slate-200 dark:border-slate-700">
-                            <div id="tabIndicator" class="absolute h-[calc(100%-12px)] top-1.5 left-1.5 bg-white dark:bg-slate-700 rounded-lg shadow-sm transition-transform duration-300 w-[calc(50%-6px)]"></div>
-                            <button class="tab-btn active" data-target="basic">标准盒型</button>
-                            <button class="tab-btn" data-target="unfolded">自定义展开</button>
-                        </div>
-                        
-                        <div id="panel-basic" class="space-y-6">
-                            <div>
-                                <label class="text-xs font-bold text-slate-400 mb-3 block uppercase tracking-wider flex items-center gap-2"><i class="fas fa-cube"></i> 盒型结构</label>
-                                <div class="relative">
-                                    <select id="boxType" class="pro-input pro-select h-12 appearance-none cursor-pointer"></select>
-                                    <i class="fas fa-chevron-down absolute right-4 top-4 text-slate-400 pointer-events-none"></i>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-3 gap-4">
-                                <div><label class="text-[10px] font-bold text-slate-400 mb-2 block text-center">长 L (mm)</label><input type="number" id="length" class="pro-input font-mono font-bold text-center text-lg h-12 transition-all" placeholder="0" step="1"></div>
-                                <div><label class="text-[10px] font-bold text-slate-400 mb-2 block text-center">宽 W (mm)</label><input type="number" id="width" class="pro-input font-mono font-bold text-center text-lg h-12 transition-all" placeholder="0" step="1"></div>
-                                <div><label class="text-[10px] font-bold text-slate-400 mb-2 block text-center">高 H (mm)</label><input type="number" id="height" class="pro-input font-mono font-bold text-center text-lg h-12 transition-all" placeholder="0" step="1"></div>
-                            </div>
-                            <div><label class="text-xs font-bold text-slate-400 mb-3 block uppercase tracking-wider flex items-center gap-2"><i class="fas fa-layer-group"></i> 打样数量</label><input type="number" id="quantity" class="pro-input font-bold text-lg h-12" value="1" min="1"></div>
-                            
-                            <label class="flex items-center gap-4 p-5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800/50 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all group">
-                                <input type="checkbox" id="checkCorrugatedBasic" class="custom-checkbox">
-                                <div class="flex flex-col">
-                                    <span class="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 transition-colors">加坑工艺 (裱瓦楞)</span>
-                                    <span class="text-[10px] text-slate-400">额外费用 +30元</span>
-                                </div>
-                            </label>
-                            
-                            <div class="grid grid-cols-4 gap-4 pt-4">
-                                <button id="btnResetBasic" class="col-span-1 btn-secondary text-slate-400 hover:text-red-500 hover:bg-red-50 hover:border-red-100 h-12 rounded-xl"><i class="fas fa-eraser"></i></button>
-                                <button id="btnCalculate" class="col-span-3 btn-primary text-sm h-12 rounded-xl"><i class="fas fa-calculator"></i> 立即计算</button>
-                            </div>
-                        </div>
-
-                        <div id="panel-unfolded" class="space-y-6 hidden">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div><label class="text-xs font-bold text-slate-400 mb-2 block">展开长 (mm)</label><input type="number" id="unfoldedL" class="pro-input font-mono font-bold text-center text-lg h-12 transition-all" placeholder="Max"></div>
-                                <div><label class="text-xs font-bold text-slate-400 mb-2 block">展开宽 (mm)</label><input type="number" id="unfoldedW" class="pro-input font-mono font-bold text-center text-lg h-12 transition-all" placeholder="Max"></div>
-                            </div>
-                            <div><label class="text-xs font-bold text-slate-400 mb-3 block">数量</label><input type="number" id="quantityUnfolded" class="pro-input font-bold text-lg h-12" value="1" min="1"></div>
-                             <label class="flex items-center gap-4 p-5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800/50 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all group">
-                                <input type="checkbox" id="checkCorrugatedUnfolded" class="custom-checkbox"><div class="flex flex-col"><span class="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 transition-colors">加坑工艺</span><span class="text-[10px] text-slate-400">额外费用 +30元</span></div>
-                            </label>
-                            <div class="grid grid-cols-4 gap-4 pt-4">
-                                <button id="btnResetUnfolded" class="col-span-1 btn-secondary text-slate-400 hover:text-red-500 hover:bg-red-50 h-12 rounded-xl"><i class="fas fa-eraser"></i></button>
-                                <button id="btnCalculateUnfolded" class="col-span-3 btn-primary text-sm h-12 rounded-xl">计算自定义</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="lg:col-span-7 space-y-6">
-                    <div id="warningCard" class="hidden pro-card p-6 border-l-4 border-l-red-500 bg-red-50/50 flex gap-4 items-start shadow-none">
-                        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 text-red-500 text-xl"><i class="fas fa-exclamation-triangle"></i></div>
-                        <div><h4 class="font-bold text-red-800 text-lg">无法排版</h4><div id="warningContent" class="text-sm text-red-600 mt-1 opacity-90 font-medium leading-relaxed"></div></div>
-                    </div>
-                    
-                    <div id="resultCard" class="hidden opacity-0 transition-opacity duration-500 space-y-6">
-                        <div class="pro-card p-0 overflow-hidden border-0 shadow-2xl shadow-indigo-500/10 ring-1 ring-black/5">
-                             <div class="p-8 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 text-white relative overflow-hidden">
-                                <div class="absolute top-0 right-0 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-                                <div class="relative z-10">
-                                    <p class="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2 flex items-center gap-2"><i class="fas fa-coins"></i> Total Estimated Cost</p>
-                                    <div class="flex items-baseline gap-3"><h2 class="text-6xl font-black tracking-tighter" id="resPrice">¥0</h2></div>
-                                    <p id="resUnitPrice" class="text-sm font-mono text-indigo-100 mt-4 bg-white/10 inline-flex px-4 py-1.5 rounded-lg backdrop-blur-md border border-white/10">单价: --</p>
-                                </div>
-                                <div class="flex flex-col gap-3 items-end relative z-10 mt-6 md:mt-0 w-full md:w-auto">
-                                    <button id="btnBridgeAddToOrder" class="btn bg-white text-slate-900 hover:bg-indigo-50 hover:text-indigo-700 w-full md:w-40 shadow-lg border-0 h-12 font-bold"><i class="fas fa-plus"></i> 加入订单</button>
-                                    <button id="btnCopyQuote" class="btn bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white w-full md:w-40 border border-slate-700 h-12"><i class="far fa-copy"></i> 复制报价</button>
-                                </div>
-                            </div>
-                            <div class="px-8 py-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
-                                <div id="costList" class="flex flex-wrap gap-x-8 gap-y-2 text-sm text-slate-500 font-mono font-medium"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="pro-card overflow-hidden flex flex-col h-80 relative group">
-                                <div class="absolute top-4 left-4 z-10 bg-white/80 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-slate-500 shadow-sm border border-slate-100">刀模结构</div>
-                                <div id="dimensionDetails" class="absolute top-4 right-4 z-10 text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded"></div>
-                                <div class="scene-container flex-grow w-full bg-white relative transition-transform duration-500 group-hover:scale-[1.02]" id="svgContainer"></div>
-                            </div>
-                            <div id="layoutVisualCard" class="pro-card overflow-hidden hidden flex-col h-80 relative group">
-                                <div class="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50"><h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2"><i class="fas fa-th"></i> 拼版示意</h3><span id="layoutPaperLabel" class="text-[10px] px-2 py-0.5 rounded bg-indigo-100 text-indigo-600 font-bold"></span></div>
-                                <div class="p-6 bg-slate-100/30 flex-grow relative">
-                                    <div id="layoutGridsContainer" class="shadow-xl rounded-sm transition-transform duration-500 group-hover:scale-[1.02] w-full h-full relative"></div>
-                                    <div class="absolute bottom-4 left-5 right-5 flex justify-between items-center text-[10px] text-slate-500 bg-white/95 p-3 rounded-xl border border-slate-100 backdrop-blur-md shadow-lg"><span id="layoutDesc" class="font-medium"></span><span id="layoutEfficiency" class="font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded"></span></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="pro-card">
-                        <div class="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800">
-                            <h3 class="text-sm font-bold text-slate-700 dark:text-white flex items-center gap-2 uppercase tracking-wider"><i class="fas fa-history text-slate-400"></i> 最近计算</h3>
-                            <button id="btnClearHistory" class="text-[10px] text-slate-400 hover:text-red-500 transition-colors font-bold px-2 py-1 hover:bg-red-50 rounded">清空记录</button>
-                        </div>
-                        <div id="calcHistoryList" class="max-h-72 overflow-y-auto custom-scrollbar"></div>
-                        <div class="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center rounded-b-3xl">
-                            <label class="text-xs text-slate-600 font-bold flex items-center gap-3 cursor-pointer ml-1 select-none hover:text-indigo-600 transition-colors"><input type="checkbox" id="checkAllHistory" class="custom-checkbox"> 全选</label>
-                            <div class="flex gap-3">
-                                <button onclick="CalcUI.batchCopyQuote()" class="btn btn-secondary text-xs px-4 h-10 bg-white shadow-sm border-0"><i class="far fa-clipboard"></i> 复制汇总</button>
-                                <button onclick="CalcUI.batchAddToOrder()" class="btn btn-primary text-xs px-4 h-10"><i class="fas fa-arrow-right"></i> 批量入单</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="app-order-form" class="hidden animate-fade-in-up space-y-6">
-            <div class="pro-card p-8 md:p-10 border-t-4 border-t-slate-800 shadow-2xl">
-                <div class="flex flex-col md:flex-row justify-between md:items-center mb-10 border-b border-slate-100 dark:border-slate-800 pb-6 gap-4">
-                    <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-3" id="formTitle">
-                        <span class="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center text-sm"><i class="fas fa-pen-nib"></i></span>
+<div class="fixed inset-0 bg-white/80 dark:bg-slate-900/90 z-[9999] hidden flex-col justify-center items-center backdrop-blur-md" id="loadingMask">
+<div class="relative">
+<div class="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+<div class="absolute inset-0 flex items-center justify-center text-indigo-600">
+<i class="fas fa-cube text-xl animate-pulse"></i>
+</div>
+</div>
+<div class="text-sm font-bold text-slate-500 mt-4 tracking-widest uppercase animate-pulse" id="loadingText">系统处理中...</div>
+</div>
+<div class="fixed inset-0 z-[10002] bg-slate-900/40 backdrop-blur-md flex justify-center items-center p-4 hidden" id="loginModal">
+<div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-3xl p-10 shadow-2xl relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+<div class="text-center mb-10">
+<div class="w-16 h-16 bg-slate-900 dark:bg-white rounded-2xl flex items-center justify-center text-white dark:text-slate-900 text-2xl mx-auto mb-6 shadow-xl shadow-slate-900/20 transform rotate-3"><i class="fas fa-user-astronaut"></i></div>
+<h2 class="text-2xl font-extrabold text-slate-900 dark:text-white">ProBox 登录</h2>
+<p class="text-sm text-slate-400 mt-2 font-medium">企业级订单协作系统</p>
+</div>
+<div class="space-y-5">
+<div class="relative group">
+<i class="fas fa-user absolute left-4 top-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors"></i>
+<input class="pro-input h-12 pl-12" id="loginUser" placeholder="输入用户名"/>
+</div>
+<div class="relative group">
+<i class="fas fa-lock absolute left-4 top-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors"></i>
+<input class="pro-input h-12 pl-12" id="loginPass" placeholder="输入密码" type="password"/>
+</div>
+<button class="btn btn-primary w-full h-12 text-sm shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 transform hover:-translate-y-0.5 transition-all mt-2" data-action="login">立即登录 <i class="fas fa-arrow-right"></i></button>
+<div class="flex justify-between items-center mt-6 pt-6 border-t border-slate-100 dark:border-slate-700">
+<button class="text-xs font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors" data-action="guest-login">访客浏览模式</button>
+<button class="text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors" data-action="register">注册新账号</button>
+</div>
+</div>
+</div>
+</div>
+<div id="toastContainer"></div>
+<div class="fixed inset-0 z-[10001] bg-black/95 hidden flex items-center justify-center p-4 cursor-pointer select-none backdrop-blur-xl" data-overlay-close="lightbox" id="lightbox">
+<button class="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all z-20" data-action="close-lightbox"><i class="fas fa-times text-xl"></i></button>
+<div class="lb-nav lb-prev" data-action="prev-lightbox"><i class="fas fa-chevron-left text-2xl"></i></div>
+<img class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl animate-fade-in cursor-default ring-1 ring-white/10" id="lightboxImg"/>
+<div class="lb-nav lb-next" data-action="next-lightbox"><i class="fas fa-chevron-right text-2xl"></i></div>
+<div class="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/80 text-sm font-bold tracking-widest bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/10" id="lightboxCounter">1 / 1</div>
+</div>
+<header class="sticky top-4 z-40 mx-4 md:mx-auto max-w-7xl">
+<div class="glass-panel rounded-2xl px-4 md:px-6 h-16 md:h-20 flex items-center justify-between shadow-xl shadow-slate-200/40 dark:shadow-none">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-gradient-to-br from-slate-800 to-black dark:from-white dark:to-slate-200 rounded-xl flex items-center justify-center text-white dark:text-slate-900 text-xl shadow-lg shadow-slate-900/20 transform hover:rotate-6 transition-transform duration-500 cursor-pointer">
+<i class="fas fa-cube"></i>
+</div>
+<div class="leading-none hidden sm:block">
+<h1 class="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white">ProBox <span class="text-indigo-500">MAX</span></h1>
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Order System</span>
+</div>
+</div>
+<div class="flex bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-xl gap-1 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700">
+<button class="nav-item px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white" data-action="switch-app" data-app="calculator" id="nav-calculator"><i class="fas fa-calculator"></i> <span class="hidden md:inline">打样</span></button>
+<button class="nav-item px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-500 hover:text-slate-800 hover:bg-slate-200/50" data-action="switch-app" data-app="order-form" id="nav-order-form"><i class="fas fa-plus-circle"></i> <span class="hidden md:inline">下单</span></button>
+<button class="nav-item px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-slate-500 hover:text-slate-800 hover:bg-slate-200/50" data-action="switch-app" data-app="order-list" id="nav-order-list"><i class="fas fa-tasks"></i> <span class="hidden md:inline">记录</span></button>
+</div>
+<div class="flex items-center gap-4">
+<div class="text-xs font-bold text-slate-500 hidden md:block px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700" id="currentUserDisplay">Guest</div>
+<button class="w-10 h-10 rounded-full bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all flex items-center justify-center border border-slate-200 hover:border-red-200" data-action="logout" title="退出登录"><i class="fas fa-power-off"></i></button>
+</div>
+</div>
+</header>
+<main class="flex-grow max-w-7xl mx-auto px-4 py-6 md:py-10 w-full space-y-8">
+<div class="animate-fade-in-up" id="app-calculator">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h2 class="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight">智能报价台</h2>
+<p class="text-slate-400 text-sm mt-1 font-medium">快速计算盒型成本与排版</p>
+</div>
+<button class="text-xs font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-5 py-3 rounded-xl shadow-sm hover:shadow-lg transition-all auth-guard-admin group" id="btnQuickSettings">
+<i class="fas fa-sliders-h group-hover:rotate-180 transition-transform duration-500"></i> <span>参数配置</span><span class="w-px h-3 bg-slate-300 mx-1"></span><span class="font-mono text-slate-400" id="displayPaperSize">读取中...</span>
+</button>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<div class="lg:col-span-5 space-y-6">
+<div class="pro-card p-8">
+<div class="bg-slate-100 dark:bg-slate-900 p-1.5 rounded-xl flex w-full mb-8 relative border border-slate-200 dark:border-slate-700">
+<div class="absolute h-[calc(100%-12px)] top-1.5 left-1.5 bg-white dark:bg-slate-700 rounded-lg shadow-sm transition-transform duration-300 w-[calc(50%-6px)]" id="tabIndicator"></div>
+<button class="tab-btn active" data-target="basic">标准盒型</button>
+<button class="tab-btn" data-target="unfolded">自定义展开</button>
+</div>
+<div class="space-y-6" id="panel-basic">
+<div>
+<label class="text-xs font-bold text-slate-400 mb-3 block uppercase tracking-wider flex items-center gap-2"><i class="fas fa-cube"></i> 盒型结构</label>
+<div class="relative">
+<select class="pro-input pro-select h-12 appearance-none cursor-pointer" id="boxType"></select>
+<i class="fas fa-chevron-down absolute right-4 top-4 text-slate-400 pointer-events-none"></i>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<div><label class="text-[10px] font-bold text-slate-400 mb-2 block text-center">长 L (mm)</label><input class="pro-input font-mono font-bold text-center text-lg h-12" id="length" placeholder="0" step="1" type="number"/></div>
+<div><label class="text-[10px] font-bold text-slate-400 mb-2 block text-center">宽 W (mm)</label><input class="pro-input font-mono font-bold text-center text-lg h-12" id="width" placeholder="0" step="1" type="number"/></div>
+<div><label class="text-[10px] font-bold text-slate-400 mb-2 block text-center">高 H (mm)</label><input class="pro-input font-mono font-bold text-center text-lg h-12" id="height" placeholder="0" step="1" type="number"/></div>
+</div>
+<div><label class="text-xs font-bold text-slate-400 mb-3 block uppercase tracking-wider flex items-center gap-2"><i class="fas fa-layer-group"></i> 打样数量</label><input class="pro-input font-bold text-lg h-12" id="quantity" min="1" type="number" value="1"/></div>
+<label class="flex items-center gap-4 p-5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800/50 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all group">
+<input class="custom-checkbox" id="checkCorrugatedBasic" type="checkbox"/>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 transition-colors">加坑工艺 (裱瓦楞)</span>
+<span class="text-[10px] text-slate-400">额外费用 +30元</span>
+</div>
+</label>
+<div class="grid grid-cols-4 gap-4 pt-4">
+<button class="col-span-1 btn-secondary text-slate-400 hover:text-red-500 hover:bg-red-50 hover:border-red-100 h-12 rounded-xl" id="btnResetBasic"><i class="fas fa-eraser"></i></button>
+<button class="col-span-3 btn-primary text-sm h-12 rounded-xl" id="btnCalculate"><i class="fas fa-calculator"></i> 立即计算</button>
+</div>
+</div>
+<div class="space-y-6 hidden" id="panel-unfolded">
+<div class="grid grid-cols-2 gap-4">
+<div><label class="text-xs font-bold text-slate-400 mb-2 block">展开长 (mm)</label><input class="pro-input font-mono font-bold text-center text-lg h-12" id="unfoldedL" placeholder="Max" type="number"/></div>
+<div><label class="text-xs font-bold text-slate-400 mb-2 block">展开宽 (mm)</label><input class="pro-input font-mono font-bold text-center text-lg h-12" id="unfoldedW" placeholder="Max" type="number"/></div>
+</div>
+<div><label class="text-xs font-bold text-slate-400 mb-3 block">数量</label><input class="pro-input font-bold text-lg h-12" id="quantityUnfolded" min="1" type="number" value="1"/></div>
+<label class="flex items-center gap-4 p-5 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800/50 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all group">
+<input class="custom-checkbox" id="checkCorrugatedUnfolded" type="checkbox"/><div class="flex flex-col"><span class="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 transition-colors">加坑工艺</span><span class="text-[10px] text-slate-400">额外费用 +30元</span></div>
+</label>
+<div class="grid grid-cols-4 gap-4 pt-4">
+<button class="col-span-1 btn-secondary text-slate-400 hover:text-red-500 hover:bg-red-50 h-12 rounded-xl" id="btnResetUnfolded"><i class="fas fa-eraser"></i></button>
+<button class="col-span-3 btn-primary text-sm h-12 rounded-xl" id="btnCalculateUnfolded">计算自定义</button>
+</div>
+</div>
+</div>
+</div>
+<div class="lg:col-span-7 space-y-6">
+<div class="hidden pro-card p-6 border-l-4 border-l-red-500 bg-red-50/50 flex gap-4 items-start shadow-none" id="warningCard">
+<div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 text-red-500 text-xl"><i class="fas fa-exclamation-triangle"></i></div>
+<div><h4 class="font-bold text-red-800 text-lg">无法排版</h4><div class="text-sm text-red-600 mt-1 opacity-90 font-medium" id="warningContent"></div></div>
+</div>
+<div class="hidden opacity-0 transition-opacity duration-500 space-y-6" id="resultCard">
+<div class="pro-card p-0 overflow-hidden border-0 shadow-2xl shadow-indigo-500/10 ring-1 ring-black/5">
+<div class="p-8 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-center bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 text-white relative overflow-hidden">
+<div class="absolute top-0 right-0 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+<div class="relative z-10">
+<p class="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2 flex items-center gap-2"><i class="fas fa-coins"></i> Total Estimated Cost</p>
+<div class="flex items-baseline gap-3"><h2 class="text-6xl font-black tracking-tighter" id="resPrice">¥0</h2></div>
+<p class="text-sm font-mono text-indigo-100 mt-4 bg-white/10 inline-flex px-4 py-1.5 rounded-lg backdrop-blur-md border border-white/10" id="resUnitPrice">单价: --</p>
+</div>
+<div class="flex flex-col gap-3 items-end relative z-10 mt-6 md:mt-0 w-full md:w-auto">
+<button class="btn bg-white text-slate-900 hover:bg-indigo-50 hover:text-indigo-700 w-full md:w-40 shadow-lg border-0 h-12 font-bold" id="btnBridgeAddToOrder"><i class="fas fa-plus"></i> 加入订单</button>
+<button class="btn bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white w-full md:w-40 border border-slate-700 h-12" id="btnCopyQuote"><i class="far fa-copy"></i> 复制报价</button>
+</div>
+</div>
+<div class="px-8 py-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+<div class="flex flex-wrap gap-x-8 gap-y-2 text-sm text-slate-500 font-mono font-medium" id="costList"></div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="pro-card overflow-hidden flex flex-col h-80 relative group">
+<div class="absolute top-4 left-4 z-10 bg-white/80 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-slate-500 shadow-sm border border-slate-100">刀模结构</div>
+<div class="absolute top-4 right-4 z-10 text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded" id="dimensionDetails"></div>
+<div class="scene-container flex-grow w-full bg-white relative transition-transform duration-500 group-hover:scale-[1.02]" id="svgContainer"></div>
+</div>
+<div class="pro-card overflow-hidden hidden flex-col h-80 relative group" id="layoutVisualCard">
+<div class="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50"><h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2"><i class="fas fa-th"></i> 拼版示意</h3><span class="text-[10px] px-2 py-0.5 rounded bg-indigo-100 text-indigo-600 font-bold" id="layoutPaperLabel"></span></div>
+<div class="p-6 bg-slate-100/30 flex-grow relative"><div class="shadow-xl rounded-sm transition-transform duration-500 group-hover:scale-[1.02]" id="layoutGridsContainer"></div><div class="absolute bottom-4 left-5 right-5 flex justify-between items-center text-[10px] text-slate-500 bg-white/95 p-3 rounded-xl border border-slate-100 backdrop-blur-md shadow-lg"><span class="font-medium" id="layoutDesc"></span><span class="font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded" id="layoutEfficiency"></span></div></div>
+</div>
+</div>
+</div>
+<div class="pro-card">
+<div class="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800">
+<h3 class="text-sm font-bold text-slate-700 dark:text-white flex items-center gap-2 uppercase tracking-wider"><i class="fas fa-history text-slate-400"></i> 最近计算</h3>
+<button class="text-[10px] text-slate-400 hover:text-red-500 transition-colors font-bold px-2 py-1 hover:bg-red-50 rounded" id="btnClearHistory">清空记录</button>
+</div>
+<div class="max-h-72 overflow-y-auto custom-scrollbar" id="calcHistoryList"></div>
+<div class="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center rounded-b-3xl">
+<label class="text-xs text-slate-600 font-bold flex items-center gap-3 cursor-pointer ml-1 select-none hover:text-indigo-600 transition-colors"><input class="custom-checkbox" id="checkAllHistory" type="checkbox"/> 全选</label>
+<div class="flex gap-3">
+<button class="btn btn-secondary text-xs px-4 h-10 bg-white shadow-sm border-0" data-action="batch-copy-quote"><i class="far fa-clipboard"></i> 复制汇总</button>
+<button class="btn btn-primary text-xs px-4 h-10" data-action="batch-add-order"><i class="fas fa-arrow-right"></i> 批量入单</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="hidden animate-fade-in-up space-y-6" id="app-order-form">
+<div class="pro-card p-8 md:p-10 border-t-4 border-t-slate-800 shadow-2xl">
+<div class="flex flex-col md:flex-row justify-between md:items-center mb-10 border-b border-slate-100 dark:border-slate-800 pb-6 gap-4">
+<h3 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-3" id="formTitle">
+<span class="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center text-sm"><i class="fas fa-pen-nib"></i></span>
                         录入新订单
                     </h3>
-                    <div class="flex gap-3">
-                        <button class="btn btn-secondary text-xs font-bold" onclick="OrderForm.reset()"><i class="fas fa-redo mr-1"></i> 重置清空</button>
-                        <button id="btnCancelEdit" class="hidden btn bg-red-50 text-red-500 hover:bg-red-100 border-red-100 text-xs font-bold" onclick="OrderForm.cancelEdit()"><i class="fas fa-times mr-1"></i> 取消编辑</button>
-                    </div>
-                </div>
-                
-                <div class="mb-10 bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
-                    <label class="text-xs font-bold text-slate-500 mb-3 block uppercase tracking-wider">订单编号 (Order ID)</label>
-                    <div class="flex gap-4">
-                        <input id="inputOrderId" class="pro-input font-mono font-bold text-slate-700 text-xl bg-white h-14 tracking-wide" placeholder="输入单号或点击生成">
-                        <button onclick="document.getElementById('inputOrderId').value = 'ORD-'+Date.now().toString().slice(-8)" class="btn btn-secondary whitespace-nowrap shadow-sm h-14 px-8 text-indigo-600 font-bold hover:text-indigo-700"><i class="fas fa-magic"></i> 自动生成</button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-                    <div><label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">客户信息</label><input id="customerInfo" placeholder="公司名称 / 联系人" class="pro-input h-12"></div>
-                    <div><label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">订单来源</label><input id="source" list="sourceList" class="pro-input h-12" placeholder="选择来源"><datalist id="sourceList"><option value="拼多多"><option value="天猫"><option value="线下"></datalist></div>
-                    <div>
-                        <label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">订单流向</label>
-                        <input id="flowStatus" list="flowList" class="pro-input h-12" placeholder="生产方">
-                        <datalist id="flowList"><option value="新正方"><option value="盛大"><option value="公司"></datalist>
-                    </div>
-                    <div><label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">结算方式</label><input id="paymentMethod" list="payList" class="pro-input h-12" placeholder="支付方式"><datalist id="payList"><option value="平台支付"><option value="对公转账"><option value="月结"></datalist></div>
-                </div>
-                
-                <div class="mb-8">
-                    <label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">客户收货地址</label>
-                    <div class="relative"><i class="fas fa-map-marker-alt absolute left-4 top-4 text-slate-400"></i><input id="customerAddress" placeholder="省/市/区/街道详细地址..." class="pro-input pl-12 h-12"></div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                     <div>
-                         <label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">文件链接 / 外部记录</label>
-                         <textarea id="fileLink" rows="3" placeholder="http://... (支持多行)" class="pro-input font-mono text-xs text-indigo-600 resize-none leading-relaxed bg-indigo-50/30 border-indigo-100"></textarea>
-                     </div>
-                     <div>
-                         <label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">订单备注</label>
-                         <textarea id="remarks" rows="3" placeholder="工艺要求、发货注意..." class="pro-input resize-none leading-relaxed"></textarea>
-                     </div>
-                </div>
-
-                <div class="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden mb-10 shadow-lg shadow-slate-200/50 dark:shadow-none">
-                    <div class="bg-slate-50 dark:bg-slate-900 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                        <div class="font-bold text-sm text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2"><i class="fas fa-list-ul"></i> 商品明细</div>
-                        <div class="text-[10px] font-bold text-slate-400 bg-white dark:bg-slate-800 px-2 py-1 rounded border border-slate-200">请添加至少一项</div>
-                    </div>
-                    <table class="w-full text-xs text-left modern-table">
-                        <thead class="bg-white dark:bg-slate-800">
-                            <tr><th class="pl-6">品名</th><th>尺寸</th><th class="w-24 text-center">数量</th><th class="w-32 text-right pr-6">总额</th><th class="w-16"></th></tr>
-                        </thead>
-                        <tbody id="tempItemsBody" class="bg-white dark:bg-slate-900"></tbody>
-                        <tfoot class="bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200">
-                            <tr>
-                                <td class="p-4"><input id="newItemName" placeholder="输入品名" class="pro-input bg-white h-11 border-slate-200"></td>
-                                <td class="p-4"><input id="newItemSize" placeholder="尺寸规格" class="pro-input bg-white h-11 border-slate-200"></td>
-                                <td class="p-4"><input type="number" id="newItemQty" placeholder="0" class="pro-input bg-white h-11 border-slate-200 text-center"></td>
-                                <td class="p-4"><input type="number" id="newItemTotal" placeholder="0.00" class="pro-input bg-white h-11 border-slate-200 text-right"></td>
-                                <td class="p-4 text-center"><button class="text-white bg-indigo-500 hover:bg-indigo-600 w-9 h-9 rounded-xl shadow-lg shadow-indigo-500/30 transition-all transform hover:scale-110 flex items-center justify-center mx-auto" onclick="OrderForm.addItem()"><i class="fas fa-plus"></i></button></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-
-                <div class="flex flex-col xl:flex-row gap-10 items-start">
-                    <div class="flex-1 w-full">
-                        <label class="text-xs font-bold text-slate-500 mb-3 block uppercase tracking-wider ml-1">参考图片 / 附件</label>
-                        <div class="paste-area border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-10 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50/20 dark:hover:bg-slate-800 transition-all text-center group relative overflow-hidden" id="pasteArea">
-                            <input type="file" id="fileInput" accept="image/*" class="hidden" multiple onchange="OrderForm.handleFileSelect(this)">
-                            <div class="absolute inset-0 bg-indigo-50/0 group-hover:bg-indigo-50/10 transition-colors pointer-events-none"></div>
-                            <div id="pastePlaceholder" class="group-hover:text-indigo-600 text-slate-400 transition-colors">
-                                <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-5 text-2xl text-slate-400 group-hover:text-indigo-500 group-hover:scale-110 transition-all shadow-inner"><i class="fas fa-cloud-upload-alt"></i></div>
-                                <div class="text-sm font-bold text-slate-600 dark:text-slate-300">点击上传参考图 (并发处理)</div>
-                                <div class="text-xs opacity-60 mt-2 font-medium">支持 Ctrl+V 直接粘贴</div>
-                            </div>
-                            <div id="imgGallery" class="flex flex-wrap gap-4 mt-4 relative z-10"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="w-full xl:w-96 bg-slate-900 text-white p-8 md:p-10 rounded-3xl shadow-2xl relative overflow-hidden">
-                        <div class="absolute -top-12 -right-12 w-48 h-48 bg-indigo-500 rounded-full blur-3xl opacity-20 animate-pulse"></div>
-                        <div class="absolute bottom-0 left-0 w-32 h-32 bg-purple-500 rounded-full blur-3xl opacity-20"></div>
-                        <div class="relative z-10">
-                            <div class="flex justify-between items-center mb-10 opacity-70">
-                                <span class="text-xs font-bold uppercase tracking-widest border-b border-white/20 pb-1">Total Amount</span>
-                                <i class="fas fa-coins text-lg"></i>
-                            </div>
-                            <div class="flex items-baseline gap-1 mb-10">
-                                <span class="text-2xl font-medium opacity-80">¥</span>
-                                <span class="text-6xl font-black tracking-tighter" id="grandTotal">0.00</span>
-                            </div>
-                            <button id="btnSubmitOrder" class="w-full py-5 bg-white text-slate-900 rounded-2xl font-bold text-base hover:bg-indigo-50 transition-colors flex justify-center items-center gap-3 shadow-xl transform hover:-translate-y-1 duration-200 auth-guard-write" onclick="OrderForm.submit()">
-                                <span>确认下单</span>
-                                <i class="fas fa-arrow-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="app-order-list" class="hidden animate-fade-in-up space-y-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div class="pro-card p-6 flex items-center justify-between hover:-translate-y-2 transition-transform cursor-pointer relative overflow-hidden group" onclick="OrderList.quickFilter('')">
-                    <div class="absolute right-0 top-0 w-24 h-24 bg-slate-100 rounded-full -mr-6 -mt-6 z-0 group-hover:scale-110 transition-transform"></div>
-                    <div class="relative z-10">
-                        <h3 class="text-xs font-bold text-slate-400 uppercase mb-2 tracking-wider">全部订单 (Cloud)</h3>
-                        <div class="text-3xl font-black text-slate-800 dark:text-white" id="statCount">--</div>
-                    </div>
-                    <div class="w-12 h-12 rounded-2xl bg-slate-800 text-white flex items-center justify-center text-lg shadow-lg relative z-10"><i class="fas fa-archive"></i></div>
-                </div>
-                
-                <div class="pro-card p-6 flex items-center justify-between hover:-translate-y-2 transition-transform cursor-pointer border-b-4 border-orange-400 relative overflow-hidden group" onclick="OrderList.quickFilter('待制作')">
-                    <div class="absolute right-0 top-0 w-24 h-24 bg-orange-50 rounded-full -mr-6 -mt-6 z-0 group-hover:scale-110 transition-transform"></div>
-                    <div class="relative z-10">
-                        <h3 class="text-xs font-bold text-orange-400 uppercase mb-2 tracking-wider">待制作</h3>
-                        <div class="text-3xl font-black text-orange-500" id="statTodo">--</div>
-                    </div>
-                    <div class="w-12 h-12 rounded-2xl bg-orange-500 text-white flex items-center justify-center text-lg shadow-lg shadow-orange-500/30 relative z-10"><i class="fas fa-clock"></i></div>
-                </div>
-                
-                <div class="pro-card p-6 flex items-center justify-between hover:-translate-y-2 transition-transform cursor-pointer border-b-4 border-indigo-500 relative overflow-hidden group" onclick="OrderList.quickFilter('待发货')">
-                    <div class="absolute right-0 top-0 w-24 h-24 bg-indigo-50 rounded-full -mr-6 -mt-6 z-0 group-hover:scale-110 transition-transform"></div>
-                    <div class="relative z-10">
-                        <h3 class="text-xs font-bold text-indigo-400 uppercase mb-2 tracking-wider">待发货</h3>
-                        <div class="text-3xl font-black text-indigo-600" id="statShipping">--</div>
-                    </div>
-                    <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-lg shadow-indigo-600/30 relative z-10"><i class="fas fa-truck"></i></div>
-                </div>
-                
-                <div class="pro-card p-6 flex items-center justify-between hover:-translate-y-2 transition-transform border-b-4 border-emerald-500 bg-gradient-to-br from-emerald-50 to-white relative overflow-hidden">
-                    <div class="relative z-10">
-                        <h3 class="text-xs font-bold text-emerald-600/70 uppercase mb-2 tracking-wider">本月营收</h3>
-                        <div class="text-3xl font-black text-emerald-600">¥<span id="statMonth">0.00</span></div>
-                    </div>
-                    <div class="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-lg shadow-lg shadow-emerald-500/30 relative z-10"><i class="fas fa-coins"></i></div>
-                </div>
-            </div>
-
-            <div class="flex flex-wrap gap-4 items-center justify-between bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg shadow-slate-200/40 dark:shadow-none border border-slate-100 dark:border-slate-700">
-                <div class="flex flex-wrap gap-4 items-center flex-1">
-                    <div class="relative w-72">
-                        <i class="fas fa-search absolute left-4 top-3.5 text-slate-400 text-xs"></i>
-                        <input type="text" id="filterKeyword" placeholder="搜单号/客户/快递号..." class="pro-input pl-10 h-11 text-xs font-semibold shadow-sm border-slate-200" oninput="OrderList.debounceSearch()">
-                    </div>
-                    <div class="h-8 w-px bg-slate-200 mx-2 hidden md:block"></div>
-                    
-                    <div class="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-200">
-                         <input type="date" id="dateStart" class="pro-input h-9 w-32 text-xs bg-white border-none shadow-sm" onchange="OrderList.refreshList()" title="开始日期">
-                         <span class="text-slate-400 font-bold">-</span>
-                         <input type="date" id="dateEnd" class="pro-input h-9 w-32 text-xs bg-white border-none shadow-sm" onchange="OrderList.refreshList()" title="结束日期">
-                    </div>
-                    
-                    <select id="filterFlow" class="pro-input w-32 h-11 text-xs cursor-pointer font-semibold" onchange="OrderList.refreshList()">
-                        <option value="">全部流向</option><option value="新正方">新正方</option><option value="盛大">盛大</option><option value="公司">公司</option>
-                    </select>
-                    <select id="filterStatus" class="pro-input w-32 h-11 text-xs cursor-pointer font-semibold" onchange="OrderList.refreshList()">
-                        <option value="">全部状态</option>
-                        <option value="待制作">🕒 待制作</option>
-                        <option value="待发货">📦 待发货</option>
-                        <option value="已完成">✅ 已完成</option>
-                        <option value="issue">⚠️ 异常/待处理</option>
-                    </select>
-                </div>
-                <button onclick="OrderList.refreshList()" class="w-11 h-11 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-all flex items-center justify-center shadow-sm" title="刷新"><i class="fas fa-sync-alt"></i></button>
-            </div>
-
-            <div class="bg-transparent">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left modern-table">
-                        <thead class="">
-                            <tr>
-                                <th class="pl-8 w-48">订单编号</th>
-                                <th class="w-28">图示</th>
-                                <th class="w-72">客户 & 地址</th>
-                                <th>内容摘要 (Top 2)</th>
-                                <th class="w-40 text-center">状态</th>
-                                <th class="w-36 text-right">金额</th>
-                                <th class="w-40 text-center pr-8">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="historyBody" class="space-y-4"></tbody>
-                    </table>
-                </div>
-                <div id="loadMoreContainer" class="p-8 text-center hidden">
-                    <button id="btnLoadMore" onclick="OrderList.loadMore()" class="btn btn-secondary text-xs px-8 py-3 rounded-full shadow-md hover:shadow-lg transition-all font-bold tracking-wide">
+<div class="flex gap-3">
+<button class="btn btn-secondary text-xs font-bold" data-action="reset-order-form"><i class="fas fa-redo mr-1"></i> 重置清空</button>
+<button class="hidden btn bg-red-50 text-red-500 hover:bg-red-100 border-red-100 text-xs font-bold" data-action="cancel-edit" id="btnCancelEdit"><i class="fas fa-times mr-1"></i> 取消编辑</button>
+</div>
+</div>
+<div class="mb-10 bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
+<label class="text-xs font-bold text-slate-500 mb-3 block uppercase tracking-wider">订单编号 (Order ID)</label>
+<div class="flex gap-4">
+<input class="pro-input font-mono font-bold text-slate-700 text-xl bg-white h-14 tracking-wide" id="inputOrderId" placeholder="输入单号或点击生成"/>
+<button class="btn btn-secondary whitespace-nowrap shadow-sm h-14 px-8 text-indigo-600 font-bold hover:text-indigo-700" data-action="generate-order-id"><i class="fas fa-magic"></i> 自动生成</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+<div><label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">客户信息</label><input class="pro-input h-12" id="customerInfo" placeholder="公司名称 / 联系人"/></div>
+<div><label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">订单来源</label><input class="pro-input h-12" id="source" list="sourceList" placeholder="选择来源"/><datalist id="sourceList"><option value="拼多多"><option value="天猫"><option value="线下"></option></option></option></datalist></div>
+<div>
+<label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">订单流向</label>
+<input class="pro-input h-12" id="flowStatus" list="flowList" placeholder="生产方"/>
+<datalist id="flowList"><option value="新正方"><option value="盛大"><option value="公司"></option></option></option></datalist>
+</div>
+<div><label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">结算方式</label><input class="pro-input h-12" id="paymentMethod" list="payList" placeholder="支付方式"/><datalist id="payList"><option value="平台支付"><option value="对公转账"><option value="月结"></option></option></option></datalist></div>
+</div>
+<div class="mb-8">
+<label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">客户收货地址</label>
+<div class="relative"><i class="fas fa-map-marker-alt absolute left-4 top-4 text-slate-400"></i><input class="pro-input pl-12 h-12" id="customerAddress" placeholder="省/市/区/街道详细地址..."/></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+<div>
+<label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">文件链接 / 外部记录</label>
+<textarea class="pro-input font-mono text-xs text-indigo-600 resize-none leading-relaxed bg-indigo-50/30 border-indigo-100" id="fileLink" placeholder="http://... (支持多行)" rows="3"></textarea>
+</div>
+<div>
+<label class="text-xs font-bold text-slate-500 mb-2.5 block ml-1">订单备注</label>
+<textarea class="pro-input resize-none leading-relaxed" id="remarks" placeholder="工艺要求、发货注意..." rows="3"></textarea>
+</div>
+</div>
+<div class="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden mb-10 shadow-lg shadow-slate-200/50 dark:shadow-none">
+<div class="bg-slate-50 dark:bg-slate-900 px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+<div class="font-bold text-sm text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2"><i class="fas fa-list-ul"></i> 商品明细</div>
+<div class="text-[10px] font-bold text-slate-400 bg-white dark:bg-slate-800 px-2 py-1 rounded border border-slate-200">请添加至少一项</div>
+</div>
+<table class="w-full text-xs text-left modern-table">
+<thead class="bg-white dark:bg-slate-800">
+<tr><th class="pl-6">品名</th><th>尺寸</th><th class="w-24 text-center">数量</th><th class="w-32 text-right pr-6">总额</th><th class="w-16"></th></tr>
+</thead>
+<tbody class="bg-white dark:bg-slate-900" id="tempItemsBody"></tbody>
+<tfoot class="bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200">
+<tr>
+<td class="p-4"><input class="pro-input bg-white h-11 border-slate-200" id="newItemName" placeholder="输入品名"/></td>
+<td class="p-4"><input class="pro-input bg-white h-11 border-slate-200" id="newItemSize" placeholder="尺寸规格"/></td>
+<td class="p-4"><input class="pro-input bg-white h-11 border-slate-200 text-center" id="newItemQty" placeholder="0" type="number"/></td>
+<td class="p-4"><input class="pro-input bg-white h-11 border-slate-200 text-right" id="newItemTotal" placeholder="0.00" type="number"/></td>
+<td class="p-4 text-center"><button class="text-white bg-indigo-500 hover:bg-indigo-600 w-9 h-9 rounded-xl shadow-lg shadow-indigo-500/30 transition-all transform hover:scale-110 flex items-center justify-center mx-auto" data-action="add-item"><i class="fas fa-plus"></i></button></td>
+</tr>
+</tfoot>
+</table>
+</div>
+<div class="flex flex-col xl:flex-row gap-10 items-start">
+<div class="flex-1 w-full">
+<label class="text-xs font-bold text-slate-500 mb-3 block uppercase tracking-wider ml-1">参考图片 / 附件</label>
+<div class="paste-area border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-10 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50/20 dark:hover:bg-slate-800 transition-all text-center group relative overflow-hidden" id="pasteArea">
+<input accept="image/*" class="hidden" id="fileInput" multiple="" type="file"/>
+<div class="absolute inset-0 bg-indigo-50/0 group-hover:bg-indigo-50/10 transition-colors pointer-events-none"></div>
+<div class="group-hover:text-indigo-600 text-slate-400 transition-colors" id="pastePlaceholder">
+<div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-5 text-2xl text-slate-400 group-hover:text-indigo-500 group-hover:scale-110 transition-all shadow-inner"><i class="fas fa-cloud-upload-alt"></i></div>
+<div class="text-sm font-bold text-slate-600 dark:text-slate-300">点击上传参考图 (并发处理)</div>
+<div class="text-xs opacity-60 mt-2 font-medium">支持 Ctrl+V 直接粘贴</div>
+</div>
+<div class="flex flex-wrap gap-4 mt-4 relative z-10" id="imgGallery"></div>
+</div>
+</div>
+<div class="w-full xl:w-96 bg-slate-900 text-white p-8 md:p-10 rounded-3xl shadow-2xl relative overflow-hidden">
+<div class="absolute -top-12 -right-12 w-48 h-48 bg-indigo-500 rounded-full blur-3xl opacity-20 animate-pulse"></div>
+<div class="absolute bottom-0 left-0 w-32 h-32 bg-purple-500 rounded-full blur-3xl opacity-20"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-center mb-10 opacity-70">
+<span class="text-xs font-bold uppercase tracking-widest border-b border-white/20 pb-1">Total Amount</span>
+<i class="fas fa-coins text-lg"></i>
+</div>
+<div class="flex items-baseline gap-1 mb-10">
+<span class="text-2xl font-medium opacity-80">¥</span>
+<span class="text-6xl font-black tracking-tighter" id="grandTotal">0.00</span>
+</div>
+<button class="w-full py-5 bg-white text-slate-900 rounded-2xl font-bold text-base hover:bg-indigo-50 transition-colors flex justify-center items-center gap-3 shadow-xl transform hover:-translate-y-1 duration-200 auth-guard-write" data-action="submit-order" id="btnSubmitOrder">
+<span>确认下单</span>
+<i class="fas fa-arrow-right"></i>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="hidden animate-fade-in-up space-y-8" id="app-order-list">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="pro-card p-6 flex items-center justify-between hover:-translate-y-2 transition-transform cursor-pointer relative overflow-hidden group" data-action="quick-filter" data-status="">
+<div class="absolute right-0 top-0 w-24 h-24 bg-slate-100 rounded-full -mr-6 -mt-6 z-0 group-hover:scale-110 transition-transform"></div>
+<div class="relative z-10">
+<h3 class="text-xs font-bold text-slate-400 uppercase mb-2 tracking-wider">全部订单 (Cloud)</h3>
+<div class="text-3xl font-black text-slate-800 dark:text-white" id="statCount">--</div>
+</div>
+<div class="w-12 h-12 rounded-2xl bg-slate-800 text-white flex items-center justify-center text-lg shadow-lg relative z-10"><i class="fas fa-archive"></i></div>
+</div>
+<div class="pro-card p-6 flex items-center justify-between hover:-translate-y-2 transition-transform cursor-pointer border-b-4 border-orange-400 relative overflow-hidden group" data-action="quick-filter" data-status="待制作">
+<div class="absolute right-0 top-0 w-24 h-24 bg-orange-50 rounded-full -mr-6 -mt-6 z-0 group-hover:scale-110 transition-transform"></div>
+<div class="relative z-10">
+<h3 class="text-xs font-bold text-orange-400 uppercase mb-2 tracking-wider">待制作</h3>
+<div class="text-3xl font-black text-orange-500" id="statTodo">--</div>
+</div>
+<div class="w-12 h-12 rounded-2xl bg-orange-500 text-white flex items-center justify-center text-lg shadow-lg shadow-orange-500/30 relative z-10"><i class="fas fa-clock"></i></div>
+</div>
+<div class="pro-card p-6 flex items-center justify-between hover:-translate-y-2 transition-transform cursor-pointer border-b-4 border-indigo-500 relative overflow-hidden group" data-action="quick-filter" data-status="待发货">
+<div class="absolute right-0 top-0 w-24 h-24 bg-indigo-50 rounded-full -mr-6 -mt-6 z-0 group-hover:scale-110 transition-transform"></div>
+<div class="relative z-10">
+<h3 class="text-xs font-bold text-indigo-400 uppercase mb-2 tracking-wider">待发货</h3>
+<div class="text-3xl font-black text-indigo-600" id="statShipping">--</div>
+</div>
+<div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-lg shadow-indigo-600/30 relative z-10"><i class="fas fa-truck"></i></div>
+</div>
+<div class="pro-card p-6 flex items-center justify-between hover:-translate-y-2 transition-transform border-b-4 border-emerald-500 bg-gradient-to-br from-emerald-50 to-white relative overflow-hidden">
+<div class="relative z-10">
+<h3 class="text-xs font-bold text-emerald-600/70 uppercase mb-2 tracking-wider">本月营收</h3>
+<div class="text-3xl font-black text-emerald-600">¥<span id="statMonth">0.00</span></div>
+</div>
+<div class="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-lg shadow-lg shadow-emerald-500/30 relative z-10"><i class="fas fa-coins"></i></div>
+</div>
+</div>
+<div class="flex flex-wrap gap-4 items-center justify-between bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg shadow-slate-200/40 dark:shadow-none border border-slate-100 dark:border-slate-700">
+<div class="flex flex-wrap gap-4 items-center flex-1">
+<div class="relative w-72">
+<i class="fas fa-search absolute left-4 top-3.5 text-slate-400 text-xs"></i>
+<input class="pro-input pl-10 h-11 text-xs font-semibold shadow-sm border-slate-200" id="filterKeyword" placeholder="搜单号/客户/快递号..." type="text"/>
+</div>
+<div class="h-8 w-px bg-slate-200 mx-2 hidden md:block"></div>
+<div class="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-200">
+<input class="pro-input h-9 w-32 text-xs bg-white border-none shadow-sm" id="dateStart" title="开始日期" type="date"/>
+<span class="text-slate-400 font-bold">-</span>
+<input class="pro-input h-9 w-32 text-xs bg-white border-none shadow-sm" id="dateEnd" title="结束日期" type="date"/>
+</div>
+<select class="pro-input w-32 h-11 text-xs cursor-pointer font-semibold" id="filterFlow">
+<option value="">全部流向</option><option value="新正方">新正方</option><option value="盛大">盛大</option><option value="公司">公司</option>
+</select>
+<select class="pro-input w-32 h-11 text-xs cursor-pointer font-semibold" id="filterStatus">
+<option value="">全部状态</option>
+<option value="待制作">🕒 待制作</option>
+<option value="待发货">📦 待发货</option>
+<option value="已完成">✅ 已完成</option>
+<option value="issue">⚠️ 异常/待处理</option>
+</select>
+</div>
+<button class="w-11 h-11 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-all flex items-center justify-center shadow-sm" data-action="refresh-list" title="刷新"><i class="fas fa-sync-alt"></i></button>
+</div>
+<div class="bg-transparent">
+<div class="overflow-x-auto">
+<table class="w-full text-left modern-table">
+<thead class="">
+<tr>
+<th class="pl-8 w-48">订单编号</th>
+<th class="w-28">图示</th>
+<th class="w-72">客户 &amp; 地址</th>
+<th>内容摘要 (Top 2)</th>
+<th class="w-40 text-center">状态</th>
+<th class="w-36 text-right">金额</th>
+<th class="w-40 text-center pr-8">操作</th>
+</tr>
+</thead>
+<tbody class="space-y-4" id="historyBody"></tbody>
+</table>
+</div>
+<div class="p-8 text-center hidden" id="loadMoreContainer">
+<button class="btn btn-secondary text-xs px-8 py-3 rounded-full shadow-md hover:shadow-lg transition-all font-bold tracking-wide" data-action="load-more" id="btnLoadMore">
                         加载更多数据 <i class="fas fa-chevron-down ml-1"></i>
-                    </button>
-                </div>
-                <div id="emptyTip" class="text-center py-24 text-slate-400 text-sm hidden flex flex-col items-center">
-                    <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-slate-300 text-4xl shadow-inner"><i class="fas fa-inbox"></i></div>
-                    <span id="emptyText" class="font-medium text-slate-500">暂无相关订单</span>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <div id="orderDetailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden justify-center items-center p-4 transition-all duration-300" onclick="if(event.target === this) UI.closeDetailModal()">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-4xl rounded-[32px] shadow-2xl max-h-[92vh] flex flex-col animate-fade-in-up overflow-hidden ring-1 ring-white/20">
-            <div class="flex justify-between items-center px-8 py-6 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 sticky top-0 z-10 shadow-sm">
-                <div>
-                    <h3 class="font-bold text-2xl text-slate-900 dark:text-white flex items-center gap-4">订单详情 <span id="modalStatusBadge" class="status-pill pill-todo scale-110">...</span></h3>
-                    <div class="text-xs text-slate-400 font-mono mt-2 flex gap-3 font-bold">
-                        <span id="modalOrderId" class="bg-slate-100 px-2 py-0.5 rounded text-slate-500">ID: ...</span>
-                        <span class="text-slate-300">|</span>
-                        <span id="modalDate"></span>
-                    </div>
-                </div>
-                <div class="flex gap-3">
-                    <button onclick="OrderList.editOrder()" class="btn btn-secondary text-xs h-10 px-5 rounded-xl border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 auth-guard-write"><i class="fas fa-edit"></i> 编辑</button>
-                    <button onclick="UI.closeDetailModal()" class="w-10 h-10 rounded-full bg-slate-50 hover:bg-red-50 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"><i class="fas fa-times text-xl"></i></button>
-                </div>
-            </div>
-            
-            <div class="p-8 overflow-y-auto flex-1 space-y-8 bg-[#fafafa] dark:bg-slate-900/50 custom-scrollbar">
-                
-                <div id="issueAlertBox" class="hidden bg-red-50 border border-red-100 p-6 rounded-2xl flex items-start gap-5 animate-pulse-glow shadow-sm">
-                    <div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center shrink-0 shadow-sm text-lg"><i class="fas fa-bell"></i></div>
-                    <div class="flex-1 pt-1">
-                        <h4 class="text-base font-bold text-red-800">该订单有反馈/异常</h4>
-                        <p id="modalIssueText" class="text-sm text-red-600 mt-1 font-medium"></p>
-                    </div>
-                    <button onclick="OrderList.resolveIssue()" class="btn bg-red-600 text-white hover:bg-red-700 text-xs h-9 px-4 border-0 auth-guard-write shadow-red-500/30 shadow-lg">标记已解决</button>
-                </div>
-
-                <div id="modalWorkflowAction" class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-indigo-50 dark:border-slate-700 shadow-md shadow-slate-200/40 flex justify-between items-center"></div>
-                
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><div class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">客户名称</div><div id="modalCustomer" class="font-bold text-slate-800 dark:text-white text-lg truncate"></div></div>
-                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><div class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">渠道流向</div><div id="modalSourceFlow" class="font-semibold text-slate-600 dark:text-slate-300"></div></div>
-                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><div class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">付款方式</div><div id="modalPayment" class="font-semibold text-slate-600 dark:text-slate-300"></div></div>
-                    <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-xl shadow-lg text-white"><div class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">订单金额</div><div id="modalTotal" class="font-black text-2xl font-mono"></div></div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2"><i class="fas fa-map-marker-alt text-indigo-500"></i> 收货地址</div>
-                        <div id="modalAddress" class="text-slate-700 dark:text-slate-200 text-sm leading-relaxed font-bold"></div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2"><i class="fas fa-link text-indigo-500"></i> 文件链接 / 记录</div>
-                        <textarea id="modalFileLink" readonly class="w-full bg-slate-50 border-0 p-3 rounded-lg text-indigo-600 text-xs font-mono resize-none focus:ring-0 leading-relaxed h-20 select-all"></textarea>
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2"><i class="fas fa-box"></i> 商品清单</div>
-                    <table class="w-full text-xs">
-                        <thead class="bg-white dark:bg-slate-900 text-slate-400 border-b border-slate-50"><tr><th class="p-5 text-left font-bold">品名</th><th class="p-5 font-bold">尺寸</th><th class="p-5 font-bold">数量</th><th class="p-5 text-right font-bold">小计</th></tr></thead>
-                        <tbody id="modalItemsBody" class="divide-y divide-slate-50 dark:divide-slate-800"></tbody>
-                    </table>
-                    <div class="p-5 bg-amber-50/50 dark:bg-slate-800/30 text-xs text-slate-600 border-t border-amber-100/50">
-                        <span class="font-bold text-amber-600 dark:text-amber-500"><i class="fas fa-sticky-note mr-1"></i> 订单备注：</span> <span id="modalRemarks" class="font-medium"></span>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase mb-4 flex items-center gap-2"><i class="fas fa-images"></i> 参考图片</h4>
-                        <div id="modalRefImages" class="flex flex-wrap gap-3"></div>
-                    </div>
-                    <div id="modalFinalImageSection" class="hidden relative group">
-                        <div class="flex justify-between items-center mb-4">
-                            <h4 class="text-xs font-bold text-emerald-600 uppercase flex items-center gap-2"><i class="fas fa-check-circle"></i> 定稿确认图</h4>
-                            <button id="btnCopyFinal" onclick="OrderList.copyFinalDraft()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors shadow-sm flex items-center gap-1">
-                                <i class="fas fa-copy"></i> 复制定稿词
+</button>
+</div>
+<div class="text-center py-24 text-slate-400 text-sm hidden flex flex-col items-center" id="emptyTip">
+<div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-slate-300 text-4xl shadow-inner"><i class="fas fa-inbox"></i></div>
+<span class="font-medium text-slate-500" id="emptyText">暂无相关订单</span>
+</div>
+</div>
+</div>
+</main>
+<div class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 hidden justify-center items-center p-4 transition-all duration-300" data-overlay-close="detail" id="orderDetailModal">
+<div class="bg-white dark:bg-slate-800 w-full max-w-4xl rounded-[32px] shadow-2xl max-h-[92vh] flex flex-col animate-fade-in-up overflow-hidden ring-1 ring-white/20">
+<div class="flex justify-between items-center px-8 py-6 border-b border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 sticky top-0 z-10 shadow-sm">
+<div>
+<h3 class="font-bold text-2xl text-slate-900 dark:text-white flex items-center gap-4">订单详情 <span class="status-pill pill-todo scale-110" id="modalStatusBadge">...</span></h3>
+<div class="text-xs text-slate-400 font-mono mt-2 flex gap-3 font-bold">
+<span class="bg-slate-100 px-2 py-0.5 rounded text-slate-500" id="modalOrderId">ID: ...</span>
+<span class="text-slate-300">|</span>
+<span id="modalDate"></span>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="btn btn-secondary text-xs h-10 px-5 rounded-xl border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 auth-guard-write" data-action="edit-order"><i class="fas fa-edit"></i> 编辑</button>
+<button class="w-10 h-10 rounded-full bg-slate-50 hover:bg-red-50 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors" data-action="close-detail"><i class="fas fa-times text-xl"></i></button>
+</div>
+</div>
+<div class="p-8 overflow-y-auto flex-1 space-y-8 bg-[#fafafa] dark:bg-slate-900/50 custom-scrollbar">
+<div class="hidden bg-red-50 border border-red-100 p-6 rounded-2xl flex items-start gap-5 animate-pulse-glow shadow-sm" id="issueAlertBox">
+<div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center shrink-0 shadow-sm text-lg"><i class="fas fa-bell"></i></div>
+<div class="flex-1 pt-1">
+<h4 class="text-base font-bold text-red-800">该订单有反馈/异常</h4>
+<p class="text-sm text-red-600 mt-1 font-medium" id="modalIssueText"></p>
+</div>
+<button class="btn bg-red-600 text-white hover:bg-red-700 text-xs h-9 px-4 border-0 auth-guard-write shadow-red-500/30 shadow-lg" data-action="resolve-issue">标记已解决</button>
+</div>
+<div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-indigo-50 dark:border-slate-700 shadow-md shadow-slate-200/40 flex justify-between items-center" id="modalWorkflowAction"></div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+<div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><div class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">客户名称</div><div class="font-bold text-slate-800 dark:text-white text-lg truncate" id="modalCustomer"></div></div>
+<div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><div class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">渠道流向</div><div class="font-semibold text-slate-600 dark:text-slate-300" id="modalSourceFlow"></div></div>
+<div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm"><div class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">付款方式</div><div class="font-semibold text-slate-600 dark:text-slate-300" id="modalPayment"></div></div>
+<div class="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-xl shadow-lg text-white"><div class="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">订单金额</div><div class="font-black text-2xl font-mono" id="modalTotal"></div></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+<div class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2"><i class="fas fa-map-marker-alt text-indigo-500"></i> 收货地址</div>
+<div class="text-slate-700 dark:text-slate-200 text-sm leading-relaxed font-bold" id="modalAddress"></div>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
+<div class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2"><i class="fas fa-link text-indigo-500"></i> 文件链接 / 记录</div>
+<textarea class="w-full bg-slate-50 border-0 p-3 rounded-lg text-indigo-600 text-xs font-mono resize-none focus:ring-0 leading-relaxed h-20 select-all" id="modalFileLink" readonly=""></textarea>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
+<div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2"><i class="fas fa-box"></i> 商品清单</div>
+<table class="w-full text-xs">
+<thead class="bg-white dark:bg-slate-900 text-slate-400 border-b border-slate-50"><tr><th class="p-5 text-left font-bold">品名</th><th class="p-5 font-bold">尺寸</th><th class="p-5 font-bold">数量</th><th class="p-5 text-right font-bold">小计</th></tr></thead>
+<tbody class="divide-y divide-slate-50 dark:divide-slate-800" id="modalItemsBody"></tbody>
+</table>
+<div class="p-5 bg-amber-50/50 dark:bg-slate-800/30 text-xs text-slate-600 border-t border-amber-100/50">
+<span class="font-bold text-amber-600 dark:text-amber-500"><i class="fas fa-sticky-note mr-1"></i> 订单备注：</span> <span class="font-medium" id="modalRemarks"></span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+<h4 class="text-xs font-bold text-slate-400 uppercase mb-4 flex items-center gap-2"><i class="fas fa-images"></i> 参考图片</h4>
+<div class="flex flex-wrap gap-3" id="modalRefImages"></div>
+</div>
+<div class="hidden relative group" id="modalFinalImageSection">
+<div class="flex justify-between items-center mb-4">
+<h4 class="text-xs font-bold text-emerald-600 uppercase flex items-center gap-2"><i class="fas fa-check-circle"></i> 定稿确认图</h4>
+<button class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors shadow-sm flex items-center gap-1" data-action="copy-final" id="btnCopyFinal">
+<i class="fas fa-copy"></i> 复制定稿词
                             </button>
-                        </div>
-                        <div class="relative rounded-2xl overflow-hidden border-4 border-emerald-50 dark:border-emerald-900 shadow-lg group-hover:shadow-xl transition-all bg-white">
-                            <img id="modalFinalImage" class="w-full h-64 object-contain cursor-zoom-in hover:scale-105 transition-transform duration-500">
-                        </div>
-                    </div>
-                </div>
-
-                <div id="modalTrackingSection" class="hidden bg-gradient-to-r from-indigo-50 to-white dark:from-indigo-900/20 dark:to-slate-800 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-800 flex items-center gap-6">
-                    <div class="w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl shadow-sm transform rotate-3"><i class="fas fa-shipping-fast"></i></div>
-                    <div>
-                        <div class="text-xs text-indigo-600 font-bold uppercase mb-1 tracking-wider">物流单号 Tracking No.</div>
-                        <div id="modalTrackingNum" class="text-2xl font-mono font-bold text-slate-800 dark:text-white tracking-wide select-all cursor-text"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="px-8 py-5 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center sticky bottom-0 z-10 rounded-b-[32px]">
-                <button class="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center gap-2 px-3 py-2 hover:bg-red-50 rounded-lg auth-guard-admin" onclick="OrderList.deleteOrderFromModal()"><i class="fas fa-trash-alt"></i> 删除订单</button>
-                <button id="btnReportIssue" class="text-xs font-bold text-slate-500 hover:text-orange-500 transition-colors flex items-center gap-2 px-3 py-2 hover:bg-orange-50 rounded-lg auth-guard-write" onclick="OrderList.reportIssue()"><i class="fas fa-exclamation-circle"></i> 反馈/报修</button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="settingsModal" class="fixed inset-0 z-[100] hidden">
-        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="document.getElementById('settingsModal').classList.add('hidden')"></div>
-        <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
-            <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-3xl shadow-2xl p-8 pointer-events-auto transform transition-all border border-white/20">
-                <h3 class="font-bold text-xl mb-6 dark:text-white pb-4 border-b border-slate-100 flex justify-between items-center">
-                    <span class="flex items-center gap-2"><i class="fas fa-cogs text-slate-400"></i> 系统参数配置</span>
-                    <span class="text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-100 px-2 py-1 rounded font-bold uppercase tracking-wider">Cloud Sync</span>
-                </h3>
-                <div class="space-y-6">
-                    <section>
-                        <h4 class="text-xs font-bold text-slate-400 uppercase mb-3">纸张规格 (mm)</h4>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">纸张宽 (W)</label><input type="number" id="paperW" class="pro-input h-10 text-center font-mono"></div>
-                            <div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">纸张高 (H)</label><input type="number" id="paperH" class="pro-input h-10 text-center font-mono"></div>
-                        </div>
-                    </section>
-                    <section>
-                        <h4 class="text-xs font-bold text-slate-400 uppercase mb-3">排版边距 (mm)</h4>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">咬口 (上下)</label><input type="number" id="marginTB" class="pro-input h-10 text-center font-mono"></div>
-                            <div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">借咬口 (左右)</label><input type="number" id="marginLR" class="pro-input h-10 text-center font-mono"></div>
-                        </div>
-                    </section>
-                    <section>
-                        <h4 class="text-xs font-bold text-slate-400 uppercase mb-3">计价因子</h4>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">单价 (元/m²)</label><input type="number" id="unitPrice" class="pro-input h-10 text-center font-mono"></div>
-                            <div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">折扣 (%)</label><input type="number" id="discount" class="pro-input h-10 text-center font-mono"></div>
-                            <div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">覆膜费</label><input type="number" id="laminationFee" class="pro-input h-10 text-center font-mono"></div>
-                            <div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">模切费</label><input type="number" id="dieCutFee" class="pro-input h-10 text-center font-mono"></div>
-                        </div>
-                        <div class="mt-4"><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">后道附加费 (元/个)</label><input type="number" id="additionalFee" class="pro-input h-10 text-center font-mono"></div>
-                    </section>
-                    <button id="btnSaveSettings" class="btn btn-primary w-full mt-2 bg-slate-900 h-12 rounded-xl shadow-lg" onclick="CloudService.saveSystemSettings()">保存并上传云端</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <input type="file" id="finalImageInput" accept="image/*" class="hidden">
-
-    <script>
+</div>
+<div class="relative rounded-2xl overflow-hidden border-4 border-emerald-50 dark:border-emerald-900 shadow-lg group-hover:shadow-xl transition-all bg-white">
+<img class="w-full h-64 object-contain cursor-zoom-in hover:scale-105 transition-transform duration-500" id="modalFinalImage"/>
+</div>
+</div>
+</div>
+<div class="hidden bg-gradient-to-r from-indigo-50 to-white dark:from-indigo-900/20 dark:to-slate-800 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-800 flex items-center gap-6" id="modalTrackingSection">
+<div class="w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl shadow-sm transform rotate-3"><i class="fas fa-shipping-fast"></i></div>
+<div>
+<div class="text-xs text-indigo-600 font-bold uppercase mb-1 tracking-wider">物流单号 Tracking No.</div>
+<div class="text-2xl font-mono font-bold text-slate-800 dark:text-white tracking-wide select-all cursor-text" id="modalTrackingNum"></div>
+</div>
+</div>
+</div>
+<div class="px-8 py-5 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex justify-between items-center sticky bottom-0 z-10 rounded-b-[32px]">
+<button class="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center gap-2 px-3 py-2 hover:bg-red-50 rounded-lg auth-guard-admin" data-action="delete-order"><i class="fas fa-trash-alt"></i> 删除订单</button>
+<button class="text-xs font-bold text-slate-500 hover:text-orange-500 transition-colors flex items-center gap-2 px-3 py-2 hover:bg-orange-50 rounded-lg auth-guard-write" data-action="report-issue" id="btnReportIssue"><i class="fas fa-exclamation-circle"></i> 反馈/报修</button>
+</div>
+</div>
+</div>
+<div class="fixed inset-0 z-[100] hidden" id="settingsModal">
+<div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" data-action="close-settings"></div>
+<div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+<div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-3xl shadow-2xl p-8 pointer-events-auto transform transition-all border border-white/20">
+<h3 class="font-bold text-xl mb-6 dark:text-white pb-4 border-b border-slate-100 flex justify-between items-center">
+<span class="flex items-center gap-2"><i class="fas fa-cogs text-slate-400"></i> 系统参数配置</span>
+<span class="text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-100 px-2 py-1 rounded font-bold uppercase tracking-wider">Cloud Sync</span>
+</h3>
+<div class="space-y-6">
+<section>
+<h4 class="text-xs font-bold text-slate-400 uppercase mb-3">纸张规格 (mm)</h4>
+<div class="grid grid-cols-2 gap-4">
+<div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">纸张宽 (W)</label><input class="pro-input h-10 text-center font-mono" id="paperW" type="number"/></div>
+<div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">纸张高 (H)</label><input class="pro-input h-10 text-center font-mono" id="paperH" type="number"/></div>
+</div>
+</section>
+<section>
+<h4 class="text-xs font-bold text-slate-400 uppercase mb-3">排版边距 (mm)</h4>
+<div class="grid grid-cols-2 gap-4">
+<div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">咬口 (上下)</label><input class="pro-input h-10 text-center font-mono" id="marginTB" type="number"/></div>
+<div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">借咬口 (左右)</label><input class="pro-input h-10 text-center font-mono" id="marginLR" type="number"/></div>
+</div>
+</section>
+<section>
+<h4 class="text-xs font-bold text-slate-400 uppercase mb-3">计价因子</h4>
+<div class="grid grid-cols-2 gap-4">
+<div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">单价 (元/m²)</label><input class="pro-input h-10 text-center font-mono" id="unitPrice" type="number"/></div>
+<div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">折扣 (%)</label><input class="pro-input h-10 text-center font-mono" id="discount" type="number"/></div>
+<div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">覆膜费</label><input class="pro-input h-10 text-center font-mono" id="laminationFee" type="number"/></div>
+<div><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">模切费</label><input class="pro-input h-10 text-center font-mono" id="dieCutFee" type="number"/></div>
+</div>
+<div class="mt-4"><label class="text-[10px] text-slate-500 mb-1.5 block font-bold">后道附加费 (元/个)</label><input class="pro-input h-10 text-center font-mono" id="additionalFee" type="number"/></div>
+</section>
+<button class="btn btn-primary w-full mt-2 bg-slate-900 h-12 rounded-xl shadow-lg" data-action="save-settings" id="btnSaveSettings">保存并上传云端</button>
+</div>
+</div>
+</div>
+</div>
+<input accept="image/*" class="hidden" id="finalImageInput" type="file"/>
+<script>
+        // ================= 模块化核心逻辑 =================
         const AV_CONFIG = {
             ID: "P091S6hqTmOR0rw4PsPWZuAe-MdYXbMMI", 
             KEY: "fS2fVHKSfZUsNqvr340QKQsT",
             SERVER: "https://api.dingdangl.xyz"
         };
         
-        // ------------------ Auth Service ------------------
+        // Auth Service
         const Auth = {
             currentUser: null,
+            
             init() {
                 const user = AV.User.current();
                 if (user) {
@@ -739,6 +696,7 @@
                     document.getElementById('loginModal').classList.remove('hidden');
                 }
             },
+            
             async login() {
                 const u = document.getElementById('loginUser').value;
                 const p = document.getElementById('loginPass').value;
@@ -753,6 +711,7 @@
                     UI.showToast('登录失败: ' + e.message, 'error');
                 }
             },
+            
             async register() {
                 const u = document.getElementById('loginUser').value;
                 const p = document.getElementById('loginPass').value;
@@ -770,6 +729,7 @@
                     UI.showToast('注册失败: ' + e.message, 'error');
                 }
             },
+            
             guestLogin() {
                 this.currentUser = { username: 'Guest', isGuest: true };
                 document.getElementById('currentUserDisplay').innerText = '访客模式';
@@ -777,24 +737,30 @@
                 this.applyGuards();
                 UI.showToast('已进入访客模式 (只读)');
             },
+            
             logout() {
                 AV.User.logOut();
                 window.location.reload();
             },
+            
             setCurrentUser(user) {
                 this.currentUser = user;
                 document.getElementById('currentUserDisplay').innerText = user.getUsername();
                 this.applyGuards();
             },
+            
             applyGuards() {
                 const isGuest = this.currentUser && this.currentUser.isGuest;
                 const isAdmin = this.currentUser && !isGuest && this.currentUser.getUsername() === 'admin';
+                const isUser = this.currentUser && !isGuest;
 
+                // Admin Guards
                 document.querySelectorAll('.auth-guard-admin').forEach(el => {
                     if (!isAdmin) el.classList.add('hidden');
                     else el.classList.remove('hidden');
                 });
 
+                // Write Guards (Guest can't do these)
                 document.querySelectorAll('.auth-guard-write').forEach(el => {
                     if (isGuest) el.classList.add('hidden');
                     else el.classList.remove('hidden');
@@ -802,7 +768,7 @@
             }
         };
 
-        // ------------------ UI & Utils ------------------
+        // 1. 工具与 UI 模块
         const UI = {
             lightboxImages:[],
             lightboxIndex: 0,
@@ -829,6 +795,7 @@
                 requestAnimationFrame(() => toast.classList.add('show'));
                 setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3500);
             },
+            
             showLightbox(src, contextImages = null) {
                 if(!src) return;
                 const img = document.getElementById('lightboxImg');
@@ -847,6 +814,7 @@
 
                 document.getElementById('lightbox').classList.remove('hidden');
             },
+            
             updateLightboxNav() {
                 const counter = document.getElementById('lightboxCounter');
                 if (this.lightboxImages.length > 1) {
@@ -860,18 +828,21 @@
                     counter.style.display = 'none';
                 }
             },
+            
             nextImage() {
                 if (this.lightboxImages.length <= 1) return;
                 this.lightboxIndex = (this.lightboxIndex + 1) % this.lightboxImages.length;
                 document.getElementById('lightboxImg').src = this.lightboxImages[this.lightboxIndex];
                 this.updateLightboxNav();
             },
+            
             prevImage() {
                 if (this.lightboxImages.length <= 1) return;
                 this.lightboxIndex = (this.lightboxIndex - 1 + this.lightboxImages.length) % this.lightboxImages.length;
                 document.getElementById('lightboxImg').src = this.lightboxImages[this.lightboxIndex];
                 this.updateLightboxNav();
             },
+
             closeLightbox() {
                 document.getElementById('lightbox').classList.add('hidden');
                 setTimeout(() => { document.getElementById('lightboxImg').src = ''; }, 300);
@@ -909,7 +880,7 @@
             convertUrlToDataURL(url) {
                 return new Promise((resolve, reject) => {
                     const img = new Image();
-                    img.crossOrigin = 'Anonymous'; 
+                    img.crossOrigin = 'Anonymous';
                     img.onload = () => {
                         try {
                             const canvas = document.createElement('canvas');
@@ -929,28 +900,38 @@
             }
         };
 
-        // ------------------ State & Cloud ------------------
+        // 2. 数据状态管理
         const OrderState = {
-            currentItems: [], currentImages:[], pendingUploadFiles: [],
-            allCloudOrders:[], currentViewingOrderId: null,
-            isEditingMode: false, editingOrderObjId: null,
-            configObjectId: null, pageSize: 20, currentPage: 0,
-            isLoadingMore: false, hasMoreData: true,
+            currentItems: [],
+            currentImages:[], 
+            pendingUploadFiles: [],
+            allCloudOrders:[], 
+            currentViewingOrderId: null,
+            isEditingMode: false,
+            editingOrderObjId: null,
+            configObjectId: null,
+            pageSize: 20,
+            currentPage: 0,
+            isLoadingMore: false,
+            hasMoreData: true,
             filterStats: { todo:0, shipping:0, month:0, total:0 },
+            
             globalConfig: {
                 defaults: { paperW: 950, paperH: 650, marginTB: 0, marginLR: 0 },
                 prices: { unit: 100, discount: 0, lamination: 5, dieCut: 20, extra: 10 }
             }
         };
 
+        // 3. 云服务模块 (LeanCloud)
         const CloudService = {
             init() {
                 if(window.AV) AV.init({ appId: AV_CONFIG.ID, appKey: AV_CONFIG.KEY, serverURL: AV_CONFIG.SERVER });
             },
             async loadSystemSettings() {
                 if(!window.AV) return;
+                const q = new AV.Query('SystemConfig');
                 try {
-                    const config = await new AV.Query('SystemConfig').first();
+                    const config = await q.first();
                     if(config) {
                         OrderState.configObjectId = config.id;
                         const d = config.attributes;
@@ -1005,7 +986,7 @@
                 finally { btn.innerHTML = '保存并上传'; btn.disabled = false; }
             },
             async uploadFilesParallel(files) {
-                const promises = files.map(async (file) => {
+                const promises = files.map(async (file, index) => {
                     try {
                         const compressedFile = await Utils.compressImage(file);
                         const avFile = new AV.File(file.name, compressedFile);
@@ -1047,7 +1028,7 @@
             }
         };
 
-        // ------------------ 智能报价台核心逻辑 ------------------
+        // 4. 计算逻辑模块
         const CalcLogic = {
             BOX_TYPES: { 
                 doubleInsert: { name: "双插盒", calc: (L, W, H) =>[{ name: "主盒", l: (L + W) * 2 + 20, w: H + W * 2 + 40 }] }, 
@@ -1066,16 +1047,13 @@
                 return { rawW, rawH, w: Math.max(0, rawW-marginLR), h: Math.max(0, rawH-marginTB), marginTB, marginLR }; 
             },
             calcMaxCapacity: (partL, partW) => { 
-                const paper = CalcLogic.getEffectivePaper(), { w: maxW, h: maxH } = paper;
-                const r1 = Math.floor(maxH/partW), c1 = Math.floor(maxW/partL), n1 = r1*c1;
-                const r2 = Math.floor(maxH/partL), c2 = Math.floor(maxW/partW), n2 = r2*c2;
-                return (n1>=n2) ? {rows:r1,cols:c1,count:n1,l:partL,w:partW,rotated:false,paperInfo:paper} : {rows:r2,cols:c2,count:n2,l:partW,w:partL,rotated:true,paperInfo:paper}; 
+                const paper = CalcLogic.getEffectivePaper(), { w: maxW, h: maxH } = paper, r1 = Math.floor(maxH/partW), c1 = Math.floor(maxW/partL), n1 = r1*c1, r2 = Math.floor(maxH/partL), c2 = Math.floor(maxW/partW), n2 = r2*c2; return (n1>=n2) ? {rows:r1,cols:c1,count:n1,l:partL,w:partW,rotated:false,paperInfo:paper} : {rows:r2,cols:c2,count:n2,l:partW,w:partL,rotated:true,paperInfo:paper}; 
             },
             calcCost: (parts, params, totalQuantity) => {
                 let details = { material: 0, lamination: 0, dieCut: 0, extra: 0, corrugated: 0 }, layoutsInfo =[], hasError = false, errorMsgs =[], paper = CalcLogic.getEffectivePaper();
                 parts.forEach(part => {
                     const fitNorm = (part.l<=paper.w && part.w<=paper.h), fitRot = (part.l<=paper.h && part.w<=paper.w);
-                    if (!fitNorm && !fitRot) { hasError = true; errorMsgs.push(`${part.name} 尺寸超限 (需 ${part.l.toFixed(0)}×${part.w.toFixed(0)} mm)`); return; }
+                    if (!fitNorm && !fitRot) { hasError = true; errorMsgs.push(`${part.name} 尺寸超限`); return; }
                     const strategy = CalcLogic.calcMaxCapacity(part.l, part.w);
                     if (strategy.count === 0) { hasError = true; errorMsgs.push(`${part.name} 无法排版`); return; }
                     const fullSheets = Math.floor(totalQuantity/strategy.count), remainder = totalQuantity%strategy.count, totalSheets = Math.ceil(totalQuantity/strategy.count), corrugatedRate = params.isCorrugated?30:0;
@@ -1130,40 +1108,17 @@
                 const btnClear = document.getElementById('btnClearHistory');
                 if(btnClear) btnClear.onclick = () => this.clearHistory();
                 
-                // 【联动优化】光标焦点高亮刀模线
-                ['length', 'width', 'height'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if(!el) return;
-                    el.addEventListener('focus', () => {
-                        const dimClass = id === 'length' ? 'dim-L' : (id === 'width' ? 'dim-W' : 'dim-H');
-                        document.querySelectorAll('.' + dimClass).forEach(node => node.classList.add('dim-highlight'));
-                    });
-                    el.addEventListener('blur', () => {
-                        const dimClass = id === 'length' ? 'dim-L' : (id === 'width' ? 'dim-W' : 'dim-H');
-                        document.querySelectorAll('.' + dimClass).forEach(node => node.classList.remove('dim-highlight'));
-                    });
-                });
-
-                // Keyboard Nav for Lightbox
                 document.addEventListener('keydown', (e) => {
                     if (document.getElementById('lightbox').classList.contains('hidden')) return;
                     if (e.key === 'ArrowLeft') UI.prevImage();
                     if (e.key === 'ArrowRight') UI.nextImage();
                 });
             },
-            resetInputs() {
-                ['length', 'width', 'height', 'unfoldedL', 'unfoldedW'].forEach(id => document.getElementById(id).value = '');
-                ['quantity', 'quantityUnfolded'].forEach(id => document.getElementById(id).value = '1');
+            resetInputs() {['length', 'width', 'height', 'unfoldedL', 'unfoldedW'].forEach(id => document.getElementById(id).value = '');['quantity', 'quantityUnfolded'].forEach(id => document.getElementById(id).value = '1');
                 document.getElementById('resultCard').classList.add('hidden');
                 document.getElementById('warningCard').classList.add('hidden');
             },
             doCalc() {
-                // 【排版优化】清除错误高亮状态
-                ['length', 'width', 'height', 'unfoldedL', 'unfoldedW'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if(el) el.classList.remove('input-error', 'animate-shake');
-                });
-
                 const mode = this.currentTab;
                 let parts=[], qty=1, params = {
                     unitPrice: parseFloat(document.getElementById('unitPrice').value)||100,
@@ -1174,8 +1129,6 @@
                     isCorrugated: false
                 };
                 
-                let inputIdsToCheck = []; 
-                
                 if(mode==='basic') {
                     const k = document.getElementById('boxType').value;
                     const L=parseFloat(document.getElementById('length').value), W=parseFloat(document.getElementById('width').value), H=parseFloat(document.getElementById('height').value);
@@ -1184,7 +1137,6 @@
                     qty = parseInt(document.getElementById('quantity').value);
                     params.isCorrugated = document.getElementById('checkCorrugatedBasic').checked;
                     this.updateUnfoldedView(L,W,H,k);
-                    inputIdsToCheck = ['length', 'width', 'height'];
                 } else {
                     const L=parseFloat(document.getElementById('unfoldedL').value), W=parseFloat(document.getElementById('unfoldedW').value);
                     if(!L||!W) return UI.showToast('请输入展开尺寸', 'error');
@@ -1192,23 +1144,13 @@
                     qty = parseInt(document.getElementById('quantityUnfolded').value);
                     params.isCorrugated = document.getElementById('checkCorrugatedUnfolded').checked;
                     document.getElementById('svgContainer').innerHTML = '<div class="text-xs text-gray-400 p-10 flex items-center justify-center h-full">自定义尺寸无结构图</div>';
-                    inputIdsToCheck = ['unfoldedL', 'unfoldedW'];
                 }
 
                 const res = CalcLogic.calcCost(parts, params, qty);
-                const paper = CalcLogic.getEffectivePaper();
-
                 if(!res.success) { 
-                    // 【报错优化】精准触发错误元素的震动和红框
-                    inputIdsToCheck.forEach(id => {
-                        const el = document.getElementById(id);
-                        if(el) { el.classList.add('input-error'); requestAnimationFrame(()=> el.classList.add('animate-shake')); }
-                    });
-                    const detailedErrors = res.errors.map(err => `${err} (当前可用区: ${paper.w}×${paper.h} mm)`);
                     document.getElementById('warningCard').classList.remove('hidden'); 
-                    document.getElementById('warningContent').innerHTML = detailedErrors.join('<br>'); 
-                    document.getElementById('resultCard').classList.add('hidden'); 
-                    return; 
+                    document.getElementById('warningContent').innerText = res.errors.join(', '); 
+                    document.getElementById('resultCard').classList.add('hidden'); return; 
                 }
                 
                 document.getElementById('warningCard').classList.add('hidden');
@@ -1218,7 +1160,6 @@
                 document.getElementById('costList').innerHTML = `<span class="text-slate-700">材料</span> ¥${res.details.material.toFixed(1)} <span class="text-slate-300 mx-1">|</span> <span class="text-slate-700">加工</span> ¥${(res.details.lamination+res.details.dieCut+res.details.corrugated).toFixed(1)} <span class="text-slate-300 mx-1">|</span> <span class="text-slate-700">附加</span> ¥${res.details.extra.toFixed(1)}`;
                 document.getElementById('dimensionDetails').innerHTML = res.layouts.map(l => `<span class="ml-2">印: ${l.originalDim.l.toFixed(0)}×${l.originalDim.w.toFixed(0)}</span>`).join('');
 
-                // 【排版图优化】绘制带有咬口/借咬口警示区的大版图
                 const con = document.getElementById('layoutGridsContainer'); con.innerHTML = '';
                 const wrap = document.createElement('div'); wrap.className = 'paper-canvas';
                 const l = res.layouts[0]; 
@@ -1228,23 +1169,9 @@
                 
                 const wPct = (l.l/l.paper.rawW)*100, hPct = (l.w/l.paper.rawH)*100;
                 const sx = (l.paper.marginLR/2/l.paper.rawW)*100, sy = (l.paper.marginTB/2/l.paper.rawH)*100;
-                const ew = 100 - (l.paper.marginLR/l.paper.rawW)*100; // 实际可用宽占比
-                const eh = 100 - (l.paper.marginTB/l.paper.rawH)*100; // 实际可用高占比
-
-                let gridHtml = `
-                    <div class="absolute inset-0 bg-white border border-slate-200"></div>
-                    <div class="absolute inset-0 margin-hatch opacity-50 pointer-events-none"></div>
-                    <div class="absolute bg-slate-50 border border-slate-300 shadow-inner" style="top:${sy}%; left:${sx}%; width:${ew}%; height:${eh}%;"></div>
-                `;
-
-                for(let r=0; r<l.rows; r++) {
-                    for(let c=0; c<l.cols; c++) {
-                        gridHtml += `
-                        <div class="absolute border border-indigo-400/50 bg-indigo-500/20 shadow-sm transition-transform hover:scale-[1.03] hover:z-10 cursor-crosshair flex items-center justify-center" 
-                             style="width:${wPct}%;height:${hPct}%;top:${sy + r*hPct}%;left:${sx + c*wPct}%">
-                             <div class="text-[8px] md:text-[10px] text-indigo-800 font-bold opacity-60 transform -rotate-12">${l.partName}</div>
-                        </div>`;
-                    }
+                let gridHtml = '';
+                for(let r=0; r<l.rows; r++) for(let c=0; c<l.cols; c++) {
+                    gridHtml += `<div class="absolute border border-indigo-400/30 bg-indigo-500/10" style="width:${wPct}%;height:${hPct}%;top:${sy + r*hPct}%;left:${sx + c*wPct}%"></div>`;
                 }
                 wrap.style.position = 'relative'; wrap.style.width = '100%'; wrap.style.height = '100%'; wrap.innerHTML = gridHtml;
                 con.appendChild(wrap);
@@ -1319,18 +1246,13 @@
             },
             updateUnfoldedView(L, W, H, type) { 
                 const c = document.getElementById('svgContainer'); 
+                const COL = '#64748b'; 
+                const DIM = '#94a3b8'; 
                 
-                // 升级刀模配色：实线深色（裁切），虚线浅色（压痕）
-                const CUT_LINE = 'stroke="#334155" stroke-width="1.5" stroke-linejoin="round"'; 
-                const CREASE_LINE = 'stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4"'; 
-                const DIM = '#64748b'; 
-
-                // 【联动优化】为标注线添加对应的类名以便高亮
                 const drawDim = (x1, y1, x2, y2, text, offset=10, isVertical=false) => { 
-                    const dimClass = `dim-${text}`; 
                     return isVertical ? 
-                        `<g class="dim-group ${dimClass}"><line x1="${x1-offset}" y1="${y1}" x2="${x1-offset}" y2="${y2}" stroke="${DIM}" stroke-width="0.8"/><text x="${x1-offset-5}" y="${(y1+y2)/2}" fill="${DIM}" font-size="12" text-anchor="end" dominant-baseline="middle" font-weight="bold">${text}</text></g>` :
-                        `<g class="dim-group ${dimClass}"><line x1="${x1}" y1="${y2+offset}" x2="${x2}" y2="${y2+offset}" stroke="${DIM}" stroke-width="0.8"/><text x="${(x1+x2)/2}" y="${y2+offset+15}" fill="${DIM}" font-size="12" text-anchor="middle" font-weight="bold">${text}</text></g>`; 
+                        `<line x1="${x1-offset}" y1="${y1}" x2="${x1-offset}" y2="${y2}" stroke="${DIM}" stroke-width="0.5"/><text x="${x1-offset-5}" y="${(y1+y2)/2}" fill="${DIM}" font-size="12" text-anchor="end" dominant-baseline="middle">${text}</text>` :
+                        `<line x1="${x1}" y1="${y2+offset}" x2="${x2}" y2="${y2+offset}" stroke="${DIM}" stroke-width="0.5"/><text x="${(x1+x2)/2}" y="${y2+offset+15}" fill="${DIM}" font-size="12" text-anchor="middle">${text}</text>`; 
                 };
                 
                 let s = '', vb = '';
@@ -1338,115 +1260,34 @@
                  switch(type) {
                     case 'topBottom': { 
                         const flap=H, gap=30; const sw=flap+L+flap, sh=flap+W+flap, tw=sw*2+gap+20, th=sh+20, sx=10, sy=flap+10; vb=`-10 -10 ${tw} ${th}`; 
-                        s+=`<g fill="rgba(241,245,249,0.5)">`;
-                        s+=`<rect x="${sx+flap}" y="${sy-flap}" width="${L}" height="${flap}" ${CUT_LINE}/><rect x="${sx+flap}" y="${sy+W}" width="${L}" height="${flap}" ${CUT_LINE}/><rect x="${sx}" y="${sy}" width="${flap}" height="${W}" ${CUT_LINE}/><rect x="${sx+flap+L}" y="${sy}" width="${flap}" height="${W}" ${CUT_LINE}/><rect x="${sx+flap}" y="${sy}" width="${L}" height="${W}" ${CUT_LINE}/>`;
-                        s+=`<line x1="${sx+flap}" y1="${sy}" x2="${sx+flap+L}" y2="${sy}" ${CREASE_LINE}/><line x1="${sx+flap}" y1="${sy+W}" x2="${sx+flap+L}" y2="${sy+W}" ${CREASE_LINE}/><line x1="${sx+flap}" y1="${sy}" x2="${sx+flap}" y2="${sy+W}" ${CREASE_LINE}/><line x1="${sx+flap+L}" y1="${sy}" x2="${sx+flap+L}" y2="${sy+W}" ${CREASE_LINE}/>`;
-                        s+=`<text x="${sx+flap+L/2}" y="${sy+W/2}" fill="${DIM}" text-anchor="middle" font-size="12">天盖</text></g>`; 
-                        
-                        let sx2=sx+sw+gap; 
-                        s+=`<g fill="rgba(241,245,249,0.5)"><rect x="${sx2+flap}" y="${sy-flap}" width="${L}" height="${flap}" ${CUT_LINE}/><rect x="${sx2+flap}" y="${sy+W}" width="${L}" height="${flap}" ${CUT_LINE}/><rect x="${sx2}" y="${sy}" width="${flap}" height="${W}" ${CUT_LINE}/><rect x="${sx2+flap+L}" y="${sy}" width="${flap}" height="${W}" ${CUT_LINE}/><rect x="${sx2+flap}" y="${sy}" width="${L}" height="${W}" ${CUT_LINE}/>`;
-                        s+=`<line x1="${sx2+flap}" y1="${sy}" x2="${sx2+flap+L}" y2="${sy}" ${CREASE_LINE}/><line x1="${sx2+flap}" y1="${sy+W}" x2="${sx2+flap+L}" y2="${sy+W}" ${CREASE_LINE}/><line x1="${sx2+flap}" y1="${sy}" x2="${sx2+flap}" y2="${sy+W}" ${CREASE_LINE}/><line x1="${sx2+flap+L}" y1="${sy}" x2="${sx2+flap+L}" y2="${sy+W}" ${CREASE_LINE}/>`;
-                        s+=`<text x="${sx2+flap+L/2}" y="${sy+W/2}" fill="${DIM}" text-anchor="middle" font-size="12">地盒</text></g>`; 
-                        
+                        s+=`<g stroke="${COL}" fill="none"><rect x="${sx+flap}" y="${sy-flap}" width="${L}" height="${flap}"/><rect x="${sx+flap}" y="${sy+W}" width="${L}" height="${flap}"/><rect x="${sx}" y="${sy}" width="${flap}" height="${W}"/><rect x="${sx+flap+L}" y="${sy}" width="${flap}" height="${W}"/><rect x="${sx+flap}" y="${sy}" width="${L}" height="${W}"/><text x="${sx+flap+L/2}" y="${sy+W/2}" fill="${DIM}" text-anchor="middle" font-size="12">天盖</text></g>`; 
+                        let sx2=sx+sw+gap; s+=`<g stroke="${COL}" fill="none"><rect x="${sx2+flap}" y="${sy-flap}" width="${L}" height="${flap}"/><rect x="${sx2+flap}" y="${sy+W}" width="${L}" height="${flap}"/><rect x="${sx2}" y="${sy}" width="${flap}" height="${W}"/><rect x="${sx2+flap+L}" y="${sy}" width="${flap}" height="${W}"/><rect x="${sx2+flap}" y="${sy}" width="${L}" height="${W}"/><text x="${sx2+flap+L/2}" y="${sy+W/2}" fill="${DIM}" text-anchor="middle" font-size="12">地盒</text></g>`; 
                         s+=drawDim(sx+flap,sy+W+flap,sx+flap+L,sy+W+flap,"L",5)+drawDim(sx+flap+L+flap,sy,sx+flap+L+flap,sy+W,"W",5,true)+drawDim(sx+flap+L+flap,sy-flap,sx+flap+L+flap,sy,"H",5,true); 
                         break; 
                     }
                     case 'drawer': { 
                         const gapD = 50; const sleeveH = 2*(W+H)+20; const trayW = L+2*H, trayH = W+2*H; const slx=10, sly=10; 
-                        s+=`<g fill="rgba(241,245,249,0.5)"> <rect x="${slx}" y="${sly}" width="${L}" height="${H}" ${CUT_LINE}/> <rect x="${slx}" y="${sly+H}" width="${L}" height="${W}" ${CUT_LINE}/> <rect x="${slx}" y="${sly+H+W}" width="${L}" height="${H}" ${CUT_LINE}/> <rect x="${slx}" y="${sly+H+W+H}" width="${L}" height="${W}" ${CUT_LINE}/>`;
-                        s+=`<line x1="${slx}" y1="${sly+H}" x2="${slx+L}" y2="${sly+H}" ${CREASE_LINE}/><line x1="${slx}" y1="${sly+H+W}" x2="${slx+L}" y2="${sly+H+W}" ${CREASE_LINE}/><line x1="${slx}" y1="${sly+H+W+H}" x2="${slx+L}" y2="${sly+H+W+H}" ${CREASE_LINE}/>`;
-                        s+=`<text x="${slx+L/2}" y="${sly+H+W+H+W+15}" fill="${DIM}" text-anchor="middle" font-size="10">外封套</text> </g>`; 
-                        
-                        const tlx = slx+L+gapD, tly = sly + (sleeveH-trayH)/2; 
-                        s+=`<g fill="rgba(241,245,249,0.5)"> <rect x="${tlx+H}" y="${tly+H}" width="${L}" height="${W}" ${CUT_LINE}/> <rect x="${tlx}" y="${tly+H}" width="${H}" height="${W}" ${CUT_LINE}/> <rect x="${tlx+H+L}" y="${tly+H}" width="${H}" height="${W}" ${CUT_LINE}/> <rect x="${tlx+H}" y="${tly}" width="${L}" height="${H}" ${CUT_LINE}/> <rect x="${tlx+H}" y="${tly+H+W}" width="${L}" height="${H}" ${CUT_LINE}/>`;
-                        s+=`<line x1="${tlx+H}" y1="${tly+H}" x2="${tlx+H+L}" y2="${tly+H}" ${CREASE_LINE}/><line x1="${tlx+H}" y1="${tly+H+W}" x2="${tlx+H+L}" y2="${tly+H+W}" ${CREASE_LINE}/><line x1="${tlx+H}" y1="${tly+H}" x2="${tlx+H}" y2="${tly+H+W}" ${CREASE_LINE}/><line x1="${tlx+H+L}" y1="${tly+H}" x2="${tlx+H+L}" y2="${tly+H+W}" ${CREASE_LINE}/>`;
-                        s+=`<text x="${tlx+H+L/2}" y="${tly+H+W/2}" fill="${DIM}" text-anchor="middle" font-size="10">内盒</text> </g>`; vb = `0 0 ${tlx+trayW+20} ${sly+sleeveH+30}`; 
-                        
-                        s+=drawDim(slx,sly+H+W+H+W,slx+L,sly+H+W+H+W,"L",20)+drawDim(slx,sly+H,slx,sly+H+W,"W",5,true)+drawDim(slx,sly,slx,sly+H,"H",5,true);
+                        s+=`<g stroke="${COL}" fill="none"> <rect x="${slx}" y="${sly}" width="${L}" height="${H}"/> <rect x="${slx}" y="${sly+H}" width="${L}" height="${W}"/> <rect x="${slx}" y="${sly+H+W}" width="${L}" height="${H}"/> <rect x="${slx}" y="${sly+H+W+H}" width="${L}" height="${W}"/> <path d="M${slx},${sly} L${slx+L},${sly} L${slx+L},${sly+H*2+W*2} L${slx},${sly+H*2+W*2} Z"/> <text x="${slx+L/2}" y="${sly+H+W+H+W+15}" fill="${DIM}" text-anchor="middle" font-size="10">外封套</text> </g>`; 
+                        const tlx = slx+L+gapD, tly = sly + (sleeveH-trayH)/2; s+=`<g stroke="${COL}" fill="none"> <rect x="${tlx+H}" y="${tly+H}" width="${L}" height="${W}"/> <rect x="${tlx}" y="${tly+H}" width="${H}" height="${W}"/> <rect x="${tlx+H+L}" y="${tly+H}" width="${H}" height="${W}"/> <rect x="${tlx+H}" y="${tly}" width="${L}" height="${H}"/> <rect x="${tlx+H}" y="${tly+H+W}" width="${L}" height="${H}"/> <text x="${tlx+H+L/2}" y="${tly+H+W/2}" fill="${DIM}" text-anchor="middle" font-size="10">内盒</text> </g>`; vb = `0 0 ${tlx+trayW+20} ${sly+sleeveH+30}`; 
                         break; 
                     }
                     case 'airplane': { 
                         const apW = W, apL = L, apH = H; const ear = 15; const totalW_ap = apL + 2*apH + 2*ear + 20; const totalH_ap = apW*2 + apH*3 + 20; vb = `-10 -10 ${totalW_ap} ${totalH_ap}`; const cx = apH + ear + 10, cy = 10; 
-                        s += `<g fill="rgba(241,245,249,0.5)">`; 
-                        s += `<rect x="${cx}" y="${cy}" width="${apL}" height="${apW}" ${CUT_LINE}/>`; 
-                        s += `<line x1="${cx}" y1="${cy+apW}" x2="${cx+apL}" y2="${cy+apW}" ${CREASE_LINE}/>`;
-                        s += `<path d="M${cx},${cy} L${cx+ear},${cy-apH} L${cx+apL-ear},${cy-apH} L${cx+apL},${cy} Z" ${CUT_LINE}/>`; 
-                        s += `<rect x="${cx}" y="${cy+apW}" width="${apL}" height="${apH}" ${CUT_LINE}/>`; 
-                        s += `<line x1="${cx}" y1="${cy+apW+apH}" x2="${cx+apL}" y2="${cy+apW+apH}" ${CREASE_LINE}/>`;
-                        const by = cy+apW+apH; 
-                        s += `<rect x="${cx}" y="${by}" width="${apL}" height="${apW}" ${CUT_LINE}/>`; 
-                        s += `<line x1="${cx}" y1="${by}" x2="${cx}" y2="${by+apW}" ${CREASE_LINE}/>`; 
-                        s += `<line x1="${cx+apL}" y1="${by}" x2="${cx+apL}" y2="${by+apW}" ${CREASE_LINE}/>`; 
-                        s += `<line x1="${cx}" y1="${by+apW}" x2="${cx+apL}" y2="${by+apW}" ${CREASE_LINE}/>`; 
-                        s += `<rect x="${cx-apH}" y="${by}" width="${apH}" height="${apW}" ${CUT_LINE}/>`; 
-                        s += `<path d="M${cx-apH},${by} L${cx-apH-ear},${by+10} L${cx-apH-ear},${by+apW-10} L${cx-apH},${by+apW} Z" ${CUT_LINE}/>`; 
-                        s += `<rect x="${cx+apL}" y="${by}" width="${apH}" height="${apW}" ${CUT_LINE}/>`; 
-                        s += `<path d="M${cx+apL+apH},${by} L${cx+apL+apH+ear},${by+10} L${cx+apL+apH+ear},${by+apW-10} L${cx+apL+apH},${by+apW} Z" ${CUT_LINE}/>`; 
-                        s += `<rect x="${cx}" y="${by+apW}" width="${apL}" height="${apH}" ${CUT_LINE}/>`; 
-                        s += `<path d="M${cx},${by+apW+apH} L${cx+10},${by+apW+apH+10} L${cx+apL-10},${by+apW+apH+10} L${cx+apL},${by+apW+apH} Z" ${CUT_LINE}/>`; 
-                        
-                        s+=drawDim(cx,by+apW,cx+apL,by+apW,"L",0,false) + drawDim(cx+apL,by,cx+apL,by+apW,"W",5,true) + drawDim(cx+apL,by+apW,cx+apL,by+apW+apH,"H",5,true); 
-                        s += `</g>`; 
+                        s += `<g stroke="${COL}" fill="none">`; s += `<rect x="${cx}" y="${cy}" width="${apL}" height="${apW}"/>`; s += `<path d="M${cx},${cy} L${cx+ear},${cy-apH} L${cx+apL-ear},${cy-apH} L${cx+apL},${cy} Z"/>`; s += `<rect x="${cx}" y="${cy+apW}" width="${apL}" height="${apH}"/>`; const by = cy+apW+apH; s += `<rect x="${cx}" y="${by}" width="${apL}" height="${apW}"/>`; s += `<rect x="${cx-apH}" y="${by}" width="${apH}" height="${apW}"/>`; s += `<path d="M${cx-apH},${by} L${cx-apH-ear},${by+10} L${cx-apH-ear},${by+apW-10} L${cx-apH},${by+apW} Z"/>`; s += `<rect x="${cx+apL}" y="${by}" width="${apH}" height="${apW}"/>`; s += `<path d="M${cx+apL+apH},${by} L${cx+apL+apH+ear},${by+10} L${cx+apL+apH+ear},${by+apW-10} L${cx+apL+apH},${by+apW} Z"/>`; s += `<rect x="${cx}" y="${by+apW}" width="${apL}" height="${apH}"/>`; s += `<path d="M${cx},${by+apW+apH} L${cx+10},${by+apW+apH+10} L${cx+apL-10},${by+apW+apH+10} L${cx+apL},${by+apW+apH} Z"/>`; 
+                        s+=drawDim(cx,by+apW,cx+apL,by+apW,"L",0,false) + drawDim(cx+apL,by,cx+apL,by+apW,"W",5,true); s += `</g>`; 
                         break; 
                     }
                     case 'handle': { 
                         const hL=L, hW=W, hH=H; const hTop = 60; const totalW_h = hL*2 + hW*2 + 40; const totalH_h = hH + hW/2 + hTop + 40; vb = `-10 -10 ${totalW_h} ${totalH_h}`; let curX = 10, curY = hTop + 20; 
-                        s+=`<g fill="rgba(241,245,249,0.5)">`; 
-                        s+=`<rect x="${curX}" y="${curY}" width="${hW}" height="${hH}" ${CUT_LINE}/>`; s+=`<path d="M${curX},${curY} L${curX+hW/2-10},${curY-hTop} L${curX+hW/2+10},${curY-hTop} L${curX+hW},${curY} Z" ${CUT_LINE}/>`; s+=`<rect x="${curX}" y="${curY+hH}" width="${hW}" height="${hW/2}" ${CUT_LINE}/>`; 
-                        s+=`<line x1="${curX}" y1="${curY}" x2="${curX+hW}" y2="${curY}" ${CREASE_LINE}/><line x1="${curX}" y1="${curY+hH}" x2="${curX+hW}" y2="${curY+hH}" ${CREASE_LINE}/><line x1="${curX+hW}" y1="${curY}" x2="${curX+hW}" y2="${curY+hH}" ${CREASE_LINE}/>`;
-                        curX += hW; s+=`<rect x="${curX}" y="${curY}" width="${hL}" height="${hH}" ${CUT_LINE}/>`; s+=`<rect x="${curX}" y="${curY+hH}" width="${hL}" height="${hW/2}" ${CUT_LINE}/>`; 
-                        s+=`<line x1="${curX}" y1="${curY+hH}" x2="${curX+hL}" y2="${curY+hH}" ${CREASE_LINE}/><line x1="${curX+hL}" y1="${curY}" x2="${curX+hL}" y2="${curY+hH}" ${CREASE_LINE}/>`;
-                        curX += hL; s+=`<rect x="${curX}" y="${curY}" width="${hW}" height="${hH}" ${CUT_LINE}/>`; s+=`<path d="M${curX},${curY} L${curX+hW/2-10},${curY-hTop} L${curX+hW/2+10},${curY-hTop} L${curX+hW},${curY} Z" ${CUT_LINE}/>`; s+=`<rect x="${curX}" y="${curY+hH}" width="${hW}" height="${hW/2}" ${CUT_LINE}/>`; 
-                        s+=`<line x1="${curX}" y1="${curY}" x2="${curX+hW}" y2="${curY}" ${CREASE_LINE}/><line x1="${curX}" y1="${curY+hH}" x2="${curX+hW}" y2="${curY+hH}" ${CREASE_LINE}/><line x1="${curX+hW}" y1="${curY}" x2="${curX+hW}" y2="${curY+hH}" ${CREASE_LINE}/>`;
-                        curX += hW; s+=`<rect x="${curX}" y="${curY}" width="${hL}" height="${hH}" ${CUT_LINE}/>`; s+=`<rect x="${curX}" y="${curY+hH}" width="${hL}" height="${hW/2}" ${CUT_LINE}/>`; s+=`<path d="M${curX+hL},${curY} L${curX+hL+15},${curY+10} L${curX+hL+15},${curY+hH-10} L${curX+hL},${curY+hH} Z" ${CUT_LINE}/>`; 
-                        s+=`<line x1="${curX}" y1="${curY+hH}" x2="${curX+hL}" y2="${curY+hH}" ${CREASE_LINE}/>`;
-                        s+=drawDim(10+hW, curY+hH, 10+hW+hL, curY+hH, "L", 5, false) + drawDim(10, curY+hH, 10+hW, curY+hH, "W", 5, false) + drawDim(10, curY, 10, curY+hH, "H", 5, true); s+=`</g>`; 
+                        s+=`<g stroke="${COL}" fill="none">`; s+=`<rect x="${curX}" y="${curY}" width="${hW}" height="${hH}"/>`; s+=`<path d="M${curX},${curY} L${curX+hW/2-10},${curY-hTop} L${curX+hW/2+10},${curY-hTop} L${curX+hW},${curY} Z"/>`; s+=`<rect x="${curX}" y="${curY+hH}" width="${hW}" height="${hW/2}"/>`; curX += hW; s+=`<rect x="${curX}" y="${curY}" width="${hL}" height="${hH}"/>`; s+=`<rect x="${curX}" y="${curY+hH}" width="${hL}" height="${hW/2}"/>`; curX += hL; s+=`<rect x="${curX}" y="${curY}" width="${hW}" height="${hH}"/>`; s+=`<path d="M${curX},${curY} L${curX+hW/2-10},${curY-hTop} L${curX+hW/2+10},${curY-hTop} L${curX+hW},${curY} Z"/>`; s+=`<rect x="${curX}" y="${curY+hH}" width="${hW}" height="${hW/2}"/>`; curX += hW; s+=`<rect x="${curX}" y="${curY}" width="${hL}" height="${hH}"/>`; s+=`<rect x="${curX}" y="${curY+hH}" width="${hL}" height="${hW/2}"/>`; s+=`<path d="M${curX+hL},${curY} L${curX+hL+15},${curY+10} L${curX+hL+15},${curY+hH-10} L${curX+hL},${curY+hH} Z"/>`; 
+                        s+=drawDim(10+hW, curY+hH, 10+hW+hL, curY+hH, "L", 5, false); s+=drawDim(10, curY+hH, 10+hW, curY+hH, "W", 5, false); s+=drawDim(10, curY, 10, curY+hH, "H", 5, true); s+=`</g>`; 
                         break; 
                     }
                     default: { 
-                        // 通用双插盒 / 扣底盒
-                        const flap2=15, dust2=W*0.6, glue2=15, tW = W+L+W+L+glue2+20, tH = H+(flap2*2)+20, sx2 = 5, sy2 = flap2+10; vb = `-10 -10 ${tW} ${tH}`; let cx2 = sx2; 
-                        s += `<g fill="rgba(241,245,249,0.5)">`; 
-                        
-                        s += `<rect x="${cx2}" y="${sy2}" width="${W}" height="${H}" ${CUT_LINE}/>`; 
-                        s += `<line x1="${cx2+W}" y1="${sy2}" x2="${cx2+W}" y2="${sy2+H}" ${CREASE_LINE}/>`; 
-                        s += `<path d="M${cx2},${sy2} L${cx2+5},${sy2-dust2} L${cx2+W-5},${sy2-dust2} L${cx2+W},${sy2} Z" ${CUT_LINE}/>`; 
-                        s += `<path d="M${cx2},${sy2+H} L${cx2+5},${sy2+H+dust2} L${cx2+W-5},${sy2+H+dust2} L${cx2+W},${sy2+H} Z" ${CUT_LINE}/>`; 
-                        cx2 += W; 
-                        
-                        s += `<rect x="${cx2}" y="${sy2}" width="${L}" height="${H}" ${CUT_LINE}/>`; 
-                        s += `<line x1="${cx2+L}" y1="${sy2}" x2="${cx2+L}" y2="${sy2+H}" ${CREASE_LINE}/>`;
-                        s += `<line x1="${cx2}" y1="${sy2}" x2="${cx2+L}" y2="${sy2}" ${CREASE_LINE}/>`; 
-                        s += `<path d="M${cx2},${sy2} L${cx2},${sy2-flap2} Q${cx2},${sy2-flap2-5} ${cx2+5},${sy2-flap2-5} L${cx2+L-5},${sy2-flap2-5} Q${cx2+L},${sy2-flap2-5} ${cx2+L},${sy2-flap2} L${cx2+L},${sy2} Z" ${CUT_LINE}/>`; 
-                        
-                        if (type === 'bottomLock') { 
-                            s += `<path d="M${cx2},${sy2+H} L${cx2+L/2},${sy2+H+W*0.6} L${cx2+L},${sy2+H} Z" ${CUT_LINE}/>`; 
-                        } else { 
-                            s += `<line x1="${cx2}" y1="${sy2+H}" x2="${cx2+L}" y2="${sy2+H}" ${CREASE_LINE}/>`;
-                            s += `<path d="M${cx2},${sy2+H} L${cx2},${sy2+H+flap2} Q${cx2},${sy2+H+flap2+5} ${cx2+5},${sy2+H+flap2+5} L${cx2+L-5},${sy2+H+flap2+5} Q${cx2+L},${sy2+H+flap2+5} ${cx2+L},${sy2+H+flap2} L${cx2+L},${sy2+H} Z" ${CUT_LINE}/>`; 
-                        } 
-                        cx2 += L; 
-                        
-                        s += `<rect x="${cx2}" y="${sy2}" width="${W}" height="${H}" ${CUT_LINE}/>`; 
-                        s += `<line x1="${cx2+W}" y1="${sy2}" x2="${cx2+W}" y2="${sy2+H}" ${CREASE_LINE}/>`;
-                        s += `<path d="M${cx2},${sy2} L${cx2+5},${sy2-dust2} L${cx2+W-5},${sy2-dust2} L${cx2+W},${sy2} Z" ${CUT_LINE}/>`; 
-                        s += `<path d="M${cx2},${sy2+H} L${cx2+5},${sy2+H+dust2} L${cx2+W-5},${sy2+H+dust2} L${cx2+W},${sy2+H} Z" ${CUT_LINE}/>`; 
-                        cx2 += W; 
-                        
-                        s += `<rect x="${cx2}" y="${sy2}" width="${L}" height="${H}" ${CUT_LINE}/>`; 
-                        s += `<line x1="${cx2+L}" y1="${sy2}" x2="${cx2+L}" y2="${sy2+H}" ${CREASE_LINE}/>`;
-                        if (type === 'bottomLock') { 
-                            s += `<path d="M${cx2},${sy2+H} L${cx2+L/2},${sy2+H+W*0.6} L${cx2+L},${sy2+H} Z" ${CUT_LINE}/>`; 
-                        } else { 
-                            s += `<line x1="${cx2}" y1="${sy2+H}" x2="${cx2+L}" y2="${sy2+H}" ${CREASE_LINE}/>`;
-                            s += `<path d="M${cx2},${sy2+H} L${cx2},${sy2+H+flap2} Q${cx2},${sy2+H+flap2+5} ${cx2+5},${sy2+H+flap2+5} L${cx2+L-5},${sy2+H+flap2+5} Q${cx2+L},${sy2+H+flap2+5} ${cx2+L},${sy2+H+flap2} L${cx2+L},${sy2+H} Z" ${CUT_LINE}/>`; 
-                        } 
-                        cx2 += L; 
-                        
-                        s += `<path d="M${cx2},${sy2} L${cx2+glue2},${sy2+5} L${cx2+glue2},${sy2+H-5} L${cx2},${sy2+H} Z" ${CUT_LINE}/>`;
-                        s += `</g>`; 
-                        
-                        s += drawDim(sx2+W/2, sy2, sx2+W/2, sy2+H, "H", 5, true) + drawDim(sx2+W+L, sy2+H-10, sx2+W+L+W, sy2+H-10, "W", 0) + drawDim(sx2+W, sy2+H-10, sx2+W+L, sy2+H-10, "L", 0); 
+                        const flap2=20, dust2=W*0.6, glue2=15, tW = W+L+W+L+glue2+20, tH = H+(flap2*2)+20, sx2 = 5, sy2 = flap2+10; vb = `-10 -10 ${tW} ${tH}`; let cx2 = sx2; 
+                        s += `<g stroke="${COL}" fill="none">`; s += `<rect x="${cx2}" y="${sy2}" width="${W}" height="${H}"/>`; s += `<path d="M${cx2},${sy2} L${cx2+5},${sy2-dust2} L${cx2+W-5},${sy2-dust2} L${cx2+W},${sy2} Z"/>`; s += `<path d="M${cx2},${sy2+H} L${cx2+5},${sy2+H+dust2} L${cx2+W-5},${sy2+H+dust2} L${cx2+W},${sy2+H} Z"/>`; cx2 += W; s += `<rect x="${cx2}" y="${sy2}" width="${L}" height="${H}"/>`; s += `<path d="M${cx2},${sy2} L${cx2},${sy2-flap2} Q${cx2},${sy2-flap2-5} ${cx2+5},${sy2-flap2-5} L${cx2+L-5},${sy2-flap2-5} Q${cx2+L},${sy2-flap2-5} ${cx2+L},${sy2-flap2} L${cx2+L},${sy2} Z"/>`; 
+                        if (type === 'bottomLock') { s += `<path d="M${cx2},${sy2+H} L${cx2+L/2},${sy2+H+W*0.6} L${cx2+L},${sy2+H} Z"/>`; } else { s += `<path d="M${cx2},${sy2+H} L${cx2},${sy2+H+flap2} Q${cx2},${sy2+H+flap2+5} ${cx2+5},${sy2+H+flap2+5} L${cx2+L-5},${sy2+H+flap2+5} Q${cx2+L},${sy2+H+flap2+5} ${cx2+L},${sy2+H+flap2} L${cx2+L},${sy2+H} Z"/>`; } cx2 += L; s += `<rect x="${cx2}" y="${sy2}" width="${W}" height="${H}"/>`; s += `<path d="M${cx2},${sy2} L${cx2+5},${sy2-dust2} L${cx2+W-5},${sy2-dust2} L${cx2+W},${sy2} Z"/>`; s += `<path d="M${cx2},${sy2+H} L${cx2+5},${sy2+H+dust2} L${cx2+W-5},${sy2+H+dust2} L${cx2+W},${sy2+H} Z"/>`; cx2 += W; s += `<rect x="${cx2}" y="${sy2}" width="${L}" height="${H}"/>`; 
+                        if (type === 'bottomLock') { s += `<path d="M${cx2},${sy2+H} L${cx2+L/2},${sy2+H+W*0.6} L${cx2+L},${sy2+H} Z"/>`; } else { s += `<path d="M${cx2},${sy2+H} L${cx2},${sy2+H+flap2} Q${cx2},${sy2+H+flap2+5} ${cx2+5},${sy2+H+flap2+5} L${cx2+L-5},${sy2+H+flap2+5} Q${cx2+L},${sy2+H+flap2+5} ${cx2+L},${sy2+H+flap2} L${cx2+L},${sy2+H} Z"/>`; } cx2 += L; s += `<path d="M${cx2},${sy2} L${cx2+glue2},${sy2+5} L${cx2+glue2},${sy2+H-5} L${cx2},${sy2+H} Z"/></g>`; s += drawDim(sx2+W/2, sy2, sx2+W/2, sy2+H, "H", 5, true) + drawDim(sx2+W+L, sy2+H-10, sx2+W+L+W, sy2+H-10, "W", 0) + drawDim(sx2+W, sy2+H-10, sx2+W+L, sy2+H-10, "L", 0); 
                         break; 
                     }
                 }
@@ -1454,7 +1295,7 @@
             }
         };
 
-        // ------------------ 订单录入模块 ------------------
+        // 5. 订单录入模块
         const OrderForm = {
             init() {
                 document.addEventListener('paste', (e) => this.handlePaste(e));
@@ -1623,12 +1464,12 @@
                 OrderState.editingOrderObjId = null;
                 document.getElementById('formTitle').innerText = "录入新订单";
                 const btn = document.getElementById('btnSubmitOrder');
-                btn.innerHTML = `<span>确认下单</span><i class="fas fa-arrow-right"></i>`;
+                btn.innerHTML = `<span>确认下单</span><i class="fas fa-arrow-right text-xs ml-1"></i>`;
                 document.getElementById('btnCancelEdit').classList.add('hidden');
             }
         };
 
-        // ------------------ 订单列表模块 ------------------
+        // 6. 订单列表模块
         const OrderList = {
             debounceSearch: Utils.debounce(() => {
                 OrderList.refreshList();
@@ -1662,7 +1503,7 @@
                     const htmlText = `<div>
                         【请确认定稿信息】<br>
                         ${materialTextHtml}商品明细：<br>${itemsTextHtml}<br><br>
-                        ⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现文字问题不做售后。<br><br>
+                        ⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现问题不做售后。<br><br>
                     </div>`;
 
                     const dataUrl = await Utils.convertUrlToDataURL(d.finalImage);
@@ -1698,7 +1539,7 @@
                             `${idx + 1}. 品名:${i.name} / 尺寸:${i.size || '常规'} / 数量:${i.qty}`
                         ).join('\n');
                         let materialText = d.remarks ? `材质及备注：${d.remarks}\n` : '';
-                        const fallbackText = `【请确认定稿信息】\n${materialText}商品明细：\n${itemsText}\n\n⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现文字问题不做售后。\n\n[定稿图链接，点击查看]:\n${d.finalImage}`;
+                        const fallbackText = `【请确认定稿信息】\n${materialText}商品明细：\n${itemsText}\n\n⚠️ 定稿后次日起7天左右出货，确认信息后提交生产。请仔细检查文字图片信息，提交生产后定制品出现问题不做售后。\n\n[定稿图链接，点击查看]:\n${d.finalImage}`;
                         
                         await navigator.clipboard.writeText(fallbackText);
                         UI.showToast('⚠️ 图片受限，已复制纯文本和链接', 'info');
@@ -2172,15 +2013,13 @@
             }
         };
 
-        // ======================= 系统初始化 =======================
+        // 初始化
         document.addEventListener('DOMContentLoaded', () => {
             CloudService.init();
             Auth.init();
             CalcUI.init();
             OrderForm.init();
             if(window.AV) OrderList.refreshList();
-            
-            // 默认启动报价台
             switchApp('calculator');
 
             // 监听定稿图上传
@@ -2189,5 +2028,1152 @@
             };
         });
     </script>
-</body>
+<script>
+(() => {
+    const $ = (id) => document.getElementById(id);
+
+    const NAV_BASE_CLASSES = ['nav-item','px-4','py-2','rounded-xl','text-xs','font-bold','transition-all','flex','items-center','gap-2'];
+    const NAV_ACTIVE_CLASSES = ['bg-white','text-slate-900','shadow-sm','dark:bg-slate-700','dark:text-white'];
+    const NAV_INACTIVE_CLASSES = ['text-slate-500','hover:text-slate-800','hover:bg-slate-200/50'];
+
+    const DOM = {
+        clear(node) {
+            while (node && node.firstChild) node.removeChild(node.firstChild);
+            return node;
+        },
+        icon(className) {
+            const i = document.createElement('i');
+            i.className = className;
+            return i;
+        },
+        text(value) {
+            return document.createTextNode(value == null ? '' : String(value));
+        },
+        button({ className = '', action = '', orderId = '', index = '', images = null, src = '', title = '', text = '', html = '' } = {}) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            if (className) btn.className = className;
+            if (action) btn.dataset.action = action;
+            if (orderId) btn.dataset.orderId = orderId;
+            if (index !== '' && index != null) btn.dataset.index = index;
+            if (images) btn.dataset.images = JSON.stringify(images);
+            if (src) btn.dataset.src = src;
+            if (title) btn.title = title;
+            if (html) btn.innerHTML = html;
+            else if (text) btn.textContent = text;
+            return btn;
+        }
+    };
+
+    const Safe = {
+        url(value) {
+            if (typeof value !== 'string') return '';
+            const trimmed = value.trim();
+            if (/^https?:\/\//i.test(trimmed) || /^data:image\//i.test(trimmed) || /^blob:/i.test(trimmed)) return trimmed;
+            return '';
+        },
+        clipboard(text) {
+            if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text);
+            return new Promise((resolve, reject) => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                try {
+                    document.execCommand('copy');
+                    resolve();
+                } catch (err) {
+                    reject(err);
+                } finally {
+                    document.body.removeChild(ta);
+                }
+            });
+        }
+    };
+
+    const normalizeOrder = (order) => {
+        if (!order) return null;
+        if (typeof order.toJSON === 'function') {
+            const json = order.toJSON();
+            json.objectId = json.objectId || order.id || order.objectId;
+            json.createdAt = json.createdAt || order.createdAt || null;
+            json.updatedAt = json.updatedAt || order.updatedAt || null;
+            return json;
+        }
+        const attrs = order.attributes ? { ...order.attributes } : { ...order };
+        attrs.objectId = attrs.objectId || order.id || order.objectId;
+        attrs.createdAt = attrs.createdAt || order.createdAt || null;
+        attrs.updatedAt = attrs.updatedAt || order.updatedAt || null;
+        return attrs;
+    };
+
+    const currentUsername = () => {
+        const user = Auth?.currentUser;
+        if (!user) return 'anonymous';
+        if (user.isGuest) return 'guest';
+        return typeof user.getUsername === 'function' ? user.getUsername() : (user.username || 'user');
+    };
+
+    const currentFilterSignature = () => JSON.stringify({
+        keyword: $('filterKeyword')?.value.trim() || '',
+        status: $('filterStatus')?.value || '',
+        flow: $('filterFlow')?.value || '',
+        start: $('dateStart')?.value || '',
+        end: $('dateEnd')?.value || ''
+    });
+
+    const currentListCacheKey = () => {
+        const sig = btoa(unescape(encodeURIComponent(currentFilterSignature()))).slice(0, 160);
+        return `cached_orders_v2:${currentUsername()}:${sig}`;
+    };
+
+    const persistListCache = () => {
+        try {
+            localStorage.setItem(currentListCacheKey(), JSON.stringify(OrderState.allCloudOrders));
+        } catch (err) {
+            console.warn('缓存订单失败', err);
+        }
+    };
+
+    const setSubmitButtonHTML = (mode) => {
+        const btn = $('btnSubmitOrder');
+        if (!btn) return;
+        if (mode === 'edit') btn.innerHTML = '<span>保存修改</span><i class="fas fa-save text-xs ml-1"></i>';
+        else btn.innerHTML = '<span>确认下单</span><i class="fas fa-arrow-right text-xs ml-1"></i>';
+    };
+
+    const setNavState = (app) => {
+        ['calculator', 'order-form', 'order-list'].forEach((id) => {
+            const btn = $(`nav-${id}`);
+            if (!btn) return;
+            btn.className = '';
+            NAV_BASE_CLASSES.forEach((cls) => btn.classList.add(cls));
+            const extra = id === app ? NAV_ACTIVE_CLASSES : NAV_INACTIVE_CLASSES;
+            extra.forEach((cls) => btn.classList.add(cls));
+        });
+    };
+
+    window.switchApp = function(app) {
+        try {
+            ['calculator', 'order-form', 'order-list'].forEach((id) => {
+                const el = $(`app-${id}`);
+                if (!el) return;
+                el.classList.add('hidden');
+                el.classList.remove('animate-fade-in-up');
+            });
+            const target = $(`app-${app}`);
+            if (target) {
+                target.classList.remove('hidden');
+                void target.offsetWidth;
+                target.classList.add('animate-fade-in-up');
+            }
+            setNavState(app);
+        } catch (err) {
+            console.error('Switch App Error:', err);
+        }
+    };
+
+    UI.showToast = function(message, type = 'info') {
+        const container = $('toastContainer');
+        const toast = document.createElement('div');
+        const iconWrap = document.createElement('span');
+        const textSpan = document.createElement('span');
+        toast.className = 'toast-msg';
+        textSpan.textContent = message;
+
+        let iconClass = 'fas fa-info-circle text-blue-500';
+        if (type === 'success') {
+            iconClass = 'fas fa-check-circle text-emerald-500';
+            toast.style.borderLeftColor = '#10b981';
+        } else if (type === 'error') {
+            iconClass = 'fas fa-exclamation-circle text-red-500';
+            toast.style.borderLeftColor = '#ef4444';
+        }
+
+        iconWrap.appendChild(DOM.icon(iconClass));
+        toast.appendChild(iconWrap);
+        toast.appendChild(textSpan);
+        container.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add('show'));
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    };
+
+    OrderState.statsMeta = {
+        lastFetchedAt: 0,
+        ttl: 30000,
+        inflight: null
+    };
+
+    CloudService.fetchOrderStats = async function(options = {}) {
+        const force = Boolean(options.force);
+        const now = Date.now();
+
+        if (!force && OrderState.statsMeta.inflight) return OrderState.statsMeta.inflight;
+        if (!force && OrderState.statsMeta.lastFetchedAt && (now - OrderState.statsMeta.lastFetchedAt) < OrderState.statsMeta.ttl) {
+            OrderList.updateStatsUI();
+            return OrderState.filterStats;
+        }
+
+        const task = (async () => {
+            try {
+                const qTodo = new AV.Query('Order');
+                qTodo.equalTo('status', '待制作');
+
+                const qShip = new AV.Query('Order');
+                qShip.equalTo('status', '待发货');
+
+                const startOfMonth = new Date();
+                startOfMonth.setDate(1);
+                startOfMonth.setHours(0, 0, 0, 0);
+
+                const qMonth = new AV.Query('Order');
+                qMonth.greaterThanOrEqualTo('createdAt', startOfMonth);
+                qMonth.select(['totalAmount']);
+                qMonth.limit(1000);
+
+                const qTotal = new AV.Query('Order');
+
+                const [cTodo, cShip, monthOrders, cTotal] = await Promise.all([
+                    qTodo.count(),
+                    qShip.count(),
+                    qMonth.find(),
+                    qTotal.count()
+                ]);
+
+                const totalMonth = monthOrders.reduce((sum, item) => sum + (item.get ? (item.get('totalAmount') || 0) : (item.totalAmount || 0)), 0);
+                OrderState.filterStats = { todo: cTodo, shipping: cShip, month: totalMonth, total: cTotal };
+                OrderState.statsMeta.lastFetchedAt = Date.now();
+                OrderList.updateStatsUI();
+                return OrderState.filterStats;
+            } catch (err) {
+                console.error('Stats fetch error', err);
+                throw err;
+            }
+        })();
+
+        OrderState.statsMeta.inflight = task;
+        try {
+            return await task;
+        } finally {
+            OrderState.statsMeta.inflight = null;
+        }
+    };
+
+    CloudService.scheduleStatsRefresh = Utils.debounce(() => {
+        CloudService.fetchOrderStats({ force: true }).catch(() => {});
+    }, 600);
+
+    OrderForm.renderImgGallery = function() {
+        const gallery = $('imgGallery');
+        const placeholder = $('pastePlaceholder');
+        DOM.clear(gallery);
+
+        if (!OrderState.currentImages.length) {
+            if (placeholder) placeholder.style.display = 'block';
+            return;
+        }
+
+        if (placeholder) placeholder.style.display = 'none';
+        const frag = document.createDocumentFragment();
+
+        OrderState.currentImages.forEach((src, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'relative group';
+
+            const img = document.createElement('img');
+            img.className = 'upload-thumb';
+            img.src = Safe.url(src) || src;
+            img.alt = `订单图片 ${index + 1}`;
+
+            const overlay = DOM.button({
+                className: 'absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer rounded-lg img-remove',
+                action: 'remove-image',
+                index
+            });
+            overlay.appendChild(DOM.icon('fas fa-trash text-white'));
+
+            wrapper.appendChild(img);
+            wrapper.appendChild(overlay);
+            frag.appendChild(wrapper);
+        });
+
+        gallery.appendChild(frag);
+    };
+
+    OrderForm.renderTempTable = function() {
+        const body = $('tempItemsBody');
+        DOM.clear(body);
+        let total = 0;
+
+        OrderState.currentItems.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors';
+
+            const tdName = document.createElement('td');
+            tdName.className = 'p-3 pl-4 font-medium';
+            tdName.textContent = item.name || '';
+
+            const tdSize = document.createElement('td');
+            tdSize.className = 'p-3 text-slate-500';
+            tdSize.textContent = item.size || '';
+
+            const tdQty = document.createElement('td');
+            tdQty.className = 'p-3 text-center';
+            tdQty.textContent = item.qty ?? '';
+
+            const tdTotal = document.createElement('td');
+            tdTotal.className = 'p-3 pr-4 font-mono text-right';
+            tdTotal.textContent = `¥${item.total || 0}`;
+
+            const tdAction = document.createElement('td');
+            tdAction.className = 'p-3 text-center';
+            const removeBtn = DOM.button({
+                className: 'text-red-400 cursor-pointer hover:text-red-600 transition-colors',
+                action: 'remove-item',
+                index,
+                title: '删除商品'
+            });
+            removeBtn.appendChild(DOM.icon('fas fa-times'));
+            tdAction.appendChild(removeBtn);
+
+            total += parseFloat(item.total || 0);
+            tr.append(tdName, tdSize, tdQty, tdTotal, tdAction);
+            body.appendChild(tr);
+        });
+
+        $('grandTotal').textContent = total.toFixed(2);
+    };
+
+    const applyOrderFilters = (query) => {
+        const status = $('filterStatus').value;
+        const flow = $('filterFlow').value;
+        const start = $('dateStart').value;
+        const end = $('dateEnd').value;
+
+        if (status) {
+            if (status === 'issue') query.equalTo('hasIssue', true);
+            else query.equalTo('status', status);
+        }
+        if (flow) query.equalTo('flowStatus', flow);
+        if (start) query.greaterThanOrEqualTo('createdAt', new Date(start));
+        if (end) {
+            const endDate = new Date(end);
+            endDate.setHours(23, 59, 59, 999);
+            query.lessThanOrEqualTo('createdAt', endDate);
+        }
+        return query;
+    };
+
+    const buildOrderQuery = () => {
+        const keyword = $('filterKeyword').value.trim();
+
+        if (!keyword) return applyOrderFilters(new AV.Query('Order'));
+
+        const fields = ['orderId', 'customerInfo', 'customerAddress', 'trackingNumber'];
+        const queries = fields.map((field) => {
+            const q = new AV.Query('Order');
+            q.contains(field, keyword);
+            return applyOrderFilters(q);
+        });
+        return AV.Query.or(...queries);
+    };
+
+    const setLoadMoreVisibility = (hasMore) => {
+        const container = $('loadMoreContainer');
+        const btn = $('btnLoadMore');
+        if (container) {
+            if (hasMore) container.classList.remove('hidden');
+            else container.classList.add('hidden');
+        }
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = hasMore ? '加载更多...' : '没有更多了';
+        }
+    };
+
+    const statusMeta = (order) => {
+        if (order.hasIssue) return { cls: 'pill-issue', text: '⚠️ 异常/待处理' };
+        if (order.status === '待制作') return { cls: 'pill-todo', text: '待制作' };
+        if (order.status === '待发货') return { cls: 'pill-shipping', text: '待发货' };
+        return { cls: 'pill-done', text: order.status || '已完成' };
+    };
+
+    const createThumb = (src, images, title, finalStyle = false) => {
+        const safeSrc = Safe.url(src);
+        if (!safeSrc) {
+            const fallback = document.createElement('div');
+            fallback.className = 'w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center text-slate-300 text-sm shadow-inner';
+            fallback.appendChild(DOM.icon('fas fa-image'));
+            return fallback;
+        }
+        const img = document.createElement('img');
+        img.className = finalStyle ? 'table-thumb thumb-final' : 'table-thumb';
+        img.src = safeSrc;
+        img.alt = title || '订单图片';
+        img.dataset.action = 'show-lightbox';
+        img.dataset.src = safeSrc;
+        img.dataset.images = JSON.stringify(images || [safeSrc]);
+        img.title = title || '查看图片';
+        return img;
+    };
+
+    OrderList.findOrder = function(id) {
+        return OrderState.allCloudOrders.find((order) => (order.objectId || order.id) === id) || null;
+    };
+
+    OrderList.createOrderRow = function(order) {
+        const id = order.objectId || order.id;
+        const row = document.createElement('tr');
+        row.id = `row-${id}`;
+        row.className = order.hasIssue ? 'row-issue' : 'hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group';
+
+        const refImgs = Array.isArray(order.images) ? order.images : (order.image ? [order.image] : []);
+        const allImgs = order.finalImage ? [order.finalImage, ...refImgs] : refImgs;
+
+        const tdId = document.createElement('td');
+        tdId.className = 'p-6 font-mono font-bold text-slate-600 dark:text-slate-400 select-all';
+        tdId.dataset.label = '订单编号';
+        tdId.textContent = order.orderId || 'No-ID';
+
+        const tdImg = document.createElement('td');
+        tdImg.className = 'p-6';
+        tdImg.dataset.label = '图示';
+        if (order.finalImage) tdImg.appendChild(createThumb(order.finalImage, allImgs, '已定稿', true));
+        else if (allImgs.length > 0) tdImg.appendChild(createThumb(allImgs[0], allImgs, '参考图'));
+        else {
+            const fallback = document.createElement('div');
+            fallback.className = 'w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center text-slate-300 text-sm shadow-inner';
+            fallback.appendChild(DOM.icon('fas fa-image'));
+            tdImg.appendChild(fallback);
+        }
+
+        const tdCustomer = document.createElement('td');
+        tdCustomer.className = 'p-6';
+        tdCustomer.dataset.label = '客户信息';
+        const customerName = document.createElement('div');
+        customerName.className = 'font-bold text-slate-800 dark:text-white text-sm';
+        customerName.textContent = order.customerInfo || '散客';
+        tdCustomer.appendChild(customerName);
+        if (order.customerAddress) {
+            const address = document.createElement('div');
+            address.className = 'text-[11px] text-slate-400 mt-1 flex items-center gap-1 group relative cursor-help';
+            address.title = order.customerAddress;
+            address.appendChild(DOM.icon('fas fa-map-marker-alt text-indigo-400'));
+            const shortAddr = order.customerAddress.length > 6 ? `${order.customerAddress.slice(0, 6)}...` : order.customerAddress;
+            address.appendChild(DOM.text(shortAddr));
+            tdCustomer.appendChild(address);
+        }
+
+        const tdSummary = document.createElement('td');
+        tdSummary.className = 'p-6 text-slate-500 text-xs';
+        tdSummary.dataset.label = '内容摘要';
+        const summaryWrap = document.createElement('div');
+        summaryWrap.className = 'space-y-1';
+
+        const items = Array.isArray(order.items) ? order.items : [];
+        items.slice(0, 2).forEach((item) => {
+            const line = document.createElement('div');
+            line.className = 'flex justify-between items-start max-w-[240px] border-b border-dashed border-slate-100 pb-1 mb-1 last:border-0 last:mb-0';
+
+            const left = document.createElement('div');
+            left.className = 'flex flex-col leading-tight';
+            const name = document.createElement('span');
+            name.className = 'text-slate-700 font-medium';
+            name.textContent = item.name || '';
+            left.appendChild(name);
+            if (item.size) {
+                const size = document.createElement('span');
+                size.className = 'text-[10px] text-slate-400 mt-0.5';
+                size.textContent = item.size;
+                left.appendChild(size);
+            }
+
+            const qty = document.createElement('span');
+            qty.className = 'text-slate-500 text-xs font-mono ml-2 whitespace-nowrap bg-slate-50 px-1.5 py-0.5 rounded';
+            qty.textContent = `x${item.qty}`;
+
+            line.append(left, qty);
+            summaryWrap.appendChild(line);
+        });
+
+        if (items.length > 2) {
+            const more = DOM.button({
+                className: 'text-[10px] text-slate-400 italic mt-1 pl-1 cursor-pointer hover:text-indigo-500',
+                action: 'open-detail',
+                orderId: id,
+                text: `+ 还有 ${items.length - 2} 件商品...`
+            });
+            summaryWrap.appendChild(more);
+        }
+
+        tdSummary.appendChild(summaryWrap);
+
+        if (order.fileLink && order.fileLink.trim()) {
+            const safeLink = Safe.url(order.fileLink);
+            const link = safeLink ? document.createElement('a') : document.createElement('div');
+            link.className = 'mt-2 flex items-center gap-1 text-[10px] text-indigo-500 bg-indigo-50 px-2 py-1 rounded w-fit max-w-[200px] truncate';
+            if (safeLink) {
+                link.href = safeLink;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+            }
+            link.append(DOM.icon('fas fa-link'), DOM.text(order.fileLink));
+            tdSummary.appendChild(link);
+        }
+
+        if (order.hasIssue) {
+            const issue = document.createElement('div');
+            issue.className = 'text-[10px] font-bold text-red-600 mt-2 bg-red-50 p-1 rounded text-center animate-pulse';
+            issue.textContent = `‼️ ${order.issueMsg || '有异常反馈'}`;
+            tdSummary.appendChild(issue);
+        }
+
+        const tdStatus = document.createElement('td');
+        tdStatus.className = 'p-6 text-center';
+        tdStatus.dataset.label = '状态';
+        const meta = statusMeta(order);
+        const badge = document.createElement('span');
+        badge.className = `status-pill ${meta.cls} shadow-sm`;
+        const dot = document.createElement('span');
+        dot.className = 'status-dot';
+        badge.append(dot, DOM.text(meta.text));
+        tdStatus.appendChild(badge);
+
+        if (order.trackingNumber) {
+            const tracking = DOM.button({
+                className: 'mt-2 flex items-center justify-center gap-1 text-[10px] text-slate-500 font-mono bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 select-all cursor-pointer hover:text-indigo-600 hover:border-indigo-300 transition-colors',
+                action: 'copy-tracking',
+                orderId: id,
+                text: ''
+            });
+            tracking.dataset.tracking = order.trackingNumber;
+            tracking.appendChild(DOM.icon('fas fa-truck-fast'));
+            tracking.appendChild(DOM.text(` ${order.trackingNumber}`));
+            tdStatus.appendChild(tracking);
+        }
+
+        const tdAmount = document.createElement('td');
+        tdAmount.className = 'p-6 font-mono font-bold text-slate-800 dark:text-white text-right';
+        tdAmount.dataset.label = '金额';
+        tdAmount.textContent = `¥${order.totalAmount || 0}`;
+
+        const tdAction = document.createElement('td');
+        tdAction.className = 'p-6 text-center pr-8';
+        tdAction.dataset.label = '操作';
+
+        if (order.status === '待发货' && !order.hasIssue) {
+            const wrap = document.createElement('div');
+            wrap.className = 'flex items-center gap-2 justify-end';
+            const shipBtn = DOM.button({
+                className: 'btn-action-ship auth-guard-write shadow-indigo-500/20',
+                action: 'quick-ship',
+                orderId: id
+            });
+            shipBtn.append(DOM.icon('fas fa-truck'), DOM.text(' 发货'));
+            const detailBtn = DOM.button({
+                className: 'w-9 h-9 rounded-xl hover:bg-slate-100 hover:shadow-md text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center',
+                action: 'open-detail',
+                orderId: id,
+                title: '查看详情'
+            });
+            detailBtn.appendChild(DOM.icon('fas fa-ellipsis-h'));
+            wrap.append(shipBtn, detailBtn);
+            tdAction.appendChild(wrap);
+        } else {
+            const detailBtn = DOM.button({
+                className: 'w-9 h-9 rounded-xl hover:bg-slate-100 hover:shadow-md text-slate-400 hover:text-indigo-600 transition-all flex items-center justify-center',
+                action: 'open-detail',
+                orderId: id,
+                title: '查看详情'
+            });
+            detailBtn.appendChild(DOM.icon('fas fa-ellipsis-h'));
+            tdAction.appendChild(detailBtn);
+        }
+
+        row.append(tdId, tdImg, tdCustomer, tdSummary, tdStatus, tdAmount, tdAction);
+        return row;
+    };
+
+    OrderList.renderListToDOM = function(list) {
+        const body = $('historyBody');
+        DOM.clear(body);
+
+        if (!Array.isArray(list) || list.length === 0) {
+            $('emptyTip').classList.remove('hidden');
+            setLoadMoreVisibility(false);
+            return;
+        }
+
+        $('emptyTip').classList.add('hidden');
+        const frag = document.createDocumentFragment();
+        list.forEach((order) => frag.appendChild(this.createOrderRow(order)));
+        body.appendChild(frag);
+        Auth.applyGuards();
+    };
+
+    OrderList.appendListToDOM = function(list) {
+        const body = $('historyBody');
+        const frag = document.createDocumentFragment();
+        list.forEach((order) => frag.appendChild(this.createOrderRow(order)));
+        body.appendChild(frag);
+        Auth.applyGuards();
+    };
+
+    OrderList.refreshList = function() {
+        OrderState.currentPage = 0;
+        OrderState.hasMoreData = true;
+        OrderState.allCloudOrders = [];
+        const cached = localStorage.getItem(currentListCacheKey());
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed) && parsed.length) this.renderListToDOM(parsed);
+            } catch (err) {
+                console.warn('读取缓存订单失败', err);
+            }
+        }
+        this.fetchOrders(false);
+        CloudService.fetchOrderStats().catch(() => {});
+    };
+
+    OrderList.loadMore = function() {
+        if (OrderState.isLoadingMore || !OrderState.hasMoreData) return;
+        OrderState.currentPage += 1;
+        this.fetchOrders(true);
+    };
+
+    OrderList.fetchOrders = async function(isAppend) {
+        if (!window.AV) return;
+        if (!isAppend) {
+            UI.showLoading(true, '同步数据中...');
+            setLoadMoreVisibility(true);
+        } else {
+            OrderState.isLoadingMore = true;
+            const btn = $('btnLoadMore');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '加载中...';
+            }
+        }
+
+        try {
+            const query = buildOrderQuery();
+            query.descending('createdAt');
+            query.limit(OrderState.pageSize);
+            query.skip(OrderState.currentPage * OrderState.pageSize);
+
+            const results = await query.find();
+            const normalized = results.map(normalizeOrder).filter(Boolean);
+
+            OrderState.hasMoreData = normalized.length === OrderState.pageSize;
+            setLoadMoreVisibility(OrderState.hasMoreData);
+
+            if (isAppend) {
+                OrderState.allCloudOrders = [...OrderState.allCloudOrders, ...normalized];
+                this.appendListToDOM(normalized);
+            } else {
+                OrderState.allCloudOrders = normalized;
+                this.renderListToDOM(normalized);
+            }
+
+            persistListCache();
+        } catch (err) {
+            console.error(err);
+            UI.showToast(`数据加载失败: ${err.message}`, 'error');
+            if (isAppend && OrderState.currentPage > 0) OrderState.currentPage -= 1;
+        } finally {
+            UI.showLoading(false);
+            OrderState.isLoadingMore = false;
+            const btn = $('btnLoadMore');
+            if (btn && OrderState.hasMoreData) {
+                btn.disabled = false;
+                btn.textContent = '加载更多...';
+            }
+        }
+    };
+
+    OrderList.updateStatsUI = function() {
+        const stats = OrderState.filterStats;
+        $('statCount').textContent = stats.total;
+        $('statTodo').textContent = stats.todo;
+        $('statShipping').textContent = stats.shipping;
+        $('statMonth').textContent = Number(stats.month || 0).toFixed(2);
+    };
+
+    OrderList.rerenderLocalViews = function({ reopenDetail = false, closeDetail = false } = {}) {
+        this.renderListToDOM(OrderState.allCloudOrders);
+        persistListCache();
+        if (closeDetail) UI.closeDetailModal();
+        else if (reopenDetail && OrderState.currentViewingOrderId) this.openDetail(OrderState.currentViewingOrderId);
+    };
+
+    OrderList.mergeLocalOrder = function(orderId, patch) {
+        OrderState.allCloudOrders = OrderState.allCloudOrders.map((order) => {
+            if ((order.objectId || order.id) !== orderId) return order;
+            return { ...order, ...patch };
+        });
+    };
+
+    OrderList.removeLocalOrder = function(orderId) {
+        OrderState.allCloudOrders = OrderState.allCloudOrders.filter((order) => (order.objectId || order.id) !== orderId);
+    };
+
+    OrderList.openDetail = function(id) {
+        OrderState.currentViewingOrderId = id;
+        const order = this.findOrder(id);
+        if (!order) return;
+
+        $('modalOrderId').textContent = `ID: ${order.orderId || id}`;
+        $('modalDate').textContent = order.createdAt ? new Date(order.createdAt).toLocaleString() : new Date().toLocaleString();
+        $('modalCustomer').textContent = order.customerInfo || '-';
+        $('modalAddress').textContent = order.customerAddress || '未录入地址';
+        $('modalSourceFlow').textContent = `${order.source || '-'} / ${order.flowStatus || '-'}`;
+        $('modalPayment').textContent = order.paymentMethod || '-';
+        $('modalTotal').textContent = `¥${order.totalAmount || 0}`;
+        $('modalRemarks').textContent = order.remarks || '-';
+        $('modalFileLink').value = order.fileLink || '';
+
+        const badge = $('modalStatusBadge');
+        const meta = statusMeta(order);
+        badge.className = 'status-pill scale-110';
+        badge.classList.add(meta.cls);
+        badge.textContent = meta.text;
+
+        const issueBox = $('issueAlertBox');
+        if (order.hasIssue) {
+            issueBox.classList.remove('hidden');
+            issueBox.classList.add('flex');
+            $('modalIssueText').textContent = order.issueMsg || '未填写具体原因';
+            $('btnReportIssue').classList.add('hidden');
+        } else {
+            issueBox.classList.add('hidden');
+            issueBox.classList.remove('flex');
+            $('btnReportIssue').classList.remove('hidden');
+        }
+
+        const itemsBody = $('modalItemsBody');
+        DOM.clear(itemsBody);
+        (order.items || []).forEach((item) => {
+            const tr = document.createElement('tr');
+
+            const name = document.createElement('td');
+            name.className = 'p-5 font-bold text-slate-700';
+            name.textContent = item.name || '';
+
+            const size = document.createElement('td');
+            size.className = 'p-5 text-slate-500';
+            size.textContent = item.size || '-';
+
+            const qty = document.createElement('td');
+            qty.className = 'p-5 text-slate-500 font-mono';
+            qty.textContent = `x${item.qty ?? ''}`;
+
+            const total = document.createElement('td');
+            total.className = 'p-5 text-right font-mono text-slate-700';
+            total.textContent = `¥${item.total || 0}`;
+
+            tr.append(name, size, qty, total);
+            itemsBody.appendChild(tr);
+        });
+
+        const refImgs = Array.isArray(order.images) ? order.images : (order.image ? [order.image] : []);
+        const allImgs = order.finalImage ? [order.finalImage, ...refImgs] : refImgs;
+
+        const refBox = $('modalRefImages');
+        DOM.clear(refBox);
+        refImgs.forEach((src) => {
+            const safeSrc = Safe.url(src);
+            if (!safeSrc) return;
+            const img = document.createElement('img');
+            img.src = safeSrc;
+            img.className = 'w-20 h-20 object-cover rounded-xl border border-slate-200 cursor-zoom-in hover:shadow-lg transition-all hover:-translate-y-1';
+            img.dataset.action = 'show-lightbox';
+            img.dataset.src = safeSrc;
+            img.dataset.images = JSON.stringify(allImgs);
+            refBox.appendChild(img);
+        });
+
+        const finalSection = $('modalFinalImageSection');
+        const finalImage = $('modalFinalImage');
+        if (order.finalImage) {
+            finalSection.classList.remove('hidden');
+            finalImage.src = Safe.url(order.finalImage) || order.finalImage;
+            finalImage.dataset.action = 'show-lightbox';
+            finalImage.dataset.src = finalImage.src;
+            finalImage.dataset.images = JSON.stringify(allImgs);
+        } else {
+            finalSection.classList.add('hidden');
+            finalImage.removeAttribute('src');
+            delete finalImage.dataset.action;
+            delete finalImage.dataset.src;
+            delete finalImage.dataset.images;
+        }
+
+        const trackingSection = $('modalTrackingSection');
+        if (order.trackingNumber) {
+            trackingSection.classList.remove('hidden');
+            $('modalTrackingNum').textContent = order.trackingNumber;
+        } else {
+            trackingSection.classList.add('hidden');
+        }
+
+        const workflow = $('modalWorkflowAction');
+        DOM.clear(workflow);
+
+        if (order.status === '待制作') {
+            const status = document.createElement('span');
+            status.className = 'text-sm font-bold text-orange-600 flex items-center gap-2';
+            const dot = document.createElement('div');
+            dot.className = 'w-2 h-2 rounded-full bg-orange-500 animate-pulse';
+            status.append(dot, DOM.text(' 生产中...'));
+
+            const uploadBtn = DOM.button({
+                className: 'btn btn-primary bg-orange-500 hover:bg-orange-600 shadow-md text-xs border-0 auth-guard-write px-6 h-10',
+                action: 'modal-upload-final-image',
+                text: ''
+            });
+            uploadBtn.append(DOM.text('上传定稿图 (完成)'));
+            workflow.append(status, uploadBtn);
+        } else if (order.status === '待发货') {
+            const status = document.createElement('span');
+            status.className = 'text-sm font-bold text-indigo-600 flex items-center gap-2';
+            const dot = document.createElement('div');
+            dot.className = 'w-2 h-2 rounded-full bg-indigo-500 animate-pulse';
+            status.append(dot, DOM.text(' 待发货'));
+
+            const shipBtn = DOM.button({
+                className: 'btn btn-primary bg-indigo-600 hover:bg-indigo-700 shadow-md text-xs border-0 auth-guard-write px-6 h-10',
+                action: 'modal-do-shipping',
+                text: '填写单号 (发货)'
+            });
+            workflow.append(status, shipBtn);
+        } else {
+            const status = document.createElement('span');
+            status.className = 'text-sm font-bold text-emerald-600 flex items-center gap-2';
+            status.append(DOM.icon('fas fa-check-circle text-lg'), DOM.text(' 订单已完成'));
+            workflow.appendChild(status);
+        }
+
+        const modal = $('orderDetailModal');
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        Auth.applyGuards();
+    };
+
+    OrderList.editOrder = function() {
+        const order = this.findOrder(OrderState.currentViewingOrderId);
+        if (!order) return;
+
+        OrderState.isEditingMode = true;
+        OrderState.editingOrderObjId = order.objectId || order.id;
+
+        $('inputOrderId').value = order.orderId || '';
+        $('customerInfo').value = order.customerInfo || '';
+        $('customerAddress').value = order.customerAddress || '';
+        $('source').value = order.source || '';
+        $('flowStatus').value = order.flowStatus || '';
+        $('paymentMethod').value = order.paymentMethod || '';
+        $('fileLink').value = order.fileLink || '';
+        $('remarks').value = order.remarks || '';
+
+        OrderState.currentItems = JSON.parse(JSON.stringify(order.items || []));
+        OrderState.currentImages = Array.isArray(order.images) ? [...order.images] : (order.image ? [order.image] : []);
+        OrderState.pendingUploadFiles = [];
+
+        OrderForm.renderTempTable();
+        OrderForm.renderImgGallery();
+        $('formTitle').textContent = '编辑订单信息';
+        $('btnCancelEdit').classList.remove('hidden');
+        setSubmitButtonHTML('edit');
+
+        UI.closeDetailModal();
+        switchApp('order-form');
+        UI.showToast('已进入编辑模式', 'info');
+    };
+
+    OrderList.reportIssue = async function() {
+        const { value: text } = await Swal.fire({
+            title: '反馈订单异常',
+            input: 'textarea',
+            inputLabel: '请描述遇到的问题',
+            inputPlaceholder: '例如：客户修改尺寸、物流破损等...',
+            showCancelButton: true,
+            confirmButtonText: '提交反馈',
+            confirmButtonColor: '#ef4444'
+        });
+        if (!text) return;
+
+        UI.showLoading(true, '提交反馈...');
+        try {
+            const orderId = OrderState.currentViewingOrderId;
+            const o = AV.Object.createWithoutData('Order', orderId);
+            o.set('hasIssue', true);
+            o.set('issueMsg', text);
+            await o.save();
+
+            this.mergeLocalOrder(orderId, { hasIssue: true, issueMsg: text });
+            this.rerenderLocalViews({ closeDetail: true });
+            CloudService.scheduleStatsRefresh();
+            Swal.fire('反馈成功', '订单已标记为异常状态', 'success');
+        } catch (err) {
+            Swal.fire('提交失败', err.message, 'error');
+        } finally {
+            UI.showLoading(false);
+        }
+    };
+
+    OrderList.resolveIssue = async function() {
+        const result = await Swal.fire({
+            title: '确定问题已解决?',
+            text: '订单状态将恢复正常显示',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: '已解决',
+            confirmButtonColor: '#10b981'
+        });
+        if (!result.isConfirmed) return;
+
+        UI.showLoading(true, '更新状态...');
+        try {
+            const orderId = OrderState.currentViewingOrderId;
+            const o = AV.Object.createWithoutData('Order', orderId);
+            o.set('hasIssue', false);
+            o.set('issueMsg', '');
+            await o.save();
+
+            this.mergeLocalOrder(orderId, { hasIssue: false, issueMsg: '' });
+            this.rerenderLocalViews({ closeDetail: true });
+            CloudService.scheduleStatsRefresh();
+            Swal.fire('已恢复', '订单异常标记已清除', 'success');
+        } catch (err) {
+            Swal.fire('操作失败', err.message, 'error');
+        } finally {
+            UI.showLoading(false);
+        }
+    };
+
+    OrderList.performShippingLogic = async function(orderId) {
+        const { value: trackingNo } = await Swal.fire({
+            title: '发货',
+            input: 'text',
+            inputLabel: '请输入物流单号',
+            inputPlaceholder: '例如: SF12345678',
+            showCancelButton: true
+        });
+        if (!trackingNo) return;
+
+        UI.showLoading(true, '更新物流信息...');
+        try {
+            const o = AV.Object.createWithoutData('Order', orderId);
+            o.set('trackingNumber', trackingNo);
+            o.set('status', '已完成');
+            await o.save();
+
+            this.mergeLocalOrder(orderId, { trackingNumber: trackingNo, status: '已完成' });
+            this.rerenderLocalViews({ closeDetail: true });
+            CloudService.scheduleStatsRefresh();
+            Swal.fire('已发货', '物流单号已保存', 'success');
+        } catch (err) {
+            Swal.fire('操作失败', err.message, 'error');
+        } finally {
+            UI.showLoading(false);
+        }
+    };
+
+    OrderList.doShipping = function() {
+        return this.performShippingLogic(OrderState.currentViewingOrderId);
+    };
+
+    OrderList.quickShip = function(orderId) {
+        return this.performShippingLogic(orderId);
+    };
+
+    OrderList.deleteOrderFromModal = async function() {
+        const result = await Swal.fire({
+            title: '确定删除?',
+            text: '此操作不可恢复！',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: '删除'
+        });
+        if (!result.isConfirmed) return;
+
+        UI.showLoading(true, '正在删除...');
+        try {
+            const orderId = OrderState.currentViewingOrderId;
+            const o = AV.Object.createWithoutData('Order', orderId);
+            await o.destroy();
+
+            this.removeLocalOrder(orderId);
+            this.rerenderLocalViews({ closeDetail: true });
+            CloudService.scheduleStatsRefresh();
+            Swal.fire('已删除', '订单已移除', 'success');
+        } catch (err) {
+            Swal.fire('删除失败', err.message, 'error');
+        } finally {
+            UI.showLoading(false);
+        }
+    };
+
+    OrderList.handleFinalImagePaste = function(file) {
+        Swal.fire({
+            title: '上传定稿图',
+            text: '确定上传这张图片作为定稿图并完成订单吗？',
+            showCancelButton: true,
+            confirmButtonText: '上传并完成'
+        }).then(async (result) => {
+            if (!result.isConfirmed) return;
+
+            UI.showLoading(true, '压缩上传定稿图...');
+            try {
+                const compressedFile = await Utils.compressImage(file);
+                const avFile = new AV.File(`final_${file.name}`, compressedFile);
+                const savedFile = await avFile.save();
+
+                const orderId = OrderState.currentViewingOrderId;
+                const o = AV.Object.createWithoutData('Order', orderId);
+                o.set('finalImage', savedFile.url());
+                o.set('status', '待发货');
+                await o.save();
+
+                this.mergeLocalOrder(orderId, { finalImage: savedFile.url(), status: '待发货' });
+                this.rerenderLocalViews({ closeDetail: true });
+                CloudService.scheduleStatsRefresh();
+                Swal.fire('成功', '定稿图已同步，状态更新：待发货', 'success');
+            } catch (err) {
+                Swal.fire('失败', err.message, 'error');
+            } finally {
+                UI.showLoading(false);
+                const input = $('finalImageInput');
+                if (input) input.value = '';
+            }
+        });
+    };
+
+    const originalOrderSubmit = OrderForm.submit.bind(OrderForm);
+    OrderForm.submit = async function(...args) {
+        await originalOrderSubmit(...args);
+        CloudService.scheduleStatsRefresh();
+    };
+
+    const originalGuestLogin = Auth.guestLogin.bind(Auth);
+    Auth.guestLogin = function(...args) {
+        const result = originalGuestLogin(...args);
+        localStorage.removeItem('cached_orders');
+        return result;
+    };
+
+    const originalSetCurrentUser = Auth.setCurrentUser.bind(Auth);
+    Auth.setCurrentUser = function(...args) {
+        const result = originalSetCurrentUser(...args);
+        OrderState.statsMeta.lastFetchedAt = 0;
+        return result;
+    };
+
+    const bindStaticListeners = () => {
+        document.addEventListener('click', async (event) => {
+            const actionEl = event.target.closest('[data-action]');
+            if (event.target.dataset.overlayClose === 'lightbox' || event.target.closest('[data-overlay-close="lightbox"]') === event.target) {
+                if (event.target.id === 'lightbox') UI.closeLightbox();
+            }
+            if (event.target.dataset.overlayClose === 'detail' || event.target.closest('[data-overlay-close="detail"]') === event.target) {
+                if (event.target.id === 'orderDetailModal') UI.closeDetailModal();
+            }
+            if (!actionEl) return;
+
+            const { action, app, status, orderId, index, src, tracking } = actionEl.dataset;
+
+            switch (action) {
+                case 'login': return Auth.login();
+                case 'guest-login': return Auth.guestLogin();
+                case 'register': return Auth.register();
+                case 'close-lightbox':
+                    event.stopPropagation();
+                    return UI.closeLightbox();
+                case 'prev-lightbox':
+                    event.stopPropagation();
+                    return UI.prevImage();
+                case 'next-lightbox':
+                    event.stopPropagation();
+                    return UI.nextImage();
+                case 'switch-app': return switchApp(app);
+                case 'logout': return Auth.logout();
+                case 'batch-copy-quote': return CalcUI.batchCopyQuote();
+                case 'batch-add-order': return CalcUI.batchAddToOrder();
+                case 'reset-order-form': return OrderForm.reset();
+                case 'cancel-edit': return OrderForm.cancelEdit();
+                case 'generate-order-id':
+                    $('inputOrderId').value = `ORD-${Date.now().toString().slice(-8)}`;
+                    return;
+                case 'add-item': return OrderForm.addItem();
+                case 'submit-order': return OrderForm.submit();
+                case 'quick-filter': return OrderList.quickFilter(status || '');
+                case 'refresh-list': return OrderList.refreshList();
+                case 'load-more': return OrderList.loadMore();
+                case 'edit-order': return OrderList.editOrder();
+                case 'close-detail': return UI.closeDetailModal();
+                case 'resolve-issue': return OrderList.resolveIssue();
+                case 'copy-final': return OrderList.copyFinalDraft();
+                case 'delete-order': return OrderList.deleteOrderFromModal();
+                case 'report-issue': return OrderList.reportIssue();
+                case 'save-settings': return CloudService.saveSystemSettings();
+                case 'close-settings':
+                    $('settingsModal')?.classList.add('hidden');
+                    return;
+                case 'remove-image':
+                    return OrderForm.removeImage(Number(index));
+                case 'remove-item':
+                    return OrderForm.removeItem(Number(index));
+                case 'open-detail':
+                    return OrderList.openDetail(orderId);
+                case 'quick-ship':
+                    return OrderList.quickShip(orderId);
+                case 'copy-tracking':
+                    await Safe.clipboard(tracking || actionEl.dataset.tracking || '');
+                    UI.showToast('单号已复制', 'success');
+                    return;
+                case 'show-lightbox': {
+                    event.stopPropagation();
+                    let images = [];
+                    try {
+                        images = JSON.parse(actionEl.dataset.images || '[]');
+                    } catch (err) {}
+                    return UI.showLightbox(src || actionEl.getAttribute('src'), images);
+                }
+                case 'modal-upload-final-image':
+                    $('finalImageInput')?.click();
+                    return;
+                case 'modal-do-shipping':
+                    return OrderList.doShipping();
+                default:
+                    return;
+            }
+        });
+
+        $('filterKeyword')?.addEventListener('input', () => OrderList.debounceSearch());
+        ['dateStart', 'dateEnd', 'filterFlow', 'filterStatus'].forEach((id) => {
+            $(id)?.addEventListener('change', () => OrderList.refreshList());
+        });
+        $('fileInput')?.addEventListener('change', (event) => OrderForm.handleFileSelect(event.target));
+        $('lightboxImg')?.addEventListener('click', (event) => event.stopPropagation());
+        $('lightbox')?.addEventListener('click', (event) => {
+            if (event.target === $('lightbox')) UI.closeLightbox();
+        });
+        $('orderDetailModal')?.addEventListener('click', (event) => {
+            if (event.target === $('orderDetailModal')) UI.closeDetailModal();
+        });
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        bindStaticListeners();
+        setSubmitButtonHTML('create');
+    });
+})();
+</script></body>
 </html>
