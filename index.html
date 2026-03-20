@@ -313,6 +313,32 @@
 <button class="col-span-3 btn-primary text-sm h-12 rounded-xl" id="btnCalculateUnfolded">计算自定义</button>
 </div>
 </div>
+<div class="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 space-y-4">
+<label class="flex items-start gap-4 p-4 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white/70 dark:bg-slate-800/40 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all group">
+<input class="custom-checkbox mt-1" id="checkMixedPricing" type="checkbox"/>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 transition-colors">双区混拼参与报价</span>
+<span class="text-[10px] text-slate-400 leading-5">关闭时：混拼只做参考示意，不影响报价。开启后：优先采用更高拼数的混拼方案参与计价。</span>
+</div>
+</label>
+<label class="flex items-start gap-4 p-4 border border-slate-200 dark:border-slate-700 rounded-2xl bg-white/70 dark:bg-slate-800/40 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 transition-all group">
+<input class="custom-checkbox mt-1" id="checkDoubleGlue" type="checkbox"/>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 transition-colors">超尺寸自动双粘</span>
+<span class="text-[10px] text-slate-400 leading-5">单片放不下 950×650 时，自动尝试沿长边/宽边拆成两片再排版。天地盒、抽屉盒不参与双粘。</span>
+</div>
+</label>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="text-[10px] font-bold text-slate-400 mb-2 block">双粘搭口 (mm)</label>
+<input class="pro-input font-mono font-bold text-center h-11" id="doubleGlueOverlap" min="0" step="1" type="number" value="15"/>
+</div>
+<div>
+<label class="text-[10px] font-bold text-slate-400 mb-2 block">双粘工费 (元/个)</label>
+<input class="pro-input font-mono font-bold text-center h-11" id="doubleGlueFee" min="0" step="0.1" type="number" value="0"/>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div class="lg:col-span-7 space-y-6">
@@ -1038,6 +1064,71 @@
                 drawer: { name: "抽屉盒", calc: (L, W, H) =>[{ name: "外封", l: (H + W) * 2 + 20, w: L }, { name: "内盒", l: L + H * 2 + 20, w: W + H * 2 + 20 }] }, 
                 handle: { name: "手提盒", calc: (L, W, H) =>[{ name: "主盒", l: 2 * L + 2 * W + 20, w: W + H + 80 }] } 
             },
+            DOUBLE_GLUE_EXCLUDED: new Set(['topBottom', 'drawer']),
+            canPieceFit: (partL, partW, paperOverride = null) => {
+                const paper = paperOverride || CalcLogic.getEffectivePaper();
+                return (partL <= paper.w && partW <= paper.h) || (partL <= paper.h && partW <= paper.w);
+            },
+            canUseDoubleGlue: (boxType) => !CalcLogic.DOUBLE_GLUE_EXCLUDED.has(boxType),
+            buildUniformPricingPlan: (partL, partW, paper, strategy = null) => {
+                const uniformStrategy = strategy || CalcLogic.calcMaxCapacity(partL, partW, paper);
+                const efficiencyValue = uniformStrategy.count > 0 ? Math.min(100, (uniformStrategy.count * partL * partW / Math.max(1, paper.w * paper.h)) * 100) : 0;
+                return {
+                    mode: uniformStrategy.rotated ? 'uniform-rotated' : 'uniform',
+                    label: uniformStrategy.rotated ? '全竖' : '全横',
+                    count: uniformStrategy.count,
+                    rows: uniformStrategy.rows,
+                    cols: uniformStrategy.cols,
+                    rotated: uniformStrategy.rotated,
+                    paper,
+                    regions: uniformStrategy.count > 0 ? [{ x: 0, y: 0, cols: uniformStrategy.cols, rows: uniformStrategy.rows, cellW: uniformStrategy.l, cellH: uniformStrategy.w, rotated: uniformStrategy.rotated, role: 'main' }] : [],
+                    efficiencyValue,
+                    efficiency: `${efficiencyValue.toFixed(1)}%`,
+                    isMixed: false
+                };
+            },
+            getPricingPlans: (partL, partW, paper, useMixedLayoutForPricing = false) => {
+                const uniformStrategy = CalcLogic.calcMaxCapacity(partL, partW, paper);
+                const referencePlan = CalcLogic.getBestLayoutPlan(partL, partW, paper);
+                const uniformPlan = CalcLogic.buildUniformPricingPlan(partL, partW, paper, uniformStrategy);
+                return { uniformStrategy, referencePlan, pricingPlan: useMixedLayoutForPricing ? referencePlan : uniformPlan };
+            },
+            getDoubleGluePlan: (part, paper, params, totalQuantity) => {
+                if (!params.allowDoubleGlue || !CalcLogic.canUseDoubleGlue(params.boxType)) return null;
+                const overlap = Math.max(0, parseFloat(params.doubleGlueOverlap) || 0);
+                const buildCandidate = (axis) => {
+                    const splitLength = axis === 'length';
+                    const longSide = splitLength ? part.l : part.w;
+                    const fixedSide = splitLength ? part.w : part.l;
+                    const splitSize = Math.ceil((longSide + overlap) / 2);
+                    const subPart = splitLength ? { l: splitSize, w: fixedSide } : { l: fixedSide, w: splitSize };
+                    if (!CalcLogic.canPieceFit(subPart.l, subPart.w, paper)) return null;
+                    const pricing = CalcLogic.getPricingPlans(subPart.l, subPart.w, paper, params.useMixedLayoutForPricing);
+                    const pricingCount = Math.max(0, pricing.pricingPlan.count || 0);
+                    if (!pricingCount) return null;
+                    const sheetsPerHalf = Math.ceil(totalQuantity / pricingCount);
+                    return {
+                        axis,
+                        label: splitLength ? '沿长边双粘' : '沿宽边双粘',
+                        overlap,
+                        totalSheets: sheetsPerHalf * 2,
+                        pricingCount,
+                        efficiencyValue: pricing.pricingPlan.efficiencyValue || 0,
+                        parts: [
+                            { name: `${part.name}-A片`, l: subPart.l, w: subPart.w },
+                            { name: `${part.name}-B片`, l: subPart.l, w: subPart.w }
+                        ]
+                    };
+                };
+                const candidates = ['length', 'width'].map(buildCandidate).filter(Boolean);
+                if (!candidates.length) return null;
+                candidates.sort((a, b) => {
+                    if (a.totalSheets !== b.totalSheets) return a.totalSheets - b.totalSheets;
+                    if (a.pricingCount !== b.pricingCount) return b.pricingCount - a.pricingCount;
+                    return (b.efficiencyValue || 0) - (a.efficiencyValue || 0);
+                });
+                return candidates[0];
+            },
             getEffectivePaper: () => { 
                 const defs = OrderState.globalConfig.defaults;
                 const rawW = parseFloat(document.getElementById('paperW')?.value)||defs.paperW, 
@@ -1046,25 +1137,211 @@
                       marginLR = parseFloat(document.getElementById('marginLR')?.value)||defs.marginLR; 
                 return { rawW, rawH, w: Math.max(0, rawW-marginLR), h: Math.max(0, rawH-marginTB), marginTB, marginLR }; 
             },
-            calcMaxCapacity: (partL, partW) => { 
-                const paper = CalcLogic.getEffectivePaper(), { w: maxW, h: maxH } = paper, r1 = Math.floor(maxH/partW), c1 = Math.floor(maxW/partL), n1 = r1*c1, r2 = Math.floor(maxH/partL), c2 = Math.floor(maxW/partW), n2 = r2*c2; return (n1>=n2) ? {rows:r1,cols:c1,count:n1,l:partL,w:partW,rotated:false,paperInfo:paper} : {rows:r2,cols:c2,count:n2,l:partW,w:partL,rotated:true,paperInfo:paper}; 
+            calcMaxCapacity: (partL, partW, paperOverride = null) => { 
+                const paper = paperOverride || CalcLogic.getEffectivePaper(), { w: maxW, h: maxH } = paper;
+                const r1 = Math.floor(maxH / partW), c1 = Math.floor(maxW / partL), n1 = r1 * c1;
+                const r2 = Math.floor(maxH / partL), c2 = Math.floor(maxW / partW), n2 = r2 * c2;
+                return (n1 >= n2)
+                    ? { rows: r1, cols: c1, count: n1, l: partL, w: partW, rotated: false, paperInfo: paper }
+                    : { rows: r2, cols: c2, count: n2, l: partW, w: partL, rotated: true, paperInfo: paper };
+            },
+            getBestLayoutPlan: (partL, partW, paperOverride = null) => {
+                const paper = paperOverride || CalcLogic.getEffectivePaper();
+                const maxW = Math.max(0, paper.w);
+                const maxH = Math.max(0, paper.h);
+                const pieceArea = partL * partW;
+                const effectiveArea = Math.max(1, maxW * maxH);
+                const variants = [
+                    { key: 'normal', name: '直拼', w: partL, h: partW, rotated: false },
+                    { key: 'rotated', name: '旋转', w: partW, h: partL, rotated: true }
+                ];
+                const createPlan = (mode, label, regions, extra = {}) => {
+                    const count = regions.reduce((sum, region) => sum + region.rows * region.cols, 0);
+                    const efficiencyValue = count > 0 ? Math.min(100, (count * pieceArea / effectiveArea) * 100) : 0;
+                    return {
+                        mode,
+                        label,
+                        count,
+                        regions,
+                        paper,
+                        efficiencyValue,
+                        efficiency: `${efficiencyValue.toFixed(1)}%`,
+                        isMixed: mode.startsWith('mixed'),
+                        ...extra
+                    };
+                };
+                const buildUniform = (variant) => {
+                    const cols = Math.floor(maxW / variant.w);
+                    const rows = Math.floor(maxH / variant.h);
+                    return createPlan(
+                        variant.rotated ? 'uniform-rotated' : 'uniform',
+                        variant.rotated ? '全竖' : '全横',
+                        cols && rows ? [{ x: 0, y: 0, cols, rows, cellW: variant.w, cellH: variant.h, rotated: variant.rotated, role: 'main' }] : [],
+                        { rows, cols, rotated: variant.rotated, cellW: variant.w, cellH: variant.h }
+                    );
+                };
+                const pickBetter = (current, candidate) => {
+                    if (!candidate || candidate.count <= 0) return current;
+                    if (!current) return candidate;
+                    if (candidate.count !== current.count) return candidate.count > current.count ? candidate : current;
+                    if ((candidate.efficiencyValue || 0) !== (current.efficiencyValue || 0)) return (candidate.efficiencyValue || 0) > (current.efficiencyValue || 0) ? candidate : current;
+                    return candidate.regions.length < current.regions.length ? candidate : current;
+                };
+                const buildSplitPlan = (primary, secondary, direction) => {
+                    let best = null;
+                    if (direction === 'vertical') {
+                        const maxPrimaryCols = Math.floor(maxW / primary.w);
+                        for (let primaryCols = 1; primaryCols <= maxPrimaryCols; primaryCols++) {
+                            const remW = maxW - primaryCols * primary.w;
+                            const primaryRows = Math.floor(maxH / primary.h);
+                            const secondaryCols = Math.floor(remW / secondary.w);
+                            const secondaryRows = Math.floor(maxH / secondary.h);
+                            const candidate = createPlan(
+                                'mixed-vertical',
+                                '左右混拼',
+                                [
+                                    { x: 0, y: 0, cols: primaryCols, rows: primaryRows, cellW: primary.w, cellH: primary.h, rotated: primary.rotated, role: 'main' },
+                                    secondaryCols && secondaryRows ? { x: primaryCols * primary.w, y: 0, cols: secondaryCols, rows: secondaryRows, cellW: secondary.w, cellH: secondary.h, rotated: secondary.rotated, role: 'secondary' } : null
+                                ].filter(Boolean),
+                                { primaryRotated: primary.rotated, secondaryRotated: secondary.rotated }
+                            );
+                            best = pickBetter(best, candidate);
+                        }
+                    } else {
+                        const maxPrimaryRows = Math.floor(maxH / primary.h);
+                        for (let primaryRows = 1; primaryRows <= maxPrimaryRows; primaryRows++) {
+                            const remH = maxH - primaryRows * primary.h;
+                            const primaryCols = Math.floor(maxW / primary.w);
+                            const secondaryCols = Math.floor(maxW / secondary.w);
+                            const secondaryRows = Math.floor(remH / secondary.h);
+                            const candidate = createPlan(
+                                'mixed-horizontal',
+                                '上下混拼',
+                                [
+                                    { x: 0, y: 0, cols: primaryCols, rows: primaryRows, cellW: primary.w, cellH: primary.h, rotated: primary.rotated, role: 'main' },
+                                    secondaryCols && secondaryRows ? { x: 0, y: primaryRows * primary.h, cols: secondaryCols, rows: secondaryRows, cellW: secondary.w, cellH: secondary.h, rotated: secondary.rotated, role: 'secondary' } : null
+                                ].filter(Boolean),
+                                { primaryRotated: primary.rotated, secondaryRotated: secondary.rotated }
+                            );
+                            best = pickBetter(best, candidate);
+                        }
+                    }
+                    return best;
+                };
+
+                let bestPlan = null;
+                variants.forEach(variant => {
+                    bestPlan = pickBetter(bestPlan, buildUniform(variant));
+                });
+                bestPlan = pickBetter(bestPlan, buildSplitPlan(variants[0], variants[1], 'vertical'));
+                bestPlan = pickBetter(bestPlan, buildSplitPlan(variants[1], variants[0], 'vertical'));
+                bestPlan = pickBetter(bestPlan, buildSplitPlan(variants[0], variants[1], 'horizontal'));
+                bestPlan = pickBetter(bestPlan, buildSplitPlan(variants[1], variants[0], 'horizontal'));
+                return bestPlan || createPlan('empty', '无法排版', []);
             },
             calcCost: (parts, params, totalQuantity) => {
-                let details = { material: 0, lamination: 0, dieCut: 0, extra: 0, corrugated: 0 }, layoutsInfo =[], hasError = false, errorMsgs =[], paper = CalcLogic.getEffectivePaper();
-                parts.forEach(part => {
-                    const fitNorm = (part.l<=paper.w && part.w<=paper.h), fitRot = (part.l<=paper.h && part.w<=paper.w);
-                    if (!fitNorm && !fitRot) { hasError = true; errorMsgs.push(`${part.name} 尺寸超限`); return; }
-                    const strategy = CalcLogic.calcMaxCapacity(part.l, part.w);
-                    if (strategy.count === 0) { hasError = true; errorMsgs.push(`${part.name} 无法排版`); return; }
-                    const fullSheets = Math.floor(totalQuantity/strategy.count), remainder = totalQuantity%strategy.count, totalSheets = Math.ceil(totalQuantity/strategy.count), corrugatedRate = params.isCorrugated?30:0;
+                let details = { material: 0, lamination: 0, dieCut: 0, extra: 0, corrugated: 0, doubleGlue: 0 }, layoutsInfo = [], hasError = false, errorMsgs = [], paper = CalcLogic.getEffectivePaper();
+                const corrugatedRate = params.isCorrugated ? 30 : 0;
+
+                const processPiece = (piece, originalPart, meta = {}) => {
+                    const { uniformStrategy, referencePlan, pricingPlan } = CalcLogic.getPricingPlans(piece.l, piece.w, paper, params.useMixedLayoutForPricing);
+                    const pricingCount = Math.max(0, pricingPlan.count || 0);
+                    if (pricingCount === 0) {
+                        hasError = true;
+                        errorMsgs.push(`${piece.name} 无法排版`);
+                        return;
+                    }
+
+                    const fullSheets = Math.floor(totalQuantity / pricingCount);
+                    const remainder = totalQuantity % pricingCount;
+                    const totalSheets = Math.ceil(totalQuantity / pricingCount);
+                    const pieceArea = piece.l * piece.w;
                     let sheetCost = 0;
-                    if (fullSheets>0) sheetCost += ((strategy.l*strategy.cols*strategy.w*strategy.rows)/1000000)*params.unitPrice*fullSheets + (params.laminationFee+params.dieCutFee+corrugatedRate)*fullSheets;
-                    if (remainder>0) { const remRows = Math.min(strategy.rows, Math.ceil(remainder/strategy.cols)), remCols = Math.min(strategy.cols, Math.ceil(remainder/remRows)); sheetCost += ((strategy.l*remCols*strategy.w*remRows)/1000000)*params.unitPrice + params.laminationFee + params.dieCutFee + corrugatedRate; }
-                    details.material += sheetCost - (params.laminationFee+params.dieCutFee+corrugatedRate)*totalSheets; details.lamination += params.laminationFee*totalSheets; details.dieCut += params.dieCutFee*totalSheets; details.corrugated += corrugatedRate*totalSheets;
-                    layoutsInfo.push({ ...strategy, partName: part.name, sheets: totalSheets, efficiency: ((strategy.l*strategy.cols*strategy.w*strategy.rows)/(paper.rawW*paper.rawH)*100).toFixed(1), originalDim: {l:part.l,w:part.w}, paper:paper });
-                });
-                details.extra = (totalQuantity>1)?(totalQuantity-1)*params.additionalFee:0; const totalOriginal = details.material+details.lamination+details.dieCut+details.extra+details.corrugated;
-                return { success:!hasError, errors:errorMsgs, originalTotal:totalOriginal, finalTotal:totalOriginal*(1-params.discount/100), unitPrice:totalOriginal*(1-params.discount/100)/totalQuantity, details, layouts:layoutsInfo };
+                    if (fullSheets > 0) sheetCost += ((pieceArea * pricingCount) / 1000000) * params.unitPrice * fullSheets + (params.laminationFee + params.dieCutFee + corrugatedRate) * fullSheets;
+                    if (remainder > 0) sheetCost += ((pieceArea * remainder) / 1000000) * params.unitPrice + params.laminationFee + params.dieCutFee + corrugatedRate;
+
+                    details.material += sheetCost - (params.laminationFee + params.dieCutFee + corrugatedRate) * totalSheets;
+                    details.lamination += params.laminationFee * totalSheets;
+                    details.dieCut += params.dieCutFee * totalSheets;
+                    details.corrugated += corrugatedRate * totalSheets;
+
+                    const uniformEfficiency = uniformStrategy.count > 0 ? ((uniformStrategy.l * uniformStrategy.cols * uniformStrategy.w * uniformStrategy.rows) / (paper.rawW * paper.rawH) * 100) : 0;
+                    layoutsInfo.push({
+                        partName: piece.name,
+                        parentPartName: meta.parentName || originalPart.name,
+                        productionLabel: meta.productionLabel || '单片成型',
+                        sheets: totalSheets,
+                        count: pricingCount,
+                        rows: uniformStrategy.rows,
+                        cols: uniformStrategy.cols,
+                        l: uniformStrategy.l,
+                        w: uniformStrategy.w,
+                        rotated: uniformStrategy.rotated,
+                        originalDim: { l: piece.l, w: piece.w },
+                        sourceDim: { l: originalPart.l, w: originalPart.w },
+                        paper,
+                        efficiency: uniformEfficiency.toFixed(1),
+                        uniformStrategy,
+                        uniformCount: uniformStrategy.count,
+                        uniformRows: uniformStrategy.rows,
+                        uniformCols: uniformStrategy.cols,
+                        referencePlan,
+                        pricingPlan,
+                        pricingCount,
+                        pricingRows: pricingPlan.rows ?? uniformStrategy.rows,
+                        pricingCols: pricingPlan.cols ?? uniformStrategy.cols,
+                        pricingMode: pricingPlan.mode,
+                        pricingLabel: pricingPlan.label,
+                        mixedPricingApplied: !!params.useMixedLayoutForPricing && pricingPlan.isMixed,
+                        doubleGlue: !!meta.doubleGlue,
+                        doubleGlueAxis: meta.axis || null,
+                        doubleGlueOverlap: meta.overlap || 0,
+                        doubleGlueSide: meta.side || null
+                    });
+                };
+
+                for (const part of parts) {
+                    if (CalcLogic.canPieceFit(part.l, part.w, paper)) {
+                        processPiece(part, part, { productionLabel: '单片成型' });
+                        continue;
+                    }
+
+                    const doubleGluePlan = CalcLogic.getDoubleGluePlan(part, paper, params, totalQuantity);
+                    if (!doubleGluePlan) {
+                        hasError = true;
+                        const reason = params.allowDoubleGlue
+                            ? (CalcLogic.canUseDoubleGlue(params.boxType) ? '尺寸超限，双粘后仍无法排版' : '尺寸超限，当前盒型不参与双粘')
+                            : '尺寸超限';
+                        errorMsgs.push(`${part.name} ${reason}`);
+                        continue;
+                    }
+
+                    details.doubleGlue += (parseFloat(params.doubleGlueFee) || 0) * totalQuantity;
+                    doubleGluePlan.parts.forEach((subPart, idx) => {
+                        processPiece(subPart, part, {
+                            doubleGlue: true,
+                            productionLabel: doubleGluePlan.label,
+                            parentName: part.name,
+                            axis: doubleGluePlan.axis,
+                            overlap: doubleGluePlan.overlap,
+                            side: idx === 0 ? 'A片' : 'B片'
+                        });
+                    });
+                }
+
+                details.extra = (totalQuantity > 1) ? (totalQuantity - 1) * params.additionalFee : 0;
+                const totalOriginal = details.material + details.lamination + details.dieCut + details.extra + details.corrugated + details.doubleGlue;
+                return {
+                    success: !hasError,
+                    errors: errorMsgs,
+                    originalTotal: totalOriginal,
+                    finalTotal: totalOriginal * (1 - params.discount / 100),
+                    unitPrice: totalOriginal * (1 - params.discount / 100) / totalQuantity,
+                    details,
+                    layouts: layoutsInfo,
+                    usedDoubleGlue: layoutsInfo.some(item => item.doubleGlue),
+                    productionSummary: Array.from(new Set(layoutsInfo.map(item => item.productionLabel).filter(Boolean)))
+                };
             }
         };
 
@@ -1072,8 +1349,24 @@
             currentTab: 'basic',
             currentQuote: null,
             history: JSON.parse(localStorage.getItem('probox_history') || '[]'),
+            useMixedLayoutForPricing: false,
+            allowDoubleGlue: true,
+            doubleGlueOverlap: 15,
+            doubleGlueFee: 0,
             
             init() {
+                this.useMixedLayoutForPricing = localStorage.getItem('probox_mixed_pricing') === '1';
+                this.allowDoubleGlue = localStorage.getItem('probox_double_glue') !== '0';
+                this.doubleGlueOverlap = parseFloat(localStorage.getItem('probox_double_glue_overlap') || '15') || 15;
+                this.doubleGlueFee = parseFloat(localStorage.getItem('probox_double_glue_fee') || '0') || 0;
+                const mixedToggle = document.getElementById('checkMixedPricing');
+                if (mixedToggle) mixedToggle.checked = this.useMixedLayoutForPricing;
+                const doubleGlueToggle = document.getElementById('checkDoubleGlue');
+                if (doubleGlueToggle) doubleGlueToggle.checked = this.allowDoubleGlue;
+                const doubleGlueOverlapInput = document.getElementById('doubleGlueOverlap');
+                if (doubleGlueOverlapInput) doubleGlueOverlapInput.value = this.doubleGlueOverlap;
+                const doubleGlueFeeInput = document.getElementById('doubleGlueFee');
+                if (doubleGlueFeeInput) doubleGlueFeeInput.value = this.doubleGlueFee;
                 const sel = document.getElementById('boxType');
                 Object.entries(CalcLogic.BOX_TYPES).forEach(([k,v]) => sel.add(new Option(v.name, k)));
                 
@@ -1104,6 +1397,36 @@
                 };
                 document.getElementById('btnCopyQuote').onclick = () => this.copyQuote();
                 document.getElementById('btnQuickSettings').onclick = () => document.getElementById('settingsModal').classList.remove('hidden');
+
+                const mixedToggle = document.getElementById('checkMixedPricing');
+                if (mixedToggle) mixedToggle.onchange = (e) => {
+                    this.useMixedLayoutForPricing = !!e.target.checked;
+                    localStorage.setItem('probox_mixed_pricing', this.useMixedLayoutForPricing ? '1' : '0');
+                    if (!document.getElementById('resultCard').classList.contains('hidden')) this.doCalc();
+                };
+
+                const doubleGlueToggle = document.getElementById('checkDoubleGlue');
+                if (doubleGlueToggle) doubleGlueToggle.onchange = (e) => {
+                    this.allowDoubleGlue = !!e.target.checked;
+                    localStorage.setItem('probox_double_glue', this.allowDoubleGlue ? '1' : '0');
+                    if (!document.getElementById('resultCard').classList.contains('hidden')) this.doCalc();
+                };
+
+                const doubleGlueOverlapInput = document.getElementById('doubleGlueOverlap');
+                if (doubleGlueOverlapInput) doubleGlueOverlapInput.onchange = (e) => {
+                    this.doubleGlueOverlap = Math.max(0, parseFloat(e.target.value) || 0);
+                    e.target.value = this.doubleGlueOverlap;
+                    localStorage.setItem('probox_double_glue_overlap', String(this.doubleGlueOverlap));
+                    if (!document.getElementById('resultCard').classList.contains('hidden')) this.doCalc();
+                };
+
+                const doubleGlueFeeInput = document.getElementById('doubleGlueFee');
+                if (doubleGlueFeeInput) doubleGlueFeeInput.onchange = (e) => {
+                    this.doubleGlueFee = Math.max(0, parseFloat(e.target.value) || 0);
+                    e.target.value = this.doubleGlueFee;
+                    localStorage.setItem('probox_double_glue_fee', String(this.doubleGlueFee));
+                    if (!document.getElementById('resultCard').classList.contains('hidden')) this.doCalc();
+                };
                 
                 const btnClear = document.getElementById('btnClearHistory');
                 if(btnClear) btnClear.onclick = () => this.clearHistory();
@@ -1126,7 +1449,12 @@
                     laminationFee: parseFloat(document.getElementById('laminationFee').value)||0,
                     dieCutFee: parseFloat(document.getElementById('dieCutFee').value)||0,
                     additionalFee: parseFloat(document.getElementById('additionalFee').value)||0,
-                    isCorrugated: false
+                    isCorrugated: false,
+                    useMixedLayoutForPricing: this.useMixedLayoutForPricing,
+                    allowDoubleGlue: this.allowDoubleGlue,
+                    doubleGlueOverlap: this.doubleGlueOverlap,
+                    doubleGlueFee: this.doubleGlueFee,
+                    boxType: this.currentTab === 'basic' ? document.getElementById('boxType').value : 'custom'
                 };
                 
                 if(mode==='basic') {
@@ -1143,7 +1471,12 @@
                     parts = [{name:'自定义', l:L, w:W}];
                     qty = parseInt(document.getElementById('quantityUnfolded').value);
                     params.isCorrugated = document.getElementById('checkCorrugatedUnfolded').checked;
-                    document.getElementById('svgContainer').innerHTML = '<div class="text-xs text-gray-400 p-10 flex items-center justify-center h-full">自定义尺寸无结构图</div>';
+                    const svgContainer = document.getElementById('svgContainer');
+                    svgContainer.innerHTML = '';
+                    const note = document.createElement('div');
+                    note.className = 'text-xs text-gray-400 p-10 flex items-center justify-center h-full';
+                    note.textContent = '自定义尺寸无结构图';
+                    svgContainer.appendChild(note);
                 }
 
                 const res = CalcLogic.calcCost(parts, params, qty);
@@ -1157,33 +1490,208 @@
                 document.getElementById('resultCard').classList.remove('hidden', 'opacity-0');
                 document.getElementById('resPrice').innerText = '¥' + Math.round(res.finalTotal);
                 document.getElementById('resUnitPrice').innerText = '单价: ¥' + Math.round(res.unitPrice);
-                document.getElementById('costList').innerHTML = `<span class="text-slate-700">材料</span> ¥${res.details.material.toFixed(1)} <span class="text-slate-300 mx-1">|</span> <span class="text-slate-700">加工</span> ¥${(res.details.lamination+res.details.dieCut+res.details.corrugated).toFixed(1)} <span class="text-slate-300 mx-1">|</span> <span class="text-slate-700">附加</span> ¥${res.details.extra.toFixed(1)}`;
-                document.getElementById('dimensionDetails').innerHTML = res.layouts.map(l => `<span class="ml-2">印: ${l.originalDim.l.toFixed(0)}×${l.originalDim.w.toFixed(0)}</span>`).join('');
-
-                const con = document.getElementById('layoutGridsContainer'); con.innerHTML = '';
-                const wrap = document.createElement('div'); wrap.className = 'paper-canvas';
-                const l = res.layouts[0]; 
-                document.getElementById('layoutVisualCard').classList.remove('hidden');
-                document.getElementById('layoutEfficiency').innerText = l.efficiency + '% 利用率';
-                document.getElementById('layoutDesc').innerText = `${l.rows}行 ${l.cols}列 (${l.count}拼) - ${l.sheets}大张`;
-                
-                const wPct = (l.l/l.paper.rawW)*100, hPct = (l.w/l.paper.rawH)*100;
-                const sx = (l.paper.marginLR/2/l.paper.rawW)*100, sy = (l.paper.marginTB/2/l.paper.rawH)*100;
-                let gridHtml = '';
-                for(let r=0; r<l.rows; r++) for(let c=0; c<l.cols; c++) {
-                    gridHtml += `<div class="absolute border border-indigo-400/30 bg-indigo-500/10" style="width:${wPct}%;height:${hPct}%;top:${sy + r*hPct}%;left:${sx + c*wPct}%"></div>`;
-                }
-                wrap.style.position = 'relative'; wrap.style.width = '100%'; wrap.style.height = '100%'; wrap.innerHTML = gridHtml;
-                con.appendChild(wrap);
+                const costBits = [
+                    `<span class="text-slate-700">材料</span> ¥${res.details.material.toFixed(1)}`,
+                    `<span class="text-slate-700">加工</span> ¥${(res.details.lamination+res.details.dieCut+res.details.corrugated).toFixed(1)}`,
+                    `<span class="text-slate-700">附加</span> ¥${res.details.extra.toFixed(1)}`
+                ];
+                if (res.details.doubleGlue > 0) costBits.push(`<span class="text-emerald-700">双粘</span> ¥${res.details.doubleGlue.toFixed(1)}`);
+                document.getElementById('costList').innerHTML = costBits.join(' <span class="text-slate-300 mx-1">|</span> ');
+                document.getElementById('dimensionDetails').innerHTML = res.layouts.map(l => `<span class="ml-2">${l.partName}: ${l.originalDim.l.toFixed(0)}×${l.originalDim.w.toFixed(0)}${l.doubleGlue ? ' · 双粘' : ''}</span>`).join('');
+                this.renderLayoutVisuals(res.layouts, params.useMixedLayoutForPricing);
                 
                 const sizeStr = mode==='basic'?`${document.getElementById('length').value}x${document.getElementById('width').value}x${document.getElementById('height').value}`:`展开 ${document.getElementById('unfoldedL').value}x${document.getElementById('unfoldedW').value}`;
                 
                 this.currentQuote = { 
                     name: mode==='basic'?CalcLogic.BOX_TYPES[document.getElementById('boxType').value].name:'自定义', 
                     qty, total: parseFloat(res.finalTotal.toFixed(2)), unitPrice: (res.finalTotal/qty).toFixed(3),
-                    size: sizeStr, date: new Date().toLocaleString()
+                    size: sizeStr, date: new Date().toLocaleString(),
+                    layoutMode: params.useMixedLayoutForPricing ? '双区混拼参与报价' : '混拼仅参考',
+                    productionMode: res.usedDoubleGlue ? '含双粘方案' : '单片成型'
                 };
                 this.saveHistory(this.currentQuote);
+            },
+            renderLayoutVisuals(layouts, useMixedPricing = false) {
+                const con = document.getElementById('layoutGridsContainer');
+                const card = document.getElementById('layoutVisualCard');
+                if(!con || !card || !layouts?.length) return;
+                con.innerHTML = '';
+                card.classList.remove('hidden');
+
+                const totalSheets = layouts.reduce((sum, item) => sum + (item.sheets || 0), 0);
+                const bestPlans = layouts.map(layout => layout.referencePlan || this.getReferenceLayoutPlan(layout));
+                const maxReference = Math.max(...bestPlans.map(plan => plan.count || 0));
+                const avgEfficiency = bestPlans.length ? (bestPlans.reduce((sum, plan) => sum + (plan.efficiencyValue || 0), 0) / bestPlans.length) : 0;
+                const doubleGlueParents = new Set(layouts.filter(item => item.doubleGlue).map(item => item.parentPartName));
+                document.getElementById('layoutDesc').innerText = `${layouts.length}片分开显示 · ${useMixedPricing ? '混拼已参与计价' : '混拼仅参考'} · 计价共 ${totalSheets} 大张${doubleGlueParents.size ? ` · 含双粘 ${doubleGlueParents.size} 件` : ''}`;
+                document.getElementById('layoutEfficiency').innerText = `参考 ${avgEfficiency.toFixed(1)}% / 最高 ${maxReference}拼`;
+                document.getElementById('layoutPaperLabel').innerText = `${layouts[0].paper.rawW}×${layouts[0].paper.rawH}`;
+
+                const grid = document.createElement('div');
+                grid.className = 'grid gap-4';
+                grid.style.gridTemplateColumns = layouts.length > 1 ? 'repeat(auto-fit, minmax(240px, 1fr))' : '1fr';
+                grid.style.alignItems = 'start';
+                grid.style.paddingBottom = '8px';
+
+                layouts.forEach((layout, index) => {
+                    const plan = bestPlans[index];
+                    grid.appendChild(this.createLayoutCard(layout, plan, useMixedPricing));
+                });
+
+                con.style.height = '100%';
+                con.style.overflowY = 'auto';
+                con.appendChild(grid);
+            },
+            getReferenceLayoutPlan(layout) {
+                return CalcLogic.getBestLayoutPlan(layout.originalDim.l, layout.originalDim.w, layout.paper);
+            },
+            createLayoutCard(layout, plan, useMixedPricing = false) {
+                const card = document.createElement('div');
+                card.className = 'bg-white/90 border border-slate-200 rounded-2xl shadow-sm overflow-hidden';
+
+                const header = document.createElement('div');
+                header.className = 'px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-3';
+                const titleWrap = document.createElement('div');
+                const title = document.createElement('div');
+                title.className = 'text-sm font-bold text-slate-700';
+                title.textContent = layout.partName || '分片';
+                const subtitle = document.createElement('div');
+                subtitle.className = 'text-[11px] text-slate-500 mt-1';
+                subtitle.textContent = `${layout.originalDim.l.toFixed(0)}×${layout.originalDim.w.toFixed(0)} mm`;
+                titleWrap.appendChild(title);
+                titleWrap.appendChild(subtitle);
+
+                const modeBadge = document.createElement('div');
+                modeBadge.className = 'text-[10px] px-2 py-1 rounded-full font-bold';
+                modeBadge.style.background = plan.mode.startsWith('mixed') ? 'rgba(99,102,241,0.12)' : 'rgba(15,23,42,0.06)';
+                modeBadge.style.color = plan.mode.startsWith('mixed') ? '#4338ca' : '#475569';
+                modeBadge.textContent = plan.label;
+                header.appendChild(titleWrap);
+                header.appendChild(modeBadge);
+
+                const canvasWrap = document.createElement('div');
+                canvasWrap.className = 'p-4 bg-slate-50/80';
+                this.renderLayoutCanvas(canvasWrap, plan);
+
+                const pricingText = layout.pricingMode && layout.pricingMode.startsWith('mixed')
+                    ? `${layout.pricingLabel} (${layout.pricingCount}拼)`
+                    : `${layout.pricingRows}×${layout.pricingCols} (${layout.pricingCount}拼)`;
+
+                const meta = document.createElement('div');
+                meta.className = 'px-4 py-3 border-t border-slate-100 bg-white text-[11px] text-slate-600 space-y-2';
+                const rows = [
+                    ['参考拼版', `${plan.count}拼 · ${plan.efficiency}`],
+                    ['计价拼版', pricingText],
+                    ['计价大张', `${layout.sheets} 张`]
+                ];
+                if (layout.doubleGlue) rows.unshift(['生产方式', `${layout.productionLabel} · ${layout.doubleGlueSide || ''}`.trim()]);
+                rows.forEach(([label, value]) => {
+                    const row = document.createElement('div');
+                    row.className = 'flex items-center justify-between gap-3';
+                    const labelEl = document.createElement('span');
+                    labelEl.textContent = label;
+                    const valueEl = document.createElement('span');
+                    valueEl.className = 'font-semibold text-slate-700 text-right';
+                    valueEl.textContent = value;
+                    row.appendChild(labelEl);
+                    row.appendChild(valueEl);
+                    meta.appendChild(row);
+                });
+
+                if (layout.doubleGlue) {
+                    const glueHint = document.createElement('div');
+                    glueHint.className = 'text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-2 py-1';
+                    glueHint.textContent = `源尺寸 ${layout.sourceDim.l.toFixed(0)}×${layout.sourceDim.w.toFixed(0)} mm 超限，已按 ${layout.productionLabel}（搭口 ${layout.doubleGlueOverlap || 0} mm）拆分。`;
+                    meta.appendChild(glueHint);
+                }
+                if (!useMixedPricing && plan.count !== layout.pricingCount) {
+                    const hint = document.createElement('div');
+                    hint.className = 'text-[10px] text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1';
+                    hint.textContent = `此处为参考混拼示意，报价仍按原逻辑 ${layout.pricingCount} 拼计算。`;
+                    meta.appendChild(hint);
+                } else if (useMixedPricing && layout.pricingMode && layout.pricingMode.startsWith('mixed')) {
+                    const hint = document.createElement('div');
+                    hint.className = 'text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-1';
+                    hint.textContent = `当前报价已按 ${layout.pricingLabel} ${layout.pricingCount} 拼参与计价。`;
+                    meta.appendChild(hint);
+                }
+
+                card.appendChild(header);
+                card.appendChild(canvasWrap);
+                card.appendChild(meta);
+                return card;
+            },
+            renderLayoutCanvas(container, plan) {
+                const paper = plan.paper;
+                const paperShell = document.createElement('div');
+                paperShell.style.position = 'relative';
+                paperShell.style.width = '100%';
+                paperShell.style.aspectRatio = `${paper.rawW} / ${paper.rawH}`;
+                paperShell.style.background = 'linear-gradient(180deg, #fff 0%, #f8fafc 100%)';
+                paperShell.style.border = '1px solid rgba(148,163,184,0.25)';
+                paperShell.style.borderRadius = '16px';
+                paperShell.style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.7)';
+                paperShell.style.overflow = 'hidden';
+
+                const effective = document.createElement('div');
+                effective.style.position = 'absolute';
+                effective.style.left = `${(paper.marginLR / 2 / paper.rawW) * 100}%`;
+                effective.style.top = `${(paper.marginTB / 2 / paper.rawH) * 100}%`;
+                effective.style.width = `${((paper.rawW - paper.marginLR) / paper.rawW) * 100}%`;
+                effective.style.height = `${((paper.rawH - paper.marginTB) / paper.rawH) * 100}%`;
+                effective.style.border = '1px dashed rgba(148,163,184,0.7)';
+                effective.style.background = 'rgba(255,255,255,0.35)';
+                effective.style.borderRadius = '12px';
+                paperShell.appendChild(effective);
+
+                const colors = {
+                    main: { fill: 'rgba(99,102,241,0.12)', stroke: 'rgba(99,102,241,0.45)' },
+                    secondary: { fill: 'rgba(14,165,233,0.12)', stroke: 'rgba(14,165,233,0.45)' }
+                };
+
+                plan.regions.forEach(region => {
+                    for (let row = 0; row < region.rows; row++) {
+                        for (let col = 0; col < region.cols; col++) {
+                            const piece = document.createElement('div');
+                            piece.style.position = 'absolute';
+                            piece.style.left = `${((paper.marginLR / 2 + region.x + col * region.cellW) / paper.rawW) * 100}%`;
+                            piece.style.top = `${((paper.marginTB / 2 + region.y + row * region.cellH) / paper.rawH) * 100}%`;
+                            piece.style.width = `${(region.cellW / paper.rawW) * 100}%`;
+                            piece.style.height = `${(region.cellH / paper.rawH) * 100}%`;
+                            piece.style.border = `1px solid ${colors[region.role || 'main'].stroke}`;
+                            piece.style.background = colors[region.role || 'main'].fill;
+                            piece.style.borderRadius = '4px';
+                            paperShell.appendChild(piece);
+                        }
+                    }
+                });
+
+                const legend = document.createElement('div');
+                legend.className = 'mt-3 flex flex-wrap gap-2 text-[10px] text-slate-500';
+                const legendItems = [
+                    ['可用区域', 'rgba(148,163,184,0.22)'],
+                    ['主区', colors.main.fill],
+                    ['补拼区', colors.secondary.fill]
+                ];
+                legendItems.forEach(([label, color]) => {
+                    const item = document.createElement('div');
+                    item.className = 'inline-flex items-center gap-1.5';
+                    const swatch = document.createElement('span');
+                    swatch.style.width = '10px';
+                    swatch.style.height = '10px';
+                    swatch.style.borderRadius = '999px';
+                    swatch.style.display = 'inline-block';
+                    swatch.style.border = '1px solid rgba(148,163,184,0.35)';
+                    swatch.style.background = color;
+                    const txt = document.createElement('span');
+                    txt.textContent = label;
+                    item.appendChild(swatch);
+                    item.appendChild(txt);
+                    legend.appendChild(item);
+                });
+
+                container.appendChild(paperShell);
+                container.appendChild(legend);
             },
             copyQuote() {
                 if(!this.currentQuote) return;
@@ -1244,54 +1752,227 @@
                 const h = document.getElementById('paperH').value || OrderState.globalConfig.defaults.paperH;
                 document.getElementById('displayPaperSize').innerText = `${w}x${h}mm`;
             },
-            updateUnfoldedView(L, W, H, type) { 
-                const c = document.getElementById('svgContainer'); 
-                const COL = '#64748b'; 
-                const DIM = '#94a3b8'; 
-                
-                const drawDim = (x1, y1, x2, y2, text, offset=10, isVertical=false) => { 
-                    return isVertical ? 
-                        `<line x1="${x1-offset}" y1="${y1}" x2="${x1-offset}" y2="${y2}" stroke="${DIM}" stroke-width="0.5"/><text x="${x1-offset-5}" y="${(y1+y2)/2}" fill="${DIM}" font-size="12" text-anchor="end" dominant-baseline="middle">${text}</text>` :
-                        `<line x1="${x1}" y1="${y2+offset}" x2="${x2}" y2="${y2+offset}" stroke="${DIM}" stroke-width="0.5"/><text x="${(x1+x2)/2}" y="${y2+offset+15}" fill="${DIM}" font-size="12" text-anchor="middle">${text}</text>`; 
+            updateUnfoldedView(L, W, H, type) {
+                const container = document.getElementById('svgContainer');
+                if (!container) return;
+                const STYLE = {
+                    cut: '#334155',
+                    fold: '#3b82f6',
+                    bleedStroke: '#ef4444',
+                    bleedFill: 'rgba(239,68,68,0.08)',
+                    glueFill: 'rgba(100,116,139,0.18)',
+                    glueStroke: '#64748b',
+                    dim: '#94a3b8',
+                    label: '#475569'
                 };
-                
-                let s = '', vb = '';
-                
-                 switch(type) {
-                    case 'topBottom': { 
-                        const flap=H, gap=30; const sw=flap+L+flap, sh=flap+W+flap, tw=sw*2+gap+20, th=sh+20, sx=10, sy=flap+10; vb=`-10 -10 ${tw} ${th}`; 
-                        s+=`<g stroke="${COL}" fill="none"><rect x="${sx+flap}" y="${sy-flap}" width="${L}" height="${flap}"/><rect x="${sx+flap}" y="${sy+W}" width="${L}" height="${flap}"/><rect x="${sx}" y="${sy}" width="${flap}" height="${W}"/><rect x="${sx+flap+L}" y="${sy}" width="${flap}" height="${W}"/><rect x="${sx+flap}" y="${sy}" width="${L}" height="${W}"/><text x="${sx+flap+L/2}" y="${sy+W/2}" fill="${DIM}" text-anchor="middle" font-size="12">天盖</text></g>`; 
-                        let sx2=sx+sw+gap; s+=`<g stroke="${COL}" fill="none"><rect x="${sx2+flap}" y="${sy-flap}" width="${L}" height="${flap}"/><rect x="${sx2+flap}" y="${sy+W}" width="${L}" height="${flap}"/><rect x="${sx2}" y="${sy}" width="${flap}" height="${W}"/><rect x="${sx2+flap+L}" y="${sy}" width="${flap}" height="${W}"/><rect x="${sx2+flap}" y="${sy}" width="${L}" height="${W}"/><text x="${sx2+flap+L/2}" y="${sy+W/2}" fill="${DIM}" text-anchor="middle" font-size="12">地盒</text></g>`; 
-                        s+=drawDim(sx+flap,sy+W+flap,sx+flap+L,sy+W+flap,"L",5)+drawDim(sx+flap+L+flap,sy,sx+flap+L+flap,sy+W,"W",5,true)+drawDim(sx+flap+L+flap,sy-flap,sx+flap+L+flap,sy,"H",5,true); 
-                        break; 
+                const state = { cuts: [], folds: [], bleeds: [], glues: [], labels: [], dims: [] };
+                let viewBox = '0 0 420 240';
+
+                const rectNode = (x, y, w, h) => ({ type: 'rect', x, y, w, h });
+                const lineNode = (x1, y1, x2, y2) => ({ type: 'line', x1, y1, x2, y2 });
+                const polyNode = (points) => ({ type: 'poly', points });
+                const textNode = (x, y, text, size = 11, anchor = 'middle') => ({ type: 'text', x, y, text, size, anchor });
+                const addRect = (bucket, x, y, w, h) => state[bucket].push(rectNode(x, y, w, h));
+                const addLine = (bucket, x1, y1, x2, y2) => state[bucket].push(lineNode(x1, y1, x2, y2));
+                const addPoly = (bucket, points) => state[bucket].push(polyNode(points));
+                const addLabel = (x, y, text, size = 11, anchor = 'middle') => state.labels.push(textNode(x, y, text, size, anchor));
+                const addDim = (x1, y1, x2, y2, text, offset = 12, isVertical = false) => state.dims.push({ x1, y1, x2, y2, text, offset, isVertical });
+                const addBleedBounds = (x, y, w, h, pad = 6) => addRect('bleeds', x - pad, y - pad, w + pad * 2, h + pad * 2);
+                const pointsToAttr = (points) => points.map(([px, py]) => `${px},${py}`).join(' ');
+                const renderShape = (shape, attrs) => {
+                    if (shape.type === 'rect') return `<rect x="${shape.x}" y="${shape.y}" width="${shape.w}" height="${shape.h}" ${attrs}/>`;
+                    if (shape.type === 'line') return `<line x1="${shape.x1}" y1="${shape.y1}" x2="${shape.x2}" y2="${shape.y2}" ${attrs}/>`;
+                    if (shape.type === 'poly') return `<polygon points="${pointsToAttr(shape.points)}" ${attrs}/>`;
+                    return '';
+                };
+                const renderLabel = (label) => `<text x="${label.x}" y="${label.y}" fill="${STYLE.label}" font-size="${label.size}" text-anchor="${label.anchor}" dominant-baseline="middle">${label.text}</text>`;
+                const renderDim = (dim) => dim.isVertical
+                    ? `<line x1="${dim.x1 - dim.offset}" y1="${dim.y1}" x2="${dim.x1 - dim.offset}" y2="${dim.y2}" stroke="${STYLE.dim}" stroke-width="0.8"/><text x="${dim.x1 - dim.offset - 6}" y="${(dim.y1 + dim.y2) / 2}" fill="${STYLE.dim}" font-size="11" text-anchor="end" dominant-baseline="middle">${dim.text}</text>`
+                    : `<line x1="${dim.x1}" y1="${dim.y2 + dim.offset}" x2="${dim.x2}" y2="${dim.y2 + dim.offset}" stroke="${STYLE.dim}" stroke-width="0.8"/><text x="${(dim.x1 + dim.x2) / 2}" y="${dim.y2 + dim.offset + 13}" fill="${STYLE.dim}" font-size="11" text-anchor="middle">${dim.text}</text>`;
+                const addLegend = () => {
+                    const lx = 18, ly = 18, gap = 18;
+                    state.bleeds.push(rectNode(lx, ly, 10, 10));
+                    state.glues.push(rectNode(lx + 88, ly, 10, 10));
+                    state.cuts.push(lineNode(lx + 176, ly + 5, lx + 206, ly + 5));
+                    state.folds.push(lineNode(lx + 256, ly + 5, lx + 286, ly + 5));
+                    state.labels.push(textNode(lx + 15, ly + 6, '出血', 10, 'start'));
+                    state.labels.push(textNode(lx + 103, ly + 6, '糊口', 10, 'start'));
+                    state.labels.push(textNode(lx + 211, ly + 6, '切线', 10, 'start'));
+                    state.labels.push(textNode(lx + 291, ly + 6, '折线', 10, 'start'));
+                };
+                const addDefaultCarton = (originX, originY, opts = {}) => {
+                    const flap = opts.flap ?? 20;
+                    const dust = opts.dust ?? W * 0.6;
+                    const glue = opts.glue ?? 15;
+                    const panels = [W, L, W, L];
+                    let cursor = originX;
+                    panels.forEach((panelW, idx) => {
+                        addRect('cuts', cursor, originY, panelW, H);
+                        addLine('folds', cursor, originY, cursor, originY + H);
+                        addLine('folds', cursor + panelW, originY, cursor + panelW, originY + H);
+                        if (idx === 0 || idx === 2) {
+                            addPoly('cuts', [[cursor, originY], [cursor + 5, originY - dust], [cursor + panelW - 5, originY - dust], [cursor + panelW, originY]]);
+                            addPoly('cuts', [[cursor, originY + H], [cursor + 5, originY + H + dust], [cursor + panelW - 5, originY + H + dust], [cursor + panelW, originY + H]]);
+                        } else {
+                            addPoly('cuts', [[cursor, originY], [cursor, originY - flap], [cursor + panelW, originY - flap], [cursor + panelW, originY]]);
+                            if (type === 'bottomLock' && (idx === 1 || idx === 3)) {
+                                addPoly('cuts', [[cursor, originY + H], [cursor + panelW / 2, originY + H + W * 0.6], [cursor + panelW, originY + H]]);
+                            } else {
+                                addPoly('cuts', [[cursor, originY + H], [cursor, originY + H + flap], [cursor + panelW, originY + H + flap], [cursor + panelW, originY + H]]);
+                            }
+                        }
+                        cursor += panelW;
+                    });
+                    addPoly('glues', [[cursor, originY], [cursor + glue, originY + 5], [cursor + glue, originY + H - 5], [cursor, originY + H]]);
+                    addLine('folds', originX, originY, cursor, originY);
+                    addLine('folds', originX, originY + H, cursor, originY + H);
+                    addBleedBounds(originX, originY - Math.max(flap, dust), cursor - originX + glue, H + Math.max(flap, dust) * 2, 5);
+                    addDim(originX + W, originY + H - 10, originX + W + L, originY + H - 10, 'L', 10, false);
+                    addDim(originX + W + L, originY + H - 10, originX + W + L + W, originY + H - 10, 'W', 10, false);
+                    addDim(originX + W / 2, originY, originX + W / 2, originY + H, 'H', 8, true);
+                    return cursor + glue;
+                };
+
+                switch(type) {
+                    case 'topBottom': {
+                        const flap = H;
+                        const gap = 36;
+                        const sw = flap + L + flap;
+                        const sh = flap + W + flap;
+                        const baseX = 28;
+                        const baseY = 54;
+                        const buildLid = (x, title) => {
+                            addRect('cuts', x + flap, baseY - flap, L, flap);
+                            addRect('cuts', x + flap, baseY + W, L, flap);
+                            addRect('cuts', x, baseY, flap, W);
+                            addRect('cuts', x + flap + L, baseY, flap, W);
+                            addRect('cuts', x + flap, baseY, L, W);
+                            addLine('folds', x + flap, baseY, x + flap + L, baseY);
+                            addLine('folds', x + flap, baseY + W, x + flap + L, baseY + W);
+                            addLine('folds', x + flap, baseY, x + flap, baseY + W);
+                            addLine('folds', x + flap + L, baseY, x + flap + L, baseY + W);
+                            addBleedBounds(x, baseY - flap, sw, sh, 6);
+                            addLabel(x + flap + L / 2, baseY + W / 2, title);
+                        };
+                        buildLid(baseX, '天盖');
+                        buildLid(baseX + sw + gap, '地盒');
+                        viewBox = `0 0 ${baseX * 2 + sw * 2 + gap} ${baseY + sh + 34}`;
+                        addDim(baseX + flap, baseY + W + flap, baseX + flap + L, baseY + W + flap, 'L', 8, false);
+                        addDim(baseX + flap + L + flap, baseY, baseX + flap + L + flap, baseY + W, 'W', 10, true);
+                        addDim(baseX + flap + L + flap, baseY - flap, baseX + flap + L + flap, baseY, 'H', 10, true);
+                        break;
                     }
-                    case 'drawer': { 
-                        const gapD = 50; const sleeveH = 2*(W+H)+20; const trayW = L+2*H, trayH = W+2*H; const slx=10, sly=10; 
-                        s+=`<g stroke="${COL}" fill="none"> <rect x="${slx}" y="${sly}" width="${L}" height="${H}"/> <rect x="${slx}" y="${sly+H}" width="${L}" height="${W}"/> <rect x="${slx}" y="${sly+H+W}" width="${L}" height="${H}"/> <rect x="${slx}" y="${sly+H+W+H}" width="${L}" height="${W}"/> <path d="M${slx},${sly} L${slx+L},${sly} L${slx+L},${sly+H*2+W*2} L${slx},${sly+H*2+W*2} Z"/> <text x="${slx+L/2}" y="${sly+H+W+H+W+15}" fill="${DIM}" text-anchor="middle" font-size="10">外封套</text> </g>`; 
-                        const tlx = slx+L+gapD, tly = sly + (sleeveH-trayH)/2; s+=`<g stroke="${COL}" fill="none"> <rect x="${tlx+H}" y="${tly+H}" width="${L}" height="${W}"/> <rect x="${tlx}" y="${tly+H}" width="${H}" height="${W}"/> <rect x="${tlx+H+L}" y="${tly+H}" width="${H}" height="${W}"/> <rect x="${tlx+H}" y="${tly}" width="${L}" height="${H}"/> <rect x="${tlx+H}" y="${tly+H+W}" width="${L}" height="${H}"/> <text x="${tlx+H+L/2}" y="${tly+H+W/2}" fill="${DIM}" text-anchor="middle" font-size="10">内盒</text> </g>`; vb = `0 0 ${tlx+trayW+20} ${sly+sleeveH+30}`; 
-                        break; 
+                    case 'drawer': {
+                        const sleeveX = 26;
+                        const sleeveY = 46;
+                        const gap = 56;
+                        const trayX = sleeveX + L + gap;
+                        const trayY = sleeveY + Math.max(0, (W + H * 2 - (W + H * 2)) / 2);
+                        const sleeveSections = [H, W, H, W];
+                        let sy = sleeveY;
+                        sleeveSections.forEach(sectionH => {
+                            addRect('cuts', sleeveX, sy, L, sectionH);
+                            addLine('folds', sleeveX, sy, sleeveX + L, sy);
+                            addLine('folds', sleeveX, sy + sectionH, sleeveX + L, sy + sectionH);
+                            sy += sectionH;
+                        });
+                        addRect('glues', sleeveX + L - 12, sleeveY, 12, sleeveSections.reduce((sum, val) => sum + val, 0));
+                        addBleedBounds(sleeveX, sleeveY, L, sleeveSections.reduce((sum, val) => sum + val, 0), 5);
+                        addLabel(sleeveX + L / 2, sleeveY + sleeveSections.reduce((sum, val) => sum + val, 0) + 16, '外封');
+
+                        addRect('cuts', trayX + H, trayY + H, L, W);
+                        addRect('cuts', trayX, trayY + H, H, W);
+                        addRect('cuts', trayX + H + L, trayY + H, H, W);
+                        addRect('cuts', trayX + H, trayY, L, H);
+                        addRect('cuts', trayX + H, trayY + H + W, L, H);
+                        addRect('glues', trayX + 4, trayY + H + 4, H - 8, W - 8);
+                        addRect('glues', trayX + H + L + 4, trayY + H + 4, H - 8, W - 8);
+                        addLine('folds', trayX + H, trayY + H, trayX + H + L, trayY + H);
+                        addLine('folds', trayX + H, trayY + H + W, trayX + H + L, trayY + H + W);
+                        addLine('folds', trayX + H, trayY + H, trayX + H, trayY + H + W);
+                        addLine('folds', trayX + H + L, trayY + H, trayX + H + L, trayY + H + W);
+                        addBleedBounds(trayX, trayY, L + H * 2, W + H * 2, 5);
+                        addLabel(trayX + H + L / 2, trayY + H + W / 2, '内盒');
+                        addDim(trayX + H, trayY + H + W + H, trayX + H + L, trayY + H + W + H, 'L', 10, false);
+                        addDim(trayX, trayY + H, trayX, trayY + H + W, 'W', 10, true);
+                        addDim(trayX + H + L + H, trayY, trayX + H + L + H, trayY + H, 'H', 10, true);
+                        viewBox = `0 0 ${trayX + L + H * 2 + 40} ${sleeveY + sleeveSections.reduce((sum, val) => sum + val, 0) + 40}`;
+                        break;
                     }
-                    case 'airplane': { 
-                        const apW = W, apL = L, apH = H; const ear = 15; const totalW_ap = apL + 2*apH + 2*ear + 20; const totalH_ap = apW*2 + apH*3 + 20; vb = `-10 -10 ${totalW_ap} ${totalH_ap}`; const cx = apH + ear + 10, cy = 10; 
-                        s += `<g stroke="${COL}" fill="none">`; s += `<rect x="${cx}" y="${cy}" width="${apL}" height="${apW}"/>`; s += `<path d="M${cx},${cy} L${cx+ear},${cy-apH} L${cx+apL-ear},${cy-apH} L${cx+apL},${cy} Z"/>`; s += `<rect x="${cx}" y="${cy+apW}" width="${apL}" height="${apH}"/>`; const by = cy+apW+apH; s += `<rect x="${cx}" y="${by}" width="${apL}" height="${apW}"/>`; s += `<rect x="${cx-apH}" y="${by}" width="${apH}" height="${apW}"/>`; s += `<path d="M${cx-apH},${by} L${cx-apH-ear},${by+10} L${cx-apH-ear},${by+apW-10} L${cx-apH},${by+apW} Z"/>`; s += `<rect x="${cx+apL}" y="${by}" width="${apH}" height="${apW}"/>`; s += `<path d="M${cx+apL+apH},${by} L${cx+apL+apH+ear},${by+10} L${cx+apL+apH+ear},${by+apW-10} L${cx+apL+apH},${by+apW} Z"/>`; s += `<rect x="${cx}" y="${by+apW}" width="${apL}" height="${apH}"/>`; s += `<path d="M${cx},${by+apW+apH} L${cx+10},${by+apW+apH+10} L${cx+apL-10},${by+apW+apH+10} L${cx+apL},${by+apW+apH} Z"/>`; 
-                        s+=drawDim(cx,by+apW,cx+apL,by+apW,"L",0,false) + drawDim(cx+apL,by,cx+apL,by+apW,"W",5,true); s += `</g>`; 
-                        break; 
+                    case 'airplane': {
+                        const ear = 15;
+                        const cx = H + ear + 26;
+                        const cy = 44;
+                        const bodyY = cy + W + H;
+                        addRect('cuts', cx, cy, L, W);
+                        addPoly('cuts', [[cx, cy], [cx + ear, cy - H], [cx + L - ear, cy - H], [cx + L, cy]]);
+                        addRect('cuts', cx, cy + W, L, H);
+                        addRect('cuts', cx, bodyY, L, W);
+                        addRect('cuts', cx - H, bodyY, H, W);
+                        addPoly('cuts', [[cx - H, bodyY], [cx - H - ear, bodyY + 10], [cx - H - ear, bodyY + W - 10], [cx - H, bodyY + W]]);
+                        addRect('cuts', cx + L, bodyY, H, W);
+                        addPoly('cuts', [[cx + L + H, bodyY], [cx + L + H + ear, bodyY + 10], [cx + L + H + ear, bodyY + W - 10], [cx + L + H, bodyY + W]]);
+                        addRect('cuts', cx, bodyY + W, L, H);
+                        addPoly('cuts', [[cx, bodyY + W + H], [cx + 10, bodyY + W + H + 10], [cx + L - 10, bodyY + W + H + 10], [cx + L, bodyY + W + H]]);
+                        addLine('folds', cx, cy + W, cx + L, cy + W);
+                        addLine('folds', cx, bodyY, cx + L, bodyY);
+                        addLine('folds', cx, bodyY + W, cx + L, bodyY + W);
+                        addLine('folds', cx, bodyY, cx, bodyY + W);
+                        addLine('folds', cx + L, bodyY, cx + L, bodyY + W);
+                        addBleedBounds(cx - H - ear, cy - H, L + H * 2 + ear * 2, W * 2 + H * 3 + 10, 6);
+                        addDim(cx, bodyY + W, cx + L, bodyY + W, 'L', 8, false);
+                        addDim(cx + L, bodyY, cx + L, bodyY + W, 'W', 10, true);
+                        addDim(cx - H, bodyY, cx - H, bodyY + W, 'H', 10, true);
+                        viewBox = `0 0 ${cx + L + H + ear + 34} ${bodyY + W + H + 36}`;
+                        break;
                     }
-                    case 'handle': { 
-                        const hL=L, hW=W, hH=H; const hTop = 60; const totalW_h = hL*2 + hW*2 + 40; const totalH_h = hH + hW/2 + hTop + 40; vb = `-10 -10 ${totalW_h} ${totalH_h}`; let curX = 10, curY = hTop + 20; 
-                        s+=`<g stroke="${COL}" fill="none">`; s+=`<rect x="${curX}" y="${curY}" width="${hW}" height="${hH}"/>`; s+=`<path d="M${curX},${curY} L${curX+hW/2-10},${curY-hTop} L${curX+hW/2+10},${curY-hTop} L${curX+hW},${curY} Z"/>`; s+=`<rect x="${curX}" y="${curY+hH}" width="${hW}" height="${hW/2}"/>`; curX += hW; s+=`<rect x="${curX}" y="${curY}" width="${hL}" height="${hH}"/>`; s+=`<rect x="${curX}" y="${curY+hH}" width="${hL}" height="${hW/2}"/>`; curX += hL; s+=`<rect x="${curX}" y="${curY}" width="${hW}" height="${hH}"/>`; s+=`<path d="M${curX},${curY} L${curX+hW/2-10},${curY-hTop} L${curX+hW/2+10},${curY-hTop} L${curX+hW},${curY} Z"/>`; s+=`<rect x="${curX}" y="${curY+hH}" width="${hW}" height="${hW/2}"/>`; curX += hW; s+=`<rect x="${curX}" y="${curY}" width="${hL}" height="${hH}"/>`; s+=`<rect x="${curX}" y="${curY+hH}" width="${hL}" height="${hW/2}"/>`; s+=`<path d="M${curX+hL},${curY} L${curX+hL+15},${curY+10} L${curX+hL+15},${curY+hH-10} L${curX+hL},${curY+hH} Z"/>`; 
-                        s+=drawDim(10+hW, curY+hH, 10+hW+hL, curY+hH, "L", 5, false); s+=drawDim(10, curY+hH, 10+hW, curY+hH, "W", 5, false); s+=drawDim(10, curY, 10, curY+hH, "H", 5, true); s+=`</g>`; 
-                        break; 
+                    case 'handle': {
+                        const top = 60;
+                        const baseX = 24;
+                        const baseY = top + 34;
+                        let cursor = baseX;
+                        const panels = [W, L, W, L];
+                        panels.forEach((panelW, idx) => {
+                            addRect('cuts', cursor, baseY, panelW, H);
+                            addRect('cuts', cursor, baseY + H, panelW, W / 2);
+                            if (idx === 0 || idx === 2) {
+                                addPoly('cuts', [[cursor, baseY], [cursor + panelW / 2 - 10, baseY - top], [cursor + panelW / 2 + 10, baseY - top], [cursor + panelW, baseY]]);
+                            }
+                            addLine('folds', cursor, baseY, cursor, baseY + H);
+                            addLine('folds', cursor + panelW, baseY, cursor + panelW, baseY + H);
+                            addLine('folds', cursor, baseY + H, cursor + panelW, baseY + H);
+                            cursor += panelW;
+                        });
+                        addPoly('glues', [[cursor, baseY], [cursor + 15, baseY + 10], [cursor + 15, baseY + H - 10], [cursor, baseY + H]]);
+                        addBleedBounds(baseX, baseY - top, cursor - baseX + 15, H + W / 2 + top, 6);
+                        addDim(baseX + W, baseY + H, baseX + W + L, baseY + H, 'L', 8, false);
+                        addDim(baseX, baseY + H, baseX + W, baseY + H, 'W', 8, false);
+                        addDim(baseX, baseY, baseX, baseY + H, 'H', 10, true);
+                        viewBox = `0 0 ${cursor + 44} ${baseY + H + W / 2 + 34}`;
+                        break;
                     }
-                    default: { 
-                        const flap2=20, dust2=W*0.6, glue2=15, tW = W+L+W+L+glue2+20, tH = H+(flap2*2)+20, sx2 = 5, sy2 = flap2+10; vb = `-10 -10 ${tW} ${tH}`; let cx2 = sx2; 
-                        s += `<g stroke="${COL}" fill="none">`; s += `<rect x="${cx2}" y="${sy2}" width="${W}" height="${H}"/>`; s += `<path d="M${cx2},${sy2} L${cx2+5},${sy2-dust2} L${cx2+W-5},${sy2-dust2} L${cx2+W},${sy2} Z"/>`; s += `<path d="M${cx2},${sy2+H} L${cx2+5},${sy2+H+dust2} L${cx2+W-5},${sy2+H+dust2} L${cx2+W},${sy2+H} Z"/>`; cx2 += W; s += `<rect x="${cx2}" y="${sy2}" width="${L}" height="${H}"/>`; s += `<path d="M${cx2},${sy2} L${cx2},${sy2-flap2} Q${cx2},${sy2-flap2-5} ${cx2+5},${sy2-flap2-5} L${cx2+L-5},${sy2-flap2-5} Q${cx2+L},${sy2-flap2-5} ${cx2+L},${sy2-flap2} L${cx2+L},${sy2} Z"/>`; 
-                        if (type === 'bottomLock') { s += `<path d="M${cx2},${sy2+H} L${cx2+L/2},${sy2+H+W*0.6} L${cx2+L},${sy2+H} Z"/>`; } else { s += `<path d="M${cx2},${sy2+H} L${cx2},${sy2+H+flap2} Q${cx2},${sy2+H+flap2+5} ${cx2+5},${sy2+H+flap2+5} L${cx2+L-5},${sy2+H+flap2+5} Q${cx2+L},${sy2+H+flap2+5} ${cx2+L},${sy2+H+flap2} L${cx2+L},${sy2+H} Z"/>`; } cx2 += L; s += `<rect x="${cx2}" y="${sy2}" width="${W}" height="${H}"/>`; s += `<path d="M${cx2},${sy2} L${cx2+5},${sy2-dust2} L${cx2+W-5},${sy2-dust2} L${cx2+W},${sy2} Z"/>`; s += `<path d="M${cx2},${sy2+H} L${cx2+5},${sy2+H+dust2} L${cx2+W-5},${sy2+H+dust2} L${cx2+W},${sy2+H} Z"/>`; cx2 += W; s += `<rect x="${cx2}" y="${sy2}" width="${L}" height="${H}"/>`; 
-                        if (type === 'bottomLock') { s += `<path d="M${cx2},${sy2+H} L${cx2+L/2},${sy2+H+W*0.6} L${cx2+L},${sy2+H} Z"/>`; } else { s += `<path d="M${cx2},${sy2+H} L${cx2},${sy2+H+flap2} Q${cx2},${sy2+H+flap2+5} ${cx2+5},${sy2+H+flap2+5} L${cx2+L-5},${sy2+H+flap2+5} Q${cx2+L},${sy2+H+flap2+5} ${cx2+L},${sy2+H+flap2} L${cx2+L},${sy2+H} Z"/>`; } cx2 += L; s += `<path d="M${cx2},${sy2} L${cx2+glue2},${sy2+5} L${cx2+glue2},${sy2+H-5} L${cx2},${sy2+H} Z"/></g>`; s += drawDim(sx2+W/2, sy2, sx2+W/2, sy2+H, "H", 5, true) + drawDim(sx2+W+L, sy2+H-10, sx2+W+L+W, sy2+H-10, "W", 0) + drawDim(sx2+W, sy2+H-10, sx2+W+L, sy2+H-10, "L", 0); 
-                        break; 
+                    default: {
+                        const width = addDefaultCarton(22, 54, { flap: 20, dust: W * 0.6, glue: 15 });
+                        viewBox = `0 0 ${width + 44} ${H + W * 1.2 + 118}`;
+                        break;
                     }
                 }
-                c.innerHTML = `<svg width="100%" height="100%" viewBox="${vb}" style="padding:10px">${s}</svg>`;
+
+                addLegend();
+                const bleedAttrs = `fill="${STYLE.bleedFill}" stroke="${STYLE.bleedStroke}" stroke-width="0.8" stroke-dasharray="4 3"`;
+                const glueAttrs = `fill="${STYLE.glueFill}" stroke="${STYLE.glueStroke}" stroke-width="0.8"`;
+                const cutAttrs = `fill="none" stroke="${STYLE.cut}" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"`;
+                const foldAttrs = `fill="none" stroke="${STYLE.fold}" stroke-width="1" stroke-dasharray="5 4" stroke-linecap="round"`;
+                const svg = `
+                    <svg width="100%" height="100%" viewBox="${viewBox}" style="padding:10px">
+                        <g>${state.bleeds.map(shape => renderShape(shape, bleedAttrs)).join('')}</g>
+                        <g>${state.glues.map(shape => renderShape(shape, glueAttrs)).join('')}</g>
+                        <g>${state.cuts.map(shape => renderShape(shape, cutAttrs)).join('')}</g>
+                        <g>${state.folds.map(shape => renderShape(shape, foldAttrs)).join('')}</g>
+                        <g>${state.labels.map(renderLabel).join('')}</g>
+                        <g>${state.dims.map(renderDim).join('')}</g>
+                    </svg>`;
+                container.innerHTML = svg;
             }
         };
 
