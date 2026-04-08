@@ -482,19 +482,19 @@
         <div class="settings-grid">
             <div class="form-group">
                 <span style="font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">珍珠棉 (元/立方)</span>
-                <div class="input-item"><input type="number" id="epe_s_epe_price" value="500"></div>
+                <div class="input-item"><input type="number" id="epe_s_epe_price" value="430"></div>
             </div>
             <div class="form-group">
                 <span style="font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">常规 EVA (元/立方)</span>
-                <div class="input-item"><input type="number" id="epe_s_eva_price" value="1500"></div>
+                <div class="input-item"><input type="number" id="epe_s_eva_price" value="1400"></div>
             </div>
             <div class="form-group">
                 <span style="font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">软 EVA (元/立方)</span>
-                <div class="input-item"><input type="number" id="epe_s_soft_eva_price" value="1250"></div>
+                <div class="input-item"><input type="number" id="epe_s_soft_eva_price" value="1100"></div>
             </div>
             <div class="form-group">
                 <span style="font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">绒布 (元/平方)</span>
-                <div class="input-item"><input type="number" id="epe_s_flock_price" value="6"></div>
+                <div class="input-item"><input type="number" id="epe_s_flock_price" value="5.5"></div>
             </div>
             <div class="form-group">
                 <span style="font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">大板长 (mm)</span>
@@ -1379,9 +1379,9 @@
             let epe_H = Total_H - eva_H;
             
             let l_eva = calcEpeLayoutData(L, W, eva_H, p_eva);
-            let l_epe = calcEpeLayoutData(L, W, epe_H, p_epe);
+            let l_epe = calcEpeVolumeCost(L, W, epe_H, p_epe);
 
-            if(l_eva.error || l_epe.error) return alert("尺寸错误，超出了拼版限制。");
+            if(l_eva.error) return alert("尺寸错误，超出了拼版限制。");
             
             visualHtml = generateEpeVisualHTML(l_eva); 
 
@@ -1390,8 +1390,7 @@
             let warnEva = l_eva.isThickWarning ? `EVA层厚度进位至 ${l_eva.calcH}mm` : "";
             receiptHtml += generateEpeReceiptRow(`复合材 (EVA层)`, `¥${l_eva.cost.toFixed(4)}`, `按大料排版算法`, warnEva);
             
-            let warnEpe = l_epe.isThickWarning ? `珍珠棉层厚度进位至 ${l_epe.calcH}mm` : "";
-            receiptHtml += generateEpeReceiptRow(`复合材 (珍珠棉层)`, `¥${l_epe.cost.toFixed(4)}`, `按大料排版算法`, warnEpe);
+            receiptHtml += generateEpeReceiptRow(`复合材 (珍珠棉层)`, `¥${l_epe.cost.toFixed(4)}`, `按纯体积 (${l_epe.vol.toFixed(6)} m³) × 单价(¥${p_epe}) 核算`);
         }
 
         let totalMaterialCost = materialUnitCost * Qty;
