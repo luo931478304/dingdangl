@@ -681,6 +681,22 @@
         }
     </style>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script>
+        window.__bmobReadyResolve = null;
+        window.__bmobReadyPromise = new Promise(function(resolve) {
+            window.__bmobReadyResolve = resolve;
+        });
+    </script>
+    <script type="module">
+        import("https://cdn.skypack.dev/hydrogen-js-sdk").then(function(mod) {
+            window.Bmob = mod.default || mod;
+            window.__bmobReadyResolve(true);
+        }).catch(function(err) {
+            console.error("Bmob SDK load failed", err);
+            window.__bmobError = err;
+            window.__bmobReadyResolve(false);
+        });
+    </script>
 </head>
 <body>
 <div id="app"></div>
@@ -695,11 +711,8 @@
     const DAILY_SALARY = MONTHLY_SALARY / WORK_DAYS;
     const PUBLIC_SEA_DAYS = 30;
     const BMOB_CONFIG = {
-        secretKey: "not-used-anymore",
-        apiSafeCode: "not-used-anymore"
-    };
-    const API_CONFIG = {
-        baseUrl: "/api"
+        secretKey: "b2628616e5656905",
+        apiSafeCode: "zx123456"
     };
 
     const PRESET_TAGS = ["高意向", "已报价", "需跟进", "已约访", "待成交", "已合作", "无需求"];
@@ -732,7 +745,6 @@
     let followups = [];
     let storageMode = "local";
     let bmobReady = false;
-    let apiReady = false;
     let saveTimer = null;
     let saveInFlight = false;
     let saveQueued = false;
@@ -3578,338 +3590,6 @@
         bindCustomerPanelControls();
         attachTagClickEvents();
         attachButtons();
-    }
-
-    async function apiFetch(path, options = {}) {
-        const response = await fetch(`${API_CONFIG.baseUrl}${path}`, {
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-                ...(options.headers || {})
-            },
-            ...options
-        });
-        const text = await response.text();
-        let data = {};
-        try { data = text ? JSON.parse(text) : {}; } catch (err) { data = { message: text || "服务器返回了非 JSON 数据" }; }
-        if (!response.ok) {
-            const error = new Error(data.message || `请求失败：${response.status}`);
-            error.status = response.status;
-            error.payload = data;
-            throw error;
-        }
-        return data;
-    }
-
-    async function initApiStorage() {
-        try {
-            await apiFetch("/health", { method: "GET" });
-            apiReady = true;
-            storageMode = "api";
-            setSyncStatus("在线模式可用，请登录");
-            return true;
-        } catch (err) {
-            console.error("api health check failed", err);
-            apiReady = false;
-            storageMode = "local";
-            setSyncStatus("在线服务未连接，当前使用本地缓存");
-            return false;
-        }
-    }
-
-    async function loadRemoteData() {
-        const remote = await apiFetch("/bootstrap", { method: "GET" });
-        if (Array.isArray(remote.users)) users = normalizeRemoteUsers(remote.users);
-        if (Array.isArray(remote.customers)) records = normalizeRemoteRecords(remote.customers);
-        if (Array.isArray(remote.orders)) orders = normalizeRemoteOrders(remote.orders);
-        if (Array.isArray(remote.followups)) followups = normalizeRemoteFollowups(remote.followups);
-        if (Array.isArray(remote.dailyStats)) normalizeRemoteDailyStats(remote.dailyStats);
-        if (Array.isArray(remote.settings)) normalizeRemoteSettings(remote.settings);
-    }
-
-    async function loadData() {
-        loadLocalCache();
-        normalizeRecordShape();
-        captureLocalSnapshot();
-        saveLocalCache();
-        const onlineReady = await initApiStorage();
-        if (!onlineReady) return;
-        try {
-            await loadRemoteData();
-            normalizeRecordShape();
-            saveLocalCache();
-            setSyncStatus("在线模式已连接");
-        } catch (err) {
-            if (err.status === 401) {
-                setSyncStatus("在线模式可用，请登录后加载云端数据");
-                return;
-            }
-            console.error("load remote data failed", err);
-            storageMode = "local";
-            setSyncStatus("在线数据加载失败，当前使用本地缓存：" + formatErrorMessage(err));
-        }
-    }
-
-    function getApiSnapshot() {
-        return {
-            users: users.map(item => ({
-                crmId: item.id,
-                name: item.name,
-                role: item.role,
-                password: item.password,
-                active: item.active !== false
-            })),
-            records: records.map(toPlainCustomer),
-            followups: followups.map(toPlainFollowup),
-            orders: orders.map(toPlainOrder),
-            dailyStats: getDailyStatRows(),
-            settings: getManagedSettingsRows()
-        };
-    }
-
-    async function runRemoteSave() {
-        if (storageMode !== "api" || !apiReady) return;
-        if (saveInFlight) {
-            saveQueued = true;
-            return;
-        }
-        saveInFlight = true;
-        setSyncStatus("在线同步中...");
-        try {
-            await apiFetch("/sync", {
-                method: "POST",
-                body: JSON.stringify(getApiSnapshot())
-            });
-            setSyncStatus("在线同步成功 " + new Date().toLocaleTimeString());
-        } catch (err) {
-            console.error("remote sync failed", err);
-            if (err.status === 401) setSyncStatus("登录已过期，请重新登录");
-            else setSyncStatus("在线同步失败：" + formatErrorMessage(err));
-        } finally {
-            saveInFlight = false;
-            if (saveQueued) {
-                saveQueued = false;
-                queueRemoteSave();
-            }
-        }
-    }
-
-    async function uploadLocalSnapshotToCloud() {
-        if (!apiReady || storageMode !== "api") {
-            alert("当前还没有连接到在线服务，请先检查服务器配置。");
-            return;
-        }
-        if (!hasLocalSnapshotData()) {
-            alert("当前没有检测到可上传的本机缓存数据。");
-            return;
-        }
-        const ok = confirm(`${getLocalSnapshotSummaryText()}\n\n确认把这份本机缓存上传到服务器吗？\n本次会用本机缓存覆盖在线数据。`);
-        if (!ok) return;
-
-        const backup = {
-            users: deepClone(users),
-            records: deepClone(records),
-            orders: deepClone(orders),
-            dailyCalls: deepClone(dailyCalls),
-            dailyWechat: deepClone(dailyWechat),
-            followups: deepClone(followups),
-            globalRecommendations: deepClone(globalRecommendations),
-            operatorScripts: deepClone(operatorScripts)
-        };
-
-        try {
-            applySnapshot(localSnapshot);
-            normalizeRecordShape();
-            setSyncStatus("正在上传本机缓存到服务器...");
-            refreshUI();
-            await apiFetch("/sync", {
-                method: "POST",
-                body: JSON.stringify(getApiSnapshot())
-            });
-            await loadRemoteData();
-            normalizeRecordShape();
-            saveLocalCache();
-            captureLocalSnapshot();
-            setSyncStatus("本机缓存已上传到服务器");
-            refreshUI();
-            alert("本机缓存已经成功上传到在线数据库。");
-        } catch (err) {
-            console.error("upload local snapshot failed", err);
-            applySnapshot(backup);
-            normalizeRecordShape();
-            saveLocalCache();
-            setSyncStatus("本机缓存上传失败：" + formatErrorMessage(err));
-            refreshUI();
-            alert("上传失败：" + formatErrorMessage(err));
-        }
-    }
-
-    async function manualSyncNow() {
-        if (storageMode !== "api" || !apiReady) {
-            alert("当前不是在线模式，暂时无法立即同步。");
-            return;
-        }
-        await runRemoteSave();
-        recordLog("手动同步", "手动触发了一次在线同步");
-        saveLocalCache();
-        refreshUI();
-    }
-
-    function queueRemoteSave() {
-        if (storageMode !== "api" || !apiReady) return;
-        if (saveTimer) clearTimeout(saveTimer);
-        saveTimer = setTimeout(() => {
-            runRemoteSave();
-        }, 500);
-    }
-
-    function saveData() {
-        saveLocalCache();
-        queueRemoteSave();
-    }
-
-    async function handleApiLogin() {
-        const name = document.getElementById("loginName").value.trim();
-        const pwd = document.getElementById("loginPwd").value;
-        if (!name || !pwd) {
-            alert("请输入用户名和密码");
-            return;
-        }
-        try {
-            const loginRes = await apiFetch("/auth/login", {
-                method: "POST",
-                body: JSON.stringify({ name, password: pwd })
-            });
-            await loadRemoteData();
-            normalizeRecordShape();
-            saveLocalCache();
-            resetCustomerVisibleCounts();
-            currentUser = users.find(u => u.id === loginRes.user.id) || {
-                id: loginRes.user.id,
-                name: loginRes.user.name,
-                role: loginRes.user.role,
-                active: loginRes.user.active
-            };
-            setSyncStatus("在线模式已连接");
-            refreshUI();
-            showReminder();
-        } catch (err) {
-            alert(formatErrorMessage(err));
-        }
-    }
-
-    async function handleLogout() {
-        if (storageMode === "api" && apiReady) {
-            try {
-                await apiFetch("/auth/logout", { method: "POST" });
-            } catch (err) {
-                console.warn("logout failed", err);
-            }
-        }
-        resetCustomerVisibleCounts();
-        currentUser = null;
-        refreshUI();
-    }
-
-    function refreshUI() {
-        if (!currentUser) {
-            const migrateHtml = hasLocalSnapshotData() && storageMode === "api"
-                ? `<div style="margin-top:12px; padding:12px; background:#f8fafc; border-radius:12px; text-align:left;"><div style="font-size:12px; color:#64748b; margin-bottom:8px;">${getLocalSnapshotSummaryText()}</div><button id="uploadLocalCacheBtn" class="outline" style="width:100%;">一键上传本机缓存到云端</button></div>`
-                : "";
-            document.getElementById("app").innerHTML = `<div class="login-card card"><h2>业务员 / 管理员登录</h2><p style="font-size:12px; color:#64748b;">${escapeHtml(syncStatusText)}</p><input type="text" id="loginName" placeholder="用户名"><input type="password" id="loginPwd" placeholder="密码"><button id="loginBtn">登录</button>${migrateHtml}</div>`;
-            document.getElementById("loginBtn").onclick = async () => {
-                if (storageMode === "api" && apiReady) await handleApiLogin();
-                else {
-                    const name = document.getElementById("loginName").value.trim();
-                    const pwd = document.getElementById("loginPwd").value;
-                    const user = users.find(u => u.name === name && u.password === pwd && u.active !== false);
-                    if (!user) { alert("用户名或密码错误"); return; }
-                    resetCustomerVisibleCounts();
-                    currentUser = user;
-                    refreshUI();
-                    showReminder();
-                }
-            };
-            const uploadBtn = document.getElementById("uploadLocalCacheBtn");
-            if (uploadBtn) uploadBtn.onclick = uploadLocalSnapshotToCloud;
-            return;
-        }
-
-        if (currentUser.role === "operator") {
-            document.getElementById("app").innerHTML = renderOperator();
-            document.getElementById("recordForm").addEventListener("submit", addRecord);
-            document.getElementById("mockOrderBtn").onclick = mockOrder;
-            document.getElementById("logoutBtn").onclick = handleLogout;
-            const manualSyncBtn = document.getElementById("manualSyncBtn");
-            if (manualSyncBtn) manualSyncBtn.onclick = manualSyncNow;
-            const exportBackupBtn = document.getElementById("exportLocalBackupBtn");
-            if (exportBackupBtn) exportBackupBtn.onclick = exportLocalBackupJson;
-            const saveBtn = document.getElementById("saveDailyBtn");
-            if (saveBtn) saveBtn.onclick = saveDailyCall;
-            const dateInput = document.getElementById("dailyDate");
-            if (dateInput) {
-                dateInput.onchange = () => {
-                    const stats = getDailyStats(currentUser.id, dateInput.value);
-                    document.getElementById("dailyCallCount").value = stats.callCount;
-                    document.getElementById("dailyWechatCount").value = stats.wechatCount;
-                };
-            }
-            const coll = document.getElementById("weeklyCollapseBtn");
-            const content = document.getElementById("weeklyCollapseContent");
-            if (coll && content) {
-                coll.onclick = function() {
-                    this.classList.toggle("active");
-                    if (content.style.maxHeight) content.style.maxHeight = null;
-                    else content.style.maxHeight = content.scrollHeight + "px";
-                };
-                content.style.maxHeight = null;
-            }
-            document.querySelectorAll(".tab-btn").forEach(btn => {
-                btn.onclick = () => {
-                    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-                    btn.classList.add("active");
-                    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-                    document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
-                    if (btn.dataset.tab === "followup") renderFollowupRecords();
-                    else if (btn.dataset.tab === "my") renderMyRecords();
-                    else if (btn.dataset.tab === "public") renderPublicRecords();
-                };
-            });
-            bindCustomerFilters();
-            renderFollowupRecords();
-            renderMyRecords();
-            renderPublicRecords();
-            renderWeeklyStats();
-            return;
-        }
-
-        document.getElementById("app").innerHTML = renderAdmin();
-        document.getElementById("logoutBtn").onclick = handleLogout;
-        document.getElementById("addOperatorBtn").onclick = addOperator;
-        document.getElementById("changeAdminPwdBtn").onclick = changeAdminPassword;
-        document.getElementById("exportDataBtn").onclick = exportAllData;
-        document.getElementById("loadStatsBtn").onclick = loadOperatorStats;
-        document.getElementById("manageRecommendBtn").onclick = showRecommendManager;
-        const importBtn = document.getElementById("importBtn");
-        if (importBtn) importBtn.onclick = () => {
-            const input = document.createElement("input");
-            input.type = "file";
-            input.accept = ".xlsx, .xls, .csv";
-            input.onchange = e => importCustomers(e.target.files[0]);
-            input.click();
-        };
-        const manualSyncBtn = document.getElementById("manualSyncBtn");
-        if (manualSyncBtn) manualSyncBtn.onclick = manualSyncNow;
-        const exportBackupBtn = document.getElementById("exportLocalBackupBtn");
-        if (exportBackupBtn) exportBackupBtn.onclick = exportLocalBackupJson;
-        const downloadTemplateBtn = document.getElementById("downloadTemplateBtn");
-        if (downloadTemplateBtn) downloadTemplateBtn.onclick = downloadImportTemplate;
-        renderTeamStatsSimple();
-        renderOrderDetailSimple();
-        renderCooperatedSimple();
-        renderOperatorListSimple();
-        renderDailyNewCustomersAdmin();
-        renderOperationLogs();
     }
 
     async function startApp() {
