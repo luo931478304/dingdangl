@@ -288,24 +288,399 @@
         .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .edit-btn { background: #f59e0b; margin-left: 4px; }
         .edit-btn:hover { background: #d97706; }
+        .status-banner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 14px 16px;
+            margin-bottom: 18px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #eff6ff, #f8fafc);
+            border: 1px solid #bfdbfe;
+        }
+        .status-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 12px;
+            color: #475569;
+        }
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: white;
+            border: 1px solid #dbeafe;
+        }
+        .toolbar-card {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+        .quick-card {
+            padding: 16px;
+            border-radius: 18px;
+            color: #0f172a;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        }
+        .quick-card h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: #334155;
+        }
+        .quick-number {
+            font-size: 30px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        .quick-muted {
+            font-size: 12px;
+            color: #64748b;
+        }
+        .action-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .filter-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            align-items: end;
+            padding: 14px;
+            margin-bottom: 14px;
+            border-radius: 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+        .filter-panel input, .filter-panel select {
+            margin-bottom: 0;
+        }
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .mini-note {
+            font-size: 12px;
+            color: #64748b;
+        }
+        .public-sea-note {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #fff7ed;
+            color: #9a3412;
+            font-size: 12px;
+            border: 1px solid #fed7aa;
+        }
+        .workbench-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .workbench-item {
+            border-radius: 16px;
+            padding: 14px;
+            background: white;
+            border: 1px solid #e2e8f0;
+        }
+        .workbench-item strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+        }
+        .overview-card {
+            padding: 14px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            border: 1px solid #e2e8f0;
+        }
+        .overview-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 8px 0 4px;
+        }
+        .overview-label {
+            font-size: 12px;
+            color: #64748b;
+        }
+        .log-list {
+            display: grid;
+            gap: 10px;
+        }
+        .log-item {
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+        }
+        .log-time {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .empty-state {
+            padding: 18px;
+            text-align: center;
+            color: #64748b;
+            border-radius: 16px;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+        }
+        .customer-panel {
+            display: grid;
+            gap: 12px;
+        }
+        .customer-panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+        .customer-toggle-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .customer-list {
+            display: grid;
+            gap: 12px;
+        }
+        .customer-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            background: white;
+            overflow: hidden;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+        }
+        .customer-card.urgent {
+            border-color: #fecaca;
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.08);
+        }
+        .customer-card.hot {
+            border-color: #bfdbfe;
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.08);
+        }
+        .customer-card summary {
+            list-style: none;
+        }
+        .customer-card summary::-webkit-details-marker {
+            display: none;
+        }
+        .customer-summary {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.8fr);
+            gap: 16px;
+            align-items: center;
+            padding: 16px 18px;
+            cursor: pointer;
+        }
+        .customer-card[open] .customer-summary {
+            border-bottom: 1px solid #e2e8f0;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+        }
+        .customer-main {
+            min-width: 0;
+        }
+        .customer-side {
+            min-width: 0;
+            text-align: right;
+        }
+        .customer-name-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+        .customer-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .customer-phone {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 12px;
+            border: 1px solid #bfdbfe;
+        }
+        .customer-subline {
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+        .customer-chip-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .customer-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            color: #475569;
+        }
+        .customer-chip.intent-1 {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-color: #bfdbfe;
+        }
+        .customer-chip.intent-2 {
+            background: #ecfeff;
+            color: #0f766e;
+            border-color: #99f6e4;
+        }
+        .customer-chip.intent-3 {
+            background: #fef2f2;
+            color: #b91c1c;
+            border-color: #fecaca;
+        }
+        .customer-alert {
+            font-size: 13px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+        .customer-preview {
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.6;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .customer-detail {
+            padding: 16px 18px 18px;
+        }
+        .customer-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px 14px;
+            margin-bottom: 14px;
+        }
+        .customer-meta-item {
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+        .customer-meta-item label {
+            display: block;
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .customer-meta-item strong {
+            display: block;
+            color: #0f172a;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .customer-note {
+            margin-bottom: 14px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: #fffaf0;
+            border: 1px solid #fde68a;
+            color: #78350f;
+            line-height: 1.7;
+            word-break: break-word;
+        }
+        .customer-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+        .customer-actions .small-btn {
+            margin-left: 0;
+        }
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+            margin: 16px 0;
+        }
+        .load-more-wrap {
+            display: grid;
+            gap: 10px;
+            margin-top: 6px;
+        }
+        .load-more-note {
+            text-align: center;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .load-more-sentinel {
+            height: 1px;
+        }
+        @media (max-width: 900px) {
+            .customer-summary {
+                grid-template-columns: 1fr;
+            }
+            .customer-side {
+                text-align: left;
+            }
+        }
+        @media (max-width: 640px) {
+            body {
+                padding: 12px;
+            }
+            .card {
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+            .tab-buttons {
+                overflow-x: auto;
+                white-space: nowrap;
+                padding-bottom: 4px;
+            }
+            .tab-btn {
+                flex: 0 0 auto;
+            }
+            .customer-meta-grid {
+                grid-template-columns: 1fr;
+            }
+            .action-row,
+            .customer-actions,
+            .customer-toggle-row {
+                gap: 6px;
+            }
+            .customer-actions .small-btn,
+            .customer-toggle-row button {
+                width: 100%;
+            }
+        }
     </style>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-    <script>
-        window.__bmobReadyResolve = null;
-        window.__bmobReadyPromise = new Promise(function(resolve) {
-            window.__bmobReadyResolve = resolve;
-        });
-    </script>
-    <script type="module">
-        import("https://cdn.skypack.dev/hydrogen-js-sdk").then(function(mod) {
-            window.Bmob = mod.default || mod;
-            window.__bmobReadyResolve(true);
-        }).catch(function(err) {
-            console.error("Bmob SDK load failed", err);
-            window.__bmobError = err;
-            window.__bmobReadyResolve(false);
-        });
-    </script>
 </head>
 <body>
 <div id="app"></div>
@@ -320,8 +695,11 @@
     const DAILY_SALARY = MONTHLY_SALARY / WORK_DAYS;
     const PUBLIC_SEA_DAYS = 30;
     const BMOB_CONFIG = {
-        secretKey: "b2628616e5656905",
-        apiSafeCode: "zx123456"
+        secretKey: "not-used-anymore",
+        apiSafeCode: "not-used-anymore"
+    };
+    const API_CONFIG = {
+        baseUrl: "/api"
     };
 
     const PRESET_TAGS = ["高意向", "已报价", "需跟进", "已约访", "待成交", "已合作", "无需求"];
@@ -354,11 +732,24 @@
     let followups = [];
     let storageMode = "local";
     let bmobReady = false;
+    let apiReady = false;
     let saveTimer = null;
     let saveInFlight = false;
     let saveQueued = false;
     let syncStatusText = "本地模式";
     let localSnapshot = null;
+    const CUSTOMER_BATCH_SIZE = 30;
+    let operationLogs = [];
+    let customerVisibleCounts = {};
+    let customerListObservers = {};
+    let customerFilters = {
+        search: "",
+        intentLevel: "",
+        hasWechat: "",
+        isVisit: "",
+        tag: "",
+        sortBy: "latest"
+    };
 
     function formatErrorMessage(err) {
         if (!err) return "未知错误";
@@ -431,6 +822,200 @@
         syncStatusText = text;
     }
 
+    function recordLog(action, detail) {
+        operationLogs.unshift({
+            id: Date.now() + Math.random().toString(16).slice(2),
+            time: new Date().toLocaleString(),
+            actor: currentUser ? currentUser.name : "系统",
+            action,
+            detail
+        });
+        operationLogs = operationLogs.slice(0, 120);
+    }
+
+    function getTodayStr() {
+        return new Date().toISOString().slice(0,10);
+    }
+
+    function compareDateDesc(a, b) {
+        return (b || "").localeCompare(a || "");
+    }
+
+    function getDaysUntilPublicSea(record) {
+        if (!record || record.hasOrder || record.intentLevel === 3 || !record.lastFollowupTime) return null;
+        const lastTime = new Date(record.lastFollowupTime);
+        const today = new Date();
+        const diffDays = Math.floor((today - lastTime) / (1000 * 60 * 60 * 24));
+        return PUBLIC_SEA_DAYS - diffDays;
+    }
+
+    function getFilteredCustomers(list) {
+        let filtered = [...list];
+        const keyword = customerFilters.search.trim().toLowerCase();
+        if (keyword) {
+            filtered = filtered.filter(item =>
+                [item.customerName, item.contactPerson, item.contactPhone, item.position, item.content, (item.tags || []).join(",")]
+                    .filter(Boolean)
+                    .some(value => String(value).toLowerCase().includes(keyword))
+            );
+        }
+        if (customerFilters.intentLevel) {
+            filtered = filtered.filter(item => String(item.intentLevel) === customerFilters.intentLevel);
+        }
+        if (customerFilters.hasWechat) {
+            filtered = filtered.filter(item => String(item.hasWechat === 1 ? 1 : 0) === customerFilters.hasWechat);
+        }
+        if (customerFilters.isVisit) {
+            filtered = filtered.filter(item => String(item.isVisit === 1 ? 1 : 0) === customerFilters.isVisit);
+        }
+        if (customerFilters.tag) {
+            filtered = filtered.filter(item => (item.tags || []).includes(customerFilters.tag));
+        }
+        if (customerFilters.sortBy === "oldest") filtered.sort((a,b) => (a.createTime || "").localeCompare(b.createTime || ""));
+        else if (customerFilters.sortBy === "nextFollowup") filtered.sort((a,b) => (a.nextFollowupTime || "9999-99-99").localeCompare(b.nextFollowupTime || "9999-99-99"));
+        else if (customerFilters.sortBy === "lastFollowup") filtered.sort((a,b) => compareDateDesc(a.lastFollowupTime, b.lastFollowupTime));
+        else filtered.sort((a,b) => compareDateDesc(a.createTime, b.createTime));
+        return filtered;
+    }
+
+    function resetCustomerFilters() {
+        customerFilters = {
+            search: "",
+            intentLevel: "",
+            hasWechat: "",
+            isVisit: "",
+            tag: "",
+            sortBy: "latest"
+        };
+    }
+
+    function resetCustomerVisibleCounts() {
+        customerVisibleCounts = {
+            followupRecordsList: CUSTOMER_BATCH_SIZE,
+            myRecordsList: CUSTOMER_BATCH_SIZE,
+            publicRecordsList: CUSTOMER_BATCH_SIZE
+        };
+    }
+
+    function renderCustomerFilterPanel(list) {
+        const availableTags = [...new Set(list.flatMap(item => item.tags || []))];
+        return `
+            <div class="filter-panel">
+                <div>
+                    <label class="mini-note">搜索客户/电话/标签</label>
+                    <input type="text" id="filterSearch" value="${escapeHtml(customerFilters.search)}" placeholder="输入客户名、电话、标签">
+                </div>
+                <div>
+                    <label class="mini-note">意向等级</label>
+                    <select id="filterIntent">
+                        <option value="">全部</option>
+                        <option value="1" ${customerFilters.intentLevel === "1" ? "selected" : ""}>意向客户</option>
+                        <option value="2" ${customerFilters.intentLevel === "2" ? "selected" : ""}>深度意向</option>
+                        <option value="3" ${customerFilters.intentLevel === "3" ? "selected" : ""}>无效</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="mini-note">微信状态</label>
+                    <select id="filterWechat">
+                        <option value="">全部</option>
+                        <option value="1" ${customerFilters.hasWechat === "1" ? "selected" : ""}>已加微信</option>
+                        <option value="0" ${customerFilters.hasWechat === "0" ? "selected" : ""}>未加微信</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="mini-note">约访状态</label>
+                    <select id="filterVisit">
+                        <option value="">全部</option>
+                        <option value="1" ${customerFilters.isVisit === "1" ? "selected" : ""}>已约访</option>
+                        <option value="0" ${customerFilters.isVisit === "0" ? "selected" : ""}>未约访</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="mini-note">标签</label>
+                    <select id="filterTag">
+                        <option value="">全部标签</option>
+                        ${availableTags.map(tag => `<option value="${escapeHtml(tag)}" ${customerFilters.tag === tag ? "selected" : ""}>${escapeHtml(tag)}</option>`).join("")}
+                    </select>
+                </div>
+                <div>
+                    <label class="mini-note">排序</label>
+                    <select id="filterSort">
+                        <option value="latest" ${customerFilters.sortBy === "latest" ? "selected" : ""}>按最新创建</option>
+                        <option value="oldest" ${customerFilters.sortBy === "oldest" ? "selected" : ""}>按最早创建</option>
+                        <option value="lastFollowup" ${customerFilters.sortBy === "lastFollowup" ? "selected" : ""}>按最后跟进</option>
+                        <option value="nextFollowup" ${customerFilters.sortBy === "nextFollowup" ? "selected" : ""}>按下次跟进</option>
+                    </select>
+                </div>
+                <div class="filter-actions">
+                    <button type="button" id="applyFiltersBtn" class="outline">应用筛选</button>
+                    <button type="button" id="resetFiltersBtn" class="secondary">重置</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function bindCustomerFilters() {
+        const applyBtn = document.getElementById("applyFiltersBtn");
+        const resetBtn = document.getElementById("resetFiltersBtn");
+        if (applyBtn) {
+            applyBtn.onclick = () => {
+                customerFilters.search = document.getElementById("filterSearch")?.value || "";
+                customerFilters.intentLevel = document.getElementById("filterIntent")?.value || "";
+                customerFilters.hasWechat = document.getElementById("filterWechat")?.value || "";
+                customerFilters.isVisit = document.getElementById("filterVisit")?.value || "";
+                customerFilters.tag = document.getElementById("filterTag")?.value || "";
+                customerFilters.sortBy = document.getElementById("filterSort")?.value || "latest";
+                resetCustomerVisibleCounts();
+                renderFollowupRecords();
+                renderMyRecords();
+                renderPublicRecords();
+            };
+        }
+        if (resetBtn) {
+            resetBtn.onclick = () => {
+                resetCustomerFilters();
+                resetCustomerVisibleCounts();
+                refreshUI();
+            };
+        }
+    }
+
+    function getOperatorWorkbenchData(operatorId) {
+        const today = getTodayStr();
+        const mine = getMyPendingCustomers(operatorId);
+        const dueToday = mine.filter(item => item.nextFollowupTime && item.nextFollowupTime <= today);
+        const highIntent = mine.filter(item => item.intentLevel === 2 && !item.hasOrder);
+        const untouched = mine.filter(item => {
+            const daysLeft = getDaysUntilPublicSea(item);
+            return daysLeft !== null && daysLeft <= 7 && daysLeft >= 0;
+        });
+        const publicSea = getPublicSeaCustomers();
+        return { mine, dueToday, highIntent, untouched, publicSea };
+    }
+
+    function getAdminOverviewData() {
+        const today = getTodayStr();
+        const activeOperators = users.filter(u => u.role === "operator" && u.active !== false).length;
+        const dueCount = records.filter(item => item.nextFollowupTime && item.nextFollowupTime <= today && !item.hasOrder).length;
+        const todayCreated = records.filter(item => item.createTime === today).length;
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 6);
+        const weekAgoStr = weekAgo.toISOString().slice(0,10);
+        const weekNew = records.filter(item => item.createTime >= weekAgoStr).length;
+        const weekOrders = orders.filter(item => (item.paidTime || "") >= weekAgoStr).length;
+        const monthAmount = orders.reduce((sum, item) => sum + (item.orderAmount || 0), 0);
+        return {
+            activeOperators,
+            dueCount,
+            todayCreated,
+            weekNew,
+            weekOrders,
+            monthAmount,
+            publicSea: getPublicSeaCustomers().length,
+            totalCustomers: records.length
+        };
+    }
+
     function saveLocalCache() {
         localStorage.setItem("crm_users", JSON.stringify(users));
         localStorage.setItem("crm_records", JSON.stringify(records));
@@ -440,6 +1025,7 @@
         localStorage.setItem("crm_followups", JSON.stringify(followups));
         localStorage.setItem("crm_globalRecommendations", JSON.stringify(globalRecommendations));
         localStorage.setItem("crm_operatorScripts", JSON.stringify(operatorScripts));
+        localStorage.setItem("crm_operationLogs", JSON.stringify(operationLogs));
     }
 
     function isBmobConfigured() {
@@ -491,6 +1077,8 @@
         if (gr) globalRecommendations = JSON.parse(gr);
         let os = localStorage.getItem("crm_operatorScripts");
         if (os) operatorScripts = JSON.parse(os);
+        let logs = localStorage.getItem("crm_operationLogs");
+        if (logs) operationLogs = JSON.parse(logs);
     }
 
     function normalizeTagValue(value) {
@@ -929,6 +1517,51 @@
             refreshUI();
             alert("上传失败：" + formatErrorMessage(err));
         }
+    }
+
+    function exportLocalBackupJson() {
+        const payload = {
+            exportedAt: new Date().toISOString(),
+            users,
+            records,
+            orders,
+            followups,
+            dailyCalls,
+            dailyWechat,
+            globalRecommendations,
+            operatorScripts,
+            operationLogs
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = `crm_backup_${new Date().toISOString().slice(0,19).replace(/[:T]/g, "-")}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        recordLog("导出本地备份", "导出 JSON 备份文件");
+        saveLocalCache();
+        alert("本地 JSON 备份已导出。");
+    }
+
+    function downloadImportTemplate() {
+        const templateRows = [
+            { "客户名称": "示例包装公司", "联系人": "张三", "职位": "采购经理", "联系电话": "13800000000", "备注": "礼盒定制需求" }
+        ];
+        exportToCSV(templateRows, "客户导入模板.csv");
+        recordLog("下载导入模板", "下载客户导入模板");
+        saveLocalCache();
+    }
+
+    async function manualSyncNow() {
+        if (storageMode !== "bmob" || !bmobReady) {
+            alert("当前不是在线模式，暂时无法立即同步。");
+            return;
+        }
+        await runRemoteSave();
+        refreshUI();
     }
 
     function queueRemoteSave() {
@@ -1893,6 +2526,1392 @@
         }
     }
     
+    function renderOperationLogs() {
+        const container = document.getElementById("operationLogsContainer");
+        if (!container) return;
+        const logs = operationLogs.slice(0, 12);
+        if (!logs.length) {
+            container.innerHTML = `<div class="empty-state">暂无操作记录</div>`;
+            return;
+        }
+        container.innerHTML = `
+            <div class="log-list">
+                ${logs.map(log => `
+                    <div class="log-item">
+                        <div>${escapeHtml(log.action || "系统操作")}</div>
+                        <div class="mini-note">${escapeHtml(log.detail || "")}</div>
+                        <div class="log-time">${escapeHtml(log.time || "")} · ${escapeHtml(log.actor || "系统")}</div>
+                    </div>
+                `).join("")}
+            </div>
+        `;
+    }
+
+    function renderOperator() {
+        const stats = calculateStats(currentUser.id);
+        const myCustomers = getMyPendingCustomers(currentUser.id);
+        const followupCustomers = getMyFollowupCustomers(currentUser.id);
+        const publicSeaCustomers = getPublicSeaCustomers();
+        const today = getTodayStr();
+        const dailyStats = getDailyStats(currentUser.id, today);
+        const totalWechat = getTotalWechat(currentUser.id);
+        const workbench = getOperatorWorkbenchData(currentUser.id);
+        const modeLabel = storageMode === "bmob" ? "在线模式" : "本地模式";
+        const filterSource = Array.from(new Map([...followupCustomers, ...myCustomers, ...publicSeaCustomers].map(item => [item.id, item])).values());
+        const dueTodayNames = workbench.dueToday.slice(0, 5).map(item => item.customerName).join("、");
+        const highIntentNames = workbench.highIntent.slice(0, 5).map(item => item.customerName).join("、");
+        const untouchedNames = workbench.untouched.slice(0, 5).map(item => item.customerName).join("、");
+        return `
+            <div class="container">
+                <div class="nav">
+                    <button class="logout-btn" id="logoutBtn">退出登录</button>
+                    <h2>业务员：${escapeHtml(currentUser.name)} <span class="version-tag">v${APP_VERSION}</span></h2>
+                </div>
+                <div class="card status-banner">
+                    <div>
+                        <div><strong>当前状态</strong> <span class="status-pill">${modeLabel}</span></div>
+                        <div class="status-meta">${escapeHtml(syncStatusText)}</div>
+                    </div>
+                    <div class="action-row">
+                        <button id="manualSyncBtn" class="outline">立即同步</button>
+                        <button id="exportLocalBackupBtn" class="secondary">导出本地备份</button>
+                    </div>
+                </div>
+                <div class="overview-grid">
+                    <div class="overview-card"><div class="overview-value">${workbench.dueToday.length}</div><div class="overview-label">今日待跟进</div></div>
+                    <div class="overview-card"><div class="overview-value">${workbench.highIntent.length}</div><div class="overview-label">深度意向</div></div>
+                    <div class="overview-card"><div class="overview-value">${workbench.untouched.length}</div><div class="overview-label">7天内可能掉公海</div></div>
+                    <div class="overview-card"><div class="overview-value">${workbench.publicSea.length}</div><div class="overview-label">公海客户池</div></div>
+                </div>
+                <div class="grid-2">
+                    <div class="card toolbar-card">
+                        <h3>新增客户沟通记录</h3>
+                        <form id="recordForm">
+                            <input type="text" id="customerName" placeholder="客户名称 *" required>
+                            <input type="text" id="contactPerson" placeholder="联系人">
+                            <input type="text" id="position" placeholder="客户职位">
+                            <input type="tel" id="contactPhone" placeholder="联系电话 *" required>
+                            <textarea id="content" rows="2" placeholder="沟通内容"></textarea>
+                            <select id="intentLevel">
+                                <option value="1">意向客户</option>
+                                <option value="2">深度意向</option>
+                                <option value="3">无效客户</option>
+                            </select>
+                            <button type="submit" style="width:100%">保存记录</button>
+                        </form>
+                        <div class="action-row" style="margin-top:12px;">
+                            <button id="mockOrderBtn" class="outline" style="flex:1;">模拟成交</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>个人业绩看板</h3>
+                        <div class="daily-stats-row">
+                            <div class="quick-card"><div class="quick-number">${stats.validIntents}</div><div class="quick-muted">意向客户</div></div>
+                            <div class="quick-card"><div class="quick-number">${stats.deepIntents}</div><div class="quick-muted">深度意向</div></div>
+                            <div class="quick-card"><div class="quick-number">${stats.orderCount}</div><div class="quick-muted">成交订单</div></div>
+                            <div class="quick-card"><div class="quick-number">¥${stats.totalBonus.toFixed(0)}</div><div class="quick-muted">当前奖金</div></div>
+                        </div>
+                        <div class="flex-between"><span>已加微信</span><strong>${stats.wechatCount}</strong></div>
+                        <div class="flex-between"><span>总积分</span><strong>${stats.totalPoints}</strong></div>
+                        <div class="flex-between"><span>约访成功</span><strong>${stats.visitCount}</strong></div>
+                        <div class="flex-between"><span>成交总额</span><strong>¥${stats.totalOrderAmount.toFixed(2)}</strong></div>
+                        <div class="flex-between"><span>无效客户</span><strong>${stats.invalidCount}</strong></div>
+                        <hr>
+                        <div class="flex-between"><span>意向奖励</span><strong>¥${stats.intentBonus.toFixed(2)}</strong></div>
+                        <div class="flex-between"><span>约访奖励</span><strong>¥${stats.visitBonus.toFixed(2)}</strong></div>
+                        <div class="flex-between"><span>成交提成</span><strong>¥${stats.orderCommission.toFixed(2)}</strong></div>
+                        <div class="flex-between"><span>预计总收入</span><strong>¥${(MONTHLY_SALARY + stats.totalBonus).toFixed(2)}</strong></div>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>我的工作台</h3>
+                        <div class="workbench-list">
+                            <div class="workbench-item"><strong>今天优先处理</strong><div class="mini-note">${escapeHtml(dueTodayNames || "今天没有到期跟进客户")}</div></div>
+                            <div class="workbench-item"><strong>深度意向名单</strong><div class="mini-note">${escapeHtml(highIntentNames || "当前没有深度意向客户")}</div></div>
+                            <div class="workbench-item"><strong>临近掉公海客户</strong><div class="mini-note">${escapeHtml(untouchedNames || "当前没有临近掉公海的客户")}</div></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>每日通话登记</h3>
+                        <div class="flex-between" style="gap:16px; flex-wrap:wrap;">
+                            <div><label>日期</label><input type="date" id="dailyDate" value="${today}" style="width:auto;"></div>
+                            <div><label>通话总数</label><input type="number" id="dailyCallCount" value="${dailyStats.callCount}" style="width:100px;"></div>
+                            <div><label>新增微信</label><input type="number" id="dailyWechatCount" value="${dailyStats.wechatCount}" style="width:100px;"></div>
+                            <button id="saveDailyBtn" class="outline">保存</button>
+                        </div>
+                        <div class="daily-stats-row">
+                            <div class="stat-item"><div class="stat-value">${dailyStats.callCount}</div><div class="stat-label">今日通话</div></div>
+                            <div class="stat-item"><div class="stat-value">${dailyStats.wechatCount}</div><div class="stat-label">今日新增微信</div></div>
+                            <div class="stat-item"><div class="stat-value">${totalWechat}</div><div class="stat-label">累计微信人数</div></div>
+                            <div class="stat-item"><div class="stat-value">${dailyStats.validIntents}</div><div class="stat-label">意向客户</div><div class="percent-value">${dailyStats.callCount ? ((dailyStats.validIntents / dailyStats.callCount) * 100).toFixed(1) : 0}%</div></div>
+                            <div class="stat-item"><div class="stat-value">${dailyStats.deepIntents}</div><div class="stat-label">深度意向</div><div class="percent-value">${dailyStats.callCount ? ((dailyStats.deepIntents / dailyStats.callCount) * 100).toFixed(1) : 0}%</div></div>
+                            <div class="stat-item"><div class="stat-value">${dailyStats.visitSuccess}</div><div class="stat-label">约访成功</div><div class="percent-value">${dailyStats.callCount ? ((dailyStats.visitSuccess / dailyStats.callCount) * 100).toFixed(1) : 0}%</div></div>
+                        </div>
+                        <button class="collapsible" id="weeklyCollapseBtn">近一周数据</button>
+                        <div class="collapsible-content" id="weeklyCollapseContent"><div id="weeklyCardsContainer" class="weekly-cards"></div></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>客户筛选</h3>
+                    ${renderCustomerFilterPanel(filterSource)}
+                    <div class="mini-note">支持按客户名、电话、标签、微信状态、约访状态快速过滤。</div>
+                </div>
+                <div class="card">
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" data-tab="followup">待跟进客户 (${followupCustomers.length})</button>
+                        <button class="tab-btn" data-tab="my">我的客户 (${myCustomers.length})</button>
+                        <button class="tab-btn" data-tab="public">公海客户 (${publicSeaCustomers.length})</button>
+                    </div>
+                    <div class="tab-content active" id="tab-followup"><div class="table-wrapper"><table><thead><tr><th>日期</th><th>客户</th><th>联系人</th><th>职位</th><th>意向等级</th><th>微信</th><th>约访</th><th>跟进次数</th><th>最后跟进</th><th>下次跟进</th><th>标签</th><th>操作</th></tr></thead><tbody id="followupRecordsTbody"></tbody></table></div></div>
+                    <div class="tab-content" id="tab-my"><div class="table-wrapper"><table><thead><tr><th>日期</th><th>客户</th><th>联系人</th><th>职位</th><th>意向等级</th><th>微信</th><th>约访</th><th>跟进次数</th><th>最后跟进</th><th>标签</th><th>操作</th></tr></thead><tbody id="myRecordsTbody"></tbody></table></div></div>
+                    <div class="tab-content" id="tab-public"><div class="table-wrapper"><table><thead><tr><th>日期</th><th>客户</th><th>联系人</th><th>职位</th><th>意向等级</th><th>微信</th><th>约访</th><th>跟进次数</th><th>最后跟进</th><th>标签</th><th>操作</th></tr></thead><tbody id="publicRecordsTbody"></tbody></table></div></div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderAdmin() {
+        const operators = users.filter(u => u.role === "operator");
+        const overview = getAdminOverviewData();
+        const modeLabel = storageMode === "bmob" ? "在线模式" : "本地模式";
+        return `
+            <div class="container">
+                <div class="nav">
+                    <button class="logout-btn" id="logoutBtn">退出登录</button>
+                    <h2>管理员：${escapeHtml(currentUser.name)} <span class="version-tag">v${APP_VERSION}</span></h2>
+                </div>
+                <div class="card status-banner">
+                    <div>
+                        <div><strong>系统状态</strong> <span class="status-pill">${modeLabel}</span></div>
+                        <div class="status-meta">${escapeHtml(syncStatusText)}</div>
+                    </div>
+                    <div class="action-row">
+                        <button id="manualSyncBtn" class="outline">立即同步</button>
+                        <button id="exportLocalBackupBtn" class="secondary">导出本地备份</button>
+                        <button id="downloadTemplateBtn" class="secondary">下载导入模板</button>
+                        <button id="changeAdminPwdBtn" class="outline">修改我的密码</button>
+                    </div>
+                </div>
+                <div class="overview-grid">
+                    <div class="overview-card"><div class="overview-value">${overview.activeOperators}</div><div class="overview-label">在岗业务员</div></div>
+                    <div class="overview-card"><div class="overview-value">${overview.todayCreated}</div><div class="overview-label">今日新增客户</div></div>
+                    <div class="overview-card"><div class="overview-value">${overview.dueCount}</div><div class="overview-label">待跟进客户</div></div>
+                    <div class="overview-card"><div class="overview-value">${overview.publicSea}</div><div class="overview-label">公海客户</div></div>
+                    <div class="overview-card"><div class="overview-value">${overview.weekNew}</div><div class="overview-label">近7天新增客户</div></div>
+                    <div class="overview-card"><div class="overview-value">¥${overview.monthAmount.toFixed(0)}</div><div class="overview-label">订单累计金额</div></div>
+                </div>
+                <div class="card toolbar-card">
+                    <h3>快捷操作</h3>
+                    <div class="action-row">
+                        <button id="importBtn" class="export-btn">批量导入客户</button>
+                        <button id="exportDataBtn" class="export-btn">导出客户及跟进</button>
+                        <button id="manageRecommendBtn" class="export-btn">管理推荐内容</button>
+                        <button id="addOperatorBtn" class="outline">新增业务员</button>
+                    </div>
+                    <div class="mini-note">管理员可统一导入客户、导出数据、维护推荐话术和业务员账号。</div>
+                </div>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>最近操作记录</h3>
+                        <div id="operationLogsContainer"></div>
+                    </div>
+                    <div class="card">
+                        <h3>业务员每日通话统计</h3>
+                        <div class="action-row">
+                            <select id="operatorSelectStats" class="operator-select" style="flex:1;">
+                                <option value="">-- 请选择业务员 --</option>
+                                ${operators.map(op => `<option value="${op.id}">${escapeHtml(op.name)}</option>`).join("")}
+                            </select>
+                            <button id="loadStatsBtn" class="outline">查看统计</button>
+                        </div>
+                        <div id="adminDailyStatsContainer" style="margin-top:16px;"></div>
+                    </div>
+                </div>
+                <div class="card"><h3>团队统计报表</h3><div id="teamStatsContainer"></div></div>
+                <div class="card"><h3>订单奖励明细</h3><div id="orderDetailContainer"></div></div>
+                <div class="card"><h3>已合作客户列表</h3><div id="cooperatedContainer"></div></div>
+                <div class="card"><h3>业务员管理</h3><div id="operatorListContainer"></div></div>
+                <div class="card"><h3>每日新客户信息</h3><div id="dailyNewCustomersContainer"></div></div>
+            </div>
+        `;
+    }
+
+    function renderFollowupRecords() {
+        const tbody = document.getElementById("followupRecordsTbody");
+        if (!tbody) return;
+        const today = getTodayStr();
+        const followupCustomers = getFilteredCustomers(getMyFollowupCustomers(currentUser.id));
+        if (!followupCustomers.length) {
+            tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state">当前筛选条件下没有待跟进客户</div></td></tr>`;
+            return;
+        }
+        tbody.innerHTML = followupCustomers.map(r => `
+            <tr class="${r.nextFollowupTime && r.nextFollowupTime <= today ? "highlight-red" : ""}">
+                <td>${escapeHtml(r.createTime || "-")}</td>
+                <td>${escapeHtml(r.customerName || "-")}</td>
+                <td>${escapeHtml(r.contactPerson || "-")}</td>
+                <td>${escapeHtml(r.position || "-")}</td>
+                <td>${escapeHtml(getIntentLevelText(r.intentLevel))}</td>
+                <td>${r.hasWechat === 1 ? "已加" : "未加"}</td>
+                <td>${r.isVisit ? "是" : "否"}</td>
+                <td>${r.followupCount || 0}</td>
+                <td>${escapeHtml(r.lastFollowupTime || "-")}</td>
+                <td>${escapeHtml(r.nextFollowupTime || "-")}</td>
+                <td>${(r.tags || []).map(t => `<span class="tag-inline" data-tag="${escapeHtml(t)}" data-id="${r.id}">${escapeHtml(t)}</span>`).join("") || "-"}</td>
+                <td><button class="small-btn order-btn" data-id="${r.id}">下单</button><button class="small-btn follow-btn" data-id="${r.id}">跟进</button><button class="small-btn view-follow-btn" data-id="${r.id}">跟进记录</button><button class="small-btn edit-btn edit-customer-btn" data-id="${r.id}">编辑</button><button class="small-btn detail-btn" data-id="${r.id}">详情</button></td>
+            </tr>
+        `).join("");
+        attachTagClickEvents();
+        attachButtons();
+        bindEditCustomerButtons();
+    }
+
+    function renderMyRecords() {
+        const tbody = document.getElementById("myRecordsTbody");
+        if (!tbody) return;
+        const myCustomers = getFilteredCustomers(getMyPendingCustomers(currentUser.id));
+        if (!myCustomers.length) {
+            tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state">当前筛选条件下没有客户</div></td></tr>`;
+            return;
+        }
+        tbody.innerHTML = myCustomers.map(r => `
+            <tr>
+                <td>${escapeHtml(r.createTime || "-")}</td>
+                <td>${escapeHtml(r.customerName || "-")}</td>
+                <td>${escapeHtml(r.contactPerson || "-")}</td>
+                <td>${escapeHtml(r.position || "-")}</td>
+                <td>${escapeHtml(getIntentLevelText(r.intentLevel))}</td>
+                <td>${r.hasWechat === 1 ? "已加" : "未加"}</td>
+                <td>${r.isVisit ? "是" : "否"}</td>
+                <td>${r.followupCount || 0}</td>
+                <td>${escapeHtml(r.lastFollowupTime || "-")}</td>
+                <td>${(r.tags || []).map(t => `<span class="tag-inline" data-tag="${escapeHtml(t)}" data-id="${r.id}">${escapeHtml(t)}</span>`).join("") || "-"}</td>
+                <td><button class="small-btn order-btn" data-id="${r.id}">下单</button><button class="small-btn follow-btn" data-id="${r.id}">跟进</button><button class="small-btn view-follow-btn" data-id="${r.id}">跟进记录</button><button class="small-btn wechat-btn" data-id="${r.id}">${r.hasWechat === 1 ? "取消微信" : "标记已加"}</button><button class="small-btn edit-btn edit-customer-btn" data-id="${r.id}">编辑</button><button class="small-btn detail-btn" data-id="${r.id}">详情</button></td>
+            </tr>
+        `).join("");
+        attachTagClickEvents();
+        attachButtons();
+        bindEditCustomerButtons();
+    }
+
+    function renderPublicRecords() {
+        const tbody = document.getElementById("publicRecordsTbody");
+        if (!tbody) return;
+        const publicCustomers = getFilteredCustomers(getPublicSeaCustomers());
+        if (!publicCustomers.length) {
+            tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state">当前筛选条件下没有公海客户</div></td></tr>`;
+            return;
+        }
+        tbody.innerHTML = publicCustomers.map(r => {
+            const daysLeft = getDaysUntilPublicSea(r);
+            const publicNote = daysLeft === null || daysLeft <= 0 ? "已进入公海，可立即领取" : `${daysLeft} 天后进入公海`;
+            return `
+                <tr>
+                    <td>${escapeHtml(r.createTime || "-")}</td>
+                    <td><div>${escapeHtml(r.customerName || "-")}</div><div class="public-sea-note">${escapeHtml(publicNote)}</div></td>
+                    <td>${escapeHtml(r.contactPerson || "-")}</td>
+                    <td>${escapeHtml(r.position || "-")}</td>
+                    <td>${escapeHtml(getIntentLevelText(r.intentLevel))}</td>
+                    <td>${r.hasWechat === 1 ? "已加" : "未加"}</td>
+                    <td>${r.isVisit ? "是" : "否"}</td>
+                    <td>${r.followupCount || 0}</td>
+                    <td>${escapeHtml(r.lastFollowupTime || "-")}</td>
+                    <td>${(r.tags || []).map(t => `<span class="tag-inline" data-tag="${escapeHtml(t)}" data-id="${r.id}">${escapeHtml(t)}</span>`).join("") || "-"}</td>
+                    <td><button class="small-btn order-btn" data-id="${r.id}">下单</button><button class="small-btn follow-btn" data-id="${r.id}">跟进</button><button class="small-btn view-follow-btn" data-id="${r.id}">跟进记录</button><button class="small-btn wechat-btn" data-id="${r.id}">${r.hasWechat === 1 ? "取消微信" : "标记已加"}</button><button class="small-btn detail-btn" data-id="${r.id}">详情</button></td>
+                </tr>
+            `;
+        }).join("");
+        attachTagClickEvents();
+        attachButtons();
+    }
+
+    function createOrder(recordId) {
+        const record = records.find(r => r.id === recordId);
+        if (!record) { alert("客户记录不存在"); return; }
+        if (record.hasOrder) { alert("该客户已经成交，不能重复下单"); return; }
+        const orderNo = prompt("请输入订单号：", "ORD" + Date.now());
+        if (!orderNo || !orderNo.trim()) { alert("订单号不能为空"); return; }
+        const amount = parseFloat(prompt("请输入订单金额（元）：", "5000"));
+        if (isNaN(amount) || amount <= 0) { alert("请输入有效的正数金额"); return; }
+        const isPublic = isInPublicSea(record);
+        if (isPublic) record.operatorId = currentUser.id;
+        const newOrder = {
+            id: getNextOrderId(),
+            recordId: record.id,
+            orderNo: orderNo.trim(),
+            orderAmount: amount,
+            commission: 0,
+            isPaid: 1,
+            paidTime: getTodayStr(),
+            cost: null,
+            customCost: null
+        };
+        newOrder.commission = calculateOrderCommission(newOrder);
+        orders.push(newOrder);
+        record.hasOrder = true;
+        recordLog("创建订单", `${record.customerName} / ${newOrder.orderNo} / ¥${amount.toFixed(2)}`);
+        saveData();
+        alert(`订单 ${newOrder.orderNo} 创建成功${isPublic ? "，客户已归属到您名下" : ""}`);
+        refreshUI();
+    }
+
+    function addFollowup(recordId) {
+        const record = records.find(r => r.id === recordId);
+        if (!record) return;
+        if (record.hasOrder) { alert("已合作客户不能继续添加跟进"); return; }
+        const content = prompt("请输入跟进内容：");
+        if (!content || !content.trim()) return;
+        let isVisit = confirm("这次跟进是否约访成功？");
+        let visitDate = null;
+        if (isVisit) {
+            const visitDateStr = prompt("请输入约访日期（YYYY-MM-DD）：", getTodayStr());
+            if (visitDateStr && /^\d{4}-\d{2}-\d{2}/.test(visitDateStr.trim())) visitDate = visitDateStr.trim().match(/^\d{4}-\d{2}-\d{2}/)[0];
+            else isVisit = false;
+        }
+        let nextFollowupDate = null;
+        const nextFollowup = prompt("请输入下次跟进日期（YYYY-MM-DD），不填则不提醒：", "");
+        if (nextFollowup && /^\d{4}-\d{2}-\d{2}/.test(nextFollowup.trim())) nextFollowupDate = nextFollowup.trim().match(/^\d{4}-\d{2}-\d{2}/)[0];
+        const newFollowup = {
+            id: getNextFollowupId(),
+            recordId,
+            operatorId: currentUser.id,
+            content: content.trim(),
+            createTime: getTodayStr(),
+            nextFollowup: nextFollowupDate,
+            isVisit: isVisit ? 1 : 0,
+            visitDate
+        };
+        followups.push(newFollowup);
+        updateRecordFollowupStats(recordId);
+        recordLog("新增跟进", `${record.customerName} / ${content.trim().slice(0, 30)}`);
+        saveData();
+        alert("跟进记录已添加");
+        refreshUI();
+    }
+
+    function setOrderCostSimple(orderId) {
+        const order = orders.find(o => o.id === orderId);
+        if (!order) return;
+        const currentCost = order.customCost !== undefined ? order.customCost : (order.cost || 0);
+        const newCost = prompt("请输入该订单的实际成本（元）：", currentCost);
+        if (newCost === null) return;
+        const costNum = parseFloat(newCost);
+        if (isNaN(costNum) || costNum <= 0) { alert("请输入有效的正数"); return; }
+        order.customCost = costNum;
+        order.commission = calculateOrderCommission(order);
+        recordLog("更新订单成本", `${order.orderNo} / ¥${costNum.toFixed(2)}`);
+        saveData();
+        alert("订单成本已更新，提成已重新计算");
+        refreshUI();
+    }
+
+    function renderOperatorListSimple() {
+        const container = document.getElementById("operatorListContainer");
+        if (!container) return;
+        const ops = users.filter(u => u.role === "operator");
+        if (!ops.length) {
+            container.innerHTML = "<div class=\"empty-state\">暂无业务员</div>";
+            return;
+        }
+        container.innerHTML = ops.map(op => `
+            <div class="flex-between" style="margin:8px 0; border-bottom:1px solid #e2e8f0; padding-bottom:10px; gap:16px; flex-wrap:wrap;">
+                <div>
+                    <strong>${escapeHtml(op.name)}</strong>
+                    <div class="mini-note">初始密码：${escapeHtml(op.password || "")}</div>
+                </div>
+                <div class="action-row">
+                    <button class="secondary small-btn change-pwd" data-id="${op.id}">修改密码</button>
+                    <button class="secondary small-btn delOpBtn" data-id="${op.id}">删除</button>
+                </div>
+            </div>
+        `).join("");
+        document.querySelectorAll(".change-pwd").forEach(btn => btn.onclick = () => changeOperatorPasswordSimple(parseInt(btn.dataset.id)));
+        document.querySelectorAll(".delOpBtn").forEach(btn => btn.onclick = () => {
+            const opId = parseInt(btn.dataset.id);
+            const op = users.find(u => u.id === opId);
+            if (!op) return;
+            if (!confirm(`删除 ${op.name} 会同时删除其客户、跟进、订单和日报数据，确认继续吗？`)) return;
+            users = users.filter(u => u.id !== opId);
+            const removedRecordIds = records.filter(r => r.operatorId === opId).map(r => r.id);
+            records = records.filter(r => r.operatorId !== opId);
+            followups = followups.filter(f => f.operatorId !== opId && !removedRecordIds.includes(f.recordId));
+            orders = orders.filter(o => !removedRecordIds.includes(o.recordId));
+            Object.keys(dailyCalls).forEach(key => { if (key.startsWith(`${opId}-`)) delete dailyCalls[key]; });
+            Object.keys(dailyWechat).forEach(key => { if (key.startsWith(`${opId}-`)) delete dailyWechat[key]; });
+            delete operatorScripts[opId];
+            recordLog("删除业务员", `${op.name} 及其关联数据已删除`);
+            saveData();
+            refreshUI();
+        });
+    }
+
+    function changeOperatorPasswordSimple(userId) {
+        const user = users.find(u => u.id === userId);
+        if (!user) return;
+        const newPwd = prompt(`请输入 ${user.name} 的新密码：`, user.password);
+        if (!newPwd || !newPwd.trim()) { alert("密码不能为空"); return; }
+        user.password = newPwd.trim();
+        recordLog("修改业务员密码", `${user.name} 的密码已更新`);
+        saveData();
+        alert(`密码已修改为 ${newPwd.trim()}`);
+        refreshUI();
+    }
+
+    function addOperator() {
+        const name = prompt("请输入新业务员姓名：");
+        if (!name || !name.trim()) return;
+        const newId = users.length ? Math.max(...users.map(u => u.id)) + 1 : 100;
+        users.push({ id: newId, name: name.trim(), role: "operator", password: "123", active: true });
+        recordLog("新增业务员", `${name.trim()} / 初始密码 123`);
+        saveData();
+        refreshUI();
+    }
+
+    function changeAdminPassword() {
+        const newPwd = prompt("请输入新的管理员密码：", currentUser.password);
+        if (!newPwd || !newPwd.trim()) { alert("密码不能为空"); return; }
+        const adminName = currentUser.name;
+        currentUser.password = newPwd.trim();
+        const admin = users.find(u => u.id === currentUser.id);
+        if (admin) admin.password = newPwd.trim();
+        recordLog("修改管理员密码", `${adminName} 修改了自己的登录密码`);
+        saveData();
+        alert("密码修改成功，请重新登录");
+        currentUser = null;
+        refreshUI();
+    }
+
+    function exportAllData() {
+        const customerData = records.map(rec => {
+            const operator = users.find(u => u.id === rec.operatorId);
+            const order = orders.find(o => o.recordId === rec.id);
+            return {
+                "客户ID": rec.id,
+                "业务员": operator ? operator.name : "未知",
+                "客户名称": rec.customerName,
+                "联系人": rec.contactPerson || "",
+                "职位": rec.position || "",
+                "联系电话": rec.contactPhone,
+                "沟通内容": rec.content || "",
+                "意向等级": getIntentLevelText(rec.intentLevel),
+                "已加微信": rec.hasWechat === 1 ? "是" : "否",
+                "约访成功": rec.isVisit === 1 ? "是" : "否",
+                "约访日期": rec.visitDate || "",
+                "创建日期": rec.createTime,
+                "已合作": rec.hasOrder ? "是" : "否",
+                "跟进次数": rec.followupCount || 0,
+                "最后跟进时间": rec.lastFollowupTime || "",
+                "下次跟进时间": rec.nextFollowupTime || "",
+                "标签": (rec.tags || []).join(","),
+                "关联订单号": order ? order.orderNo : "",
+                "订单金额": order ? order.orderAmount : "",
+                "订单成本": order ? (order.customCost || order.cost || "") : "",
+                "订单提成": order ? (order.commission || "") : "",
+                "成交日期": order ? order.paidTime : ""
+            };
+        });
+        const followupData = followups.map(f => {
+            const record = records.find(r => r.id === f.recordId);
+            const operator = users.find(u => u.id === f.operatorId);
+            return {
+                "跟进ID": f.id,
+                "客户名称": record ? record.customerName : "未知",
+                "业务员": operator ? operator.name : "未知",
+                "跟进内容": f.content,
+                "跟进日期": f.createTime,
+                "约访成功": f.isVisit === 1 ? "是" : "否",
+                "约访日期": f.visitDate || "",
+                "下次跟进时间": f.nextFollowup || ""
+            };
+        });
+        if (customerData.length) exportToCSV(customerData, "客户数据导出.csv");
+        else alert("暂无客户数据可导出");
+        if (followupData.length) setTimeout(() => exportToCSV(followupData, "跟进记录导出.csv"), 500);
+        recordLog("导出数据", `导出客户 ${customerData.length} 条，跟进 ${followupData.length} 条`);
+        saveLocalCache();
+    }
+
+    function importCustomers(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: "array" });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(sheet);
+            let successCount = 0;
+            let duplicateCount = 0;
+            for (const row of rows) {
+                const customerName = row["客户名称"] || "";
+                const contactPhone = row["联系电话"] || "";
+                if (!customerName || !contactPhone) continue;
+                if (checkDuplicate(customerName, contactPhone)) { duplicateCount++; continue; }
+                records.push({
+                    id: getNextRecordId(),
+                    operatorId: null,
+                    customerName,
+                    contactPerson: row["联系人"] || "",
+                    position: row["职位"] || "",
+                    contactPhone,
+                    content: row["备注"] || "",
+                    intentLevel: 1,
+                    hasWechat: 0,
+                    createTime: getTodayStr(),
+                    auditStatus: 1,
+                    hasOrder: false,
+                    followupCount: 0,
+                    lastFollowupTime: getTodayStr(),
+                    nextFollowupTime: null,
+                    isVisit: 0,
+                    visitDate: null,
+                    tags: []
+                });
+                successCount++;
+            }
+            recordLog("批量导入客户", `成功 ${successCount} 条，跳过重复 ${duplicateCount} 条`);
+            saveData();
+            alert(`导入完成：成功 ${successCount} 条，跳过重复 ${duplicateCount} 条`);
+            refreshUI();
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function addRecord(e) {
+        e.preventDefault();
+        const customerName = document.getElementById("customerName").value.trim();
+        const contactPhone = document.getElementById("contactPhone").value.trim();
+        if (!customerName || !contactPhone) { alert("请填写客户名称和联系电话"); return; }
+        if (checkDuplicate(customerName, contactPhone) && !confirm("该客户已经存在，是否继续录入？")) return;
+        const content = document.getElementById("content").value.trim();
+        const newRecord = {
+            id: getNextRecordId(),
+            operatorId: currentUser.id,
+            customerName,
+            contactPerson: document.getElementById("contactPerson").value.trim(),
+            position: document.getElementById("position").value.trim(),
+            contactPhone,
+            content,
+            intentLevel: parseInt(document.getElementById("intentLevel").value),
+            hasWechat: 0,
+            createTime: getTodayStr(),
+            auditStatus: 1,
+            hasOrder: false,
+            followupCount: 0,
+            lastFollowupTime: getTodayStr(),
+            nextFollowupTime: null,
+            isVisit: 0,
+            visitDate: null,
+            tags: []
+        };
+        records.push(newRecord);
+        if (content) {
+            followups.push({
+                id: getNextFollowupId(),
+                recordId: newRecord.id,
+                operatorId: currentUser.id,
+                content,
+                createTime: getTodayStr(),
+                nextFollowup: null,
+                isVisit: 0,
+                visitDate: null
+            });
+            updateRecordFollowupStats(newRecord.id);
+        }
+        recordLog("新增客户", `${customerName} / ${contactPhone}`);
+        saveData();
+        document.getElementById("recordForm").reset();
+        alert("记录已保存，并自动生成首条跟进记录");
+        refreshUI();
+    }
+
+    function saveDailyCall() {
+        const date = document.getElementById("dailyDate").value;
+        const callCount = parseInt(document.getElementById("dailyCallCount").value);
+        const wechatCount = parseInt(document.getElementById("dailyWechatCount").value);
+        if (isNaN(callCount) || callCount < 0) { alert("请输入有效的通话数量"); return; }
+        if (isNaN(wechatCount) || wechatCount < 0) { alert("请输入有效的微信新增数量"); return; }
+        dailyCalls[`${currentUser.id}-${date}`] = callCount;
+        dailyWechat[`${currentUser.id}-${date}`] = wechatCount;
+        recordLog("保存日报", `${date} / 通话 ${callCount} / 新增微信 ${wechatCount}`);
+        saveData();
+        alert("已保存");
+        refreshUI();
+    }
+
+    async function manualSyncNow() {
+        if (storageMode !== "bmob" || !bmobReady) {
+            alert("当前不是在线模式，暂时无法立即同步。");
+            return;
+        }
+        await runRemoteSave();
+        recordLog("手动同步", "手动触发了一次在线同步");
+        saveLocalCache();
+        refreshUI();
+    }
+
+    function refreshUI() {
+        if (!currentUser) {
+            const migrateHtml = hasLocalSnapshotData() && storageMode === "bmob"
+                ? `<div style="margin-top:12px; padding:12px; background:#f8fafc; border-radius:12px; text-align:left;"><div style="font-size:12px; color:#64748b; margin-bottom:8px;">${getLocalSnapshotSummaryText()}</div><button id="uploadLocalCacheBtn" class="outline" style="width:100%;">一键上传本机缓存到云端</button></div>`
+                : "";
+            document.getElementById("app").innerHTML = `<div class="login-card card"><h2>业务员 / 管理员登录</h2><p style="font-size:12px; color:#64748b;">${escapeHtml(syncStatusText)}</p><input type="text" id="loginName" placeholder="用户名"><input type="password" id="loginPwd" placeholder="密码"><button id="loginBtn">登录</button>${migrateHtml}</div>`;
+            document.getElementById("loginBtn").onclick = () => {
+                const name = document.getElementById("loginName").value.trim();
+                const pwd = document.getElementById("loginPwd").value;
+                const user = users.find(u => u.name === name && u.password === pwd && u.active !== false);
+                if (!user) { alert("用户名或密码错误"); return; }
+                resetCustomerVisibleCounts();
+                currentUser = user;
+                refreshUI();
+                showReminder();
+            };
+            const uploadBtn = document.getElementById("uploadLocalCacheBtn");
+            if (uploadBtn) uploadBtn.onclick = uploadLocalSnapshotToCloud;
+            return;
+        }
+
+        if (currentUser.role === "operator") {
+            document.getElementById("app").innerHTML = renderOperator();
+            document.getElementById("recordForm").addEventListener("submit", addRecord);
+            document.getElementById("mockOrderBtn").onclick = mockOrder;
+            document.getElementById("logoutBtn").onclick = () => { resetCustomerVisibleCounts(); currentUser = null; refreshUI(); };
+            const manualSyncBtn = document.getElementById("manualSyncBtn");
+            if (manualSyncBtn) manualSyncBtn.onclick = manualSyncNow;
+            const exportBackupBtn = document.getElementById("exportLocalBackupBtn");
+            if (exportBackupBtn) exportBackupBtn.onclick = exportLocalBackupJson;
+            const saveBtn = document.getElementById("saveDailyBtn");
+            if (saveBtn) saveBtn.onclick = saveDailyCall;
+            const dateInput = document.getElementById("dailyDate");
+            if (dateInput) {
+                dateInput.onchange = () => {
+                    const stats = getDailyStats(currentUser.id, dateInput.value);
+                    document.getElementById("dailyCallCount").value = stats.callCount;
+                    document.getElementById("dailyWechatCount").value = stats.wechatCount;
+                };
+            }
+            const coll = document.getElementById("weeklyCollapseBtn");
+            const content = document.getElementById("weeklyCollapseContent");
+            if (coll && content) {
+                coll.onclick = function() {
+                    this.classList.toggle("active");
+                    if (content.style.maxHeight) content.style.maxHeight = null;
+                    else content.style.maxHeight = content.scrollHeight + "px";
+                };
+                content.style.maxHeight = null;
+            }
+            document.querySelectorAll(".tab-btn").forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+                    document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
+                    if (btn.dataset.tab === "followup") renderFollowupRecords();
+                    else if (btn.dataset.tab === "my") renderMyRecords();
+                    else if (btn.dataset.tab === "public") renderPublicRecords();
+                };
+            });
+            bindCustomerFilters();
+            renderFollowupRecords();
+            renderMyRecords();
+            renderPublicRecords();
+            renderWeeklyStats();
+            return;
+        }
+
+        document.getElementById("app").innerHTML = renderAdmin();
+        document.getElementById("logoutBtn").onclick = () => { resetCustomerVisibleCounts(); currentUser = null; refreshUI(); };
+        document.getElementById("addOperatorBtn").onclick = addOperator;
+        document.getElementById("changeAdminPwdBtn").onclick = changeAdminPassword;
+        document.getElementById("exportDataBtn").onclick = exportAllData;
+        document.getElementById("loadStatsBtn").onclick = loadOperatorStats;
+        document.getElementById("manageRecommendBtn").onclick = showRecommendManager;
+        const importBtn = document.getElementById("importBtn");
+        if (importBtn) importBtn.onclick = () => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = ".xlsx, .xls, .csv";
+            input.onchange = e => importCustomers(e.target.files[0]);
+            input.click();
+        };
+        const manualSyncBtn = document.getElementById("manualSyncBtn");
+        if (manualSyncBtn) manualSyncBtn.onclick = manualSyncNow;
+        const exportBackupBtn = document.getElementById("exportLocalBackupBtn");
+        if (exportBackupBtn) exportBackupBtn.onclick = exportLocalBackupJson;
+        const downloadTemplateBtn = document.getElementById("downloadTemplateBtn");
+        if (downloadTemplateBtn) downloadTemplateBtn.onclick = downloadImportTemplate;
+        renderTeamStatsSimple();
+        renderOrderDetailSimple();
+        renderCooperatedSimple();
+        renderOperatorListSimple();
+        renderDailyNewCustomersAdmin();
+        renderOperationLogs();
+    }
+
+    function getCustomerPreviewText(record) {
+        const text = (record.content || "").trim();
+        if (!text) return "暂无沟通内容，点开后可以继续补充。";
+        return text.length > 42 ? `${text.slice(0, 42)}...` : text;
+    }
+
+    function getCustomerAlertText(record, tabType) {
+        const today = getTodayStr();
+        if (tabType === "followup") {
+            if (record.nextFollowupTime && record.nextFollowupTime < today) return `已逾期，原计划 ${record.nextFollowupTime} 跟进`;
+            if (record.nextFollowupTime && record.nextFollowupTime === today) return "今天需要优先跟进";
+            if (record.nextFollowupTime) return `下次跟进：${record.nextFollowupTime}`;
+            return "待安排下次跟进";
+        }
+        if (tabType === "public") {
+            const daysLeft = getDaysUntilPublicSea(record);
+            if (daysLeft === null || daysLeft <= 0) return "已在公海，可立即领取";
+            return `${daysLeft} 天后进入公海`;
+        }
+        if (record.lastFollowupTime) return `最后跟进：${record.lastFollowupTime}`;
+        return "暂无跟进记录";
+    }
+
+    function getCustomerCardClass(record, tabType) {
+        if (tabType === "followup" && record.nextFollowupTime && record.nextFollowupTime <= getTodayStr()) return "urgent";
+        if (record.intentLevel === 2) return "hot";
+        return "";
+    }
+
+    function renderCustomerMetaItem(label, value) {
+        return `<div class="customer-meta-item"><label>${label}</label><strong>${value}</strong></div>`;
+    }
+
+    function renderCustomerActionButtons(record, tabType) {
+        const actions = [
+            `<button class="small-btn order-btn" data-id="${record.id}">下单</button>`,
+            `<button class="small-btn follow-btn" data-id="${record.id}">跟进</button>`,
+            `<button class="small-btn view-follow-btn" data-id="${record.id}">跟进记录</button>`
+        ];
+        if (tabType !== "followup") {
+            actions.push(`<button class="small-btn wechat-btn" data-id="${record.id}">${record.hasWechat === 1 ? "取消微信" : "标记已加"}</button>`);
+        }
+        if (tabType !== "public") {
+            actions.push(`<button class="small-btn edit-btn edit-customer-btn" data-id="${record.id}">编辑</button>`);
+        }
+        actions.push(`<button class="small-btn detail-btn" data-id="${record.id}">详情</button>`);
+        return actions.join("");
+    }
+
+    function renderCustomerCard(record, tabType) {
+        const chips = [
+            `<span class="customer-chip intent-${record.intentLevel}">${escapeHtml(getIntentLevelText(record.intentLevel))}</span>`,
+            `<span class="customer-chip">${record.hasWechat === 1 ? "已加微信" : "未加微信"}</span>`,
+            `<span class="customer-chip">${record.isVisit ? `已约访${record.visitDate ? ` ${escapeHtml(record.visitDate)}` : ""}` : "未约访"}</span>`,
+            `<span class="customer-chip">跟进 ${record.followupCount || 0} 次</span>`
+        ];
+        if (record.nextFollowupTime) chips.push(`<span class="customer-chip">下次 ${escapeHtml(record.nextFollowupTime)}</span>`);
+        const metaItems = [
+            renderCustomerMetaItem("联系人", escapeHtml(record.contactPerson || "未填写")),
+            renderCustomerMetaItem("职位", escapeHtml(record.position || "未填写")),
+            renderCustomerMetaItem("联系电话", escapeHtml(record.contactPhone || "-")),
+            renderCustomerMetaItem("创建日期", escapeHtml(record.createTime || "-")),
+            renderCustomerMetaItem("最后跟进", escapeHtml(record.lastFollowupTime || "-")),
+            renderCustomerMetaItem("下次跟进", escapeHtml(record.nextFollowupTime || "未设置"))
+        ];
+        if (record.visitDate) metaItems.push(renderCustomerMetaItem("约访日期", escapeHtml(record.visitDate)));
+        const tagsHtml = (record.tags || []).length
+            ? (record.tags || []).map(t => `<span class="tag-inline" data-tag="${escapeHtml(t)}" data-id="${record.id}">${escapeHtml(t)}</span>`).join("")
+            : `<span class="mini-note">暂无标签</span>`;
+        return `
+            <details class="customer-card ${getCustomerCardClass(record, tabType)}">
+                <summary class="customer-summary">
+                    <div class="customer-main">
+                        <div class="customer-name-row">
+                            <span class="customer-name">${escapeHtml(record.customerName || "未命名客户")}</span>
+                            <span class="customer-phone">${escapeHtml(record.contactPhone || "未留电话")}</span>
+                        </div>
+                        <div class="customer-subline">${escapeHtml(record.contactPerson || "未填写联系人")}${record.position ? ` · ${escapeHtml(record.position)}` : ""}</div>
+                        <div class="customer-chip-row">${chips.join("")}</div>
+                    </div>
+                    <div class="customer-side">
+                        <div class="customer-alert">${escapeHtml(getCustomerAlertText(record, tabType))}</div>
+                        <div class="customer-preview">${escapeHtml(getCustomerPreviewText(record))}</div>
+                    </div>
+                </summary>
+                <div class="customer-detail">
+                    <div class="customer-meta-grid">${metaItems.join("")}</div>
+                    <div class="customer-note">${escapeHtml(record.content || "暂无沟通内容")}</div>
+                    <div class="customer-chip-row">${tagsHtml}</div>
+                    <div class="customer-actions">${renderCustomerActionButtons(record, tabType)}</div>
+                </div>
+            </details>
+        `;
+    }
+
+    function ensureCustomerVisibleCount(containerId) {
+        if (!customerVisibleCounts[containerId]) customerVisibleCounts[containerId] = CUSTOMER_BATCH_SIZE;
+        return customerVisibleCounts[containerId];
+    }
+
+    function loadMoreCustomers(containerId) {
+        customerVisibleCounts[containerId] = ensureCustomerVisibleCount(containerId) + CUSTOMER_BATCH_SIZE;
+        if (containerId === "followupRecordsList") renderFollowupRecords();
+        else if (containerId === "myRecordsList") renderMyRecords();
+        else if (containerId === "publicRecordsList") renderPublicRecords();
+    }
+
+    function disconnectCustomerObserver(containerId) {
+        if (customerListObservers[containerId]) {
+            customerListObservers[containerId].disconnect();
+            delete customerListObservers[containerId];
+        }
+    }
+
+    function renderCustomerPanel(containerId, list, tabType, emptyText) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        disconnectCustomerObserver(containerId);
+        if (!list.length) {
+            container.innerHTML = `<div class="empty-state">${emptyText}</div>`;
+            return;
+        }
+        const visibleCount = Math.min(ensureCustomerVisibleCount(containerId), list.length);
+        const visibleList = list.slice(0, visibleCount);
+        const hasMore = visibleCount < list.length;
+        container.innerHTML = `
+            <div class="customer-panel">
+                <div class="customer-panel-head">
+                    <div>
+                        <strong>当前显示 ${visibleCount} / ${list.length} 条客户</strong>
+                        <div class="mini-note">默认先显示前 ${CUSTOMER_BATCH_SIZE} 条，往下滚动到底部或点击按钮会继续加载。</div>
+                    </div>
+                    <div class="customer-toggle-row">
+                        <button type="button" class="outline list-expand-all" data-target="${containerId}">全部展开</button>
+                        <button type="button" class="secondary list-collapse-all" data-target="${containerId}">全部收起</button>
+                    </div>
+                </div>
+                <div class="customer-list">${visibleList.map(item => renderCustomerCard(item, tabType)).join("")}</div>
+                ${hasMore ? `
+                    <div class="load-more-wrap">
+                        <button type="button" class="outline load-more-btn" data-target="${containerId}">继续加载 ${Math.min(CUSTOMER_BATCH_SIZE, list.length - visibleCount)} 条</button>
+                        <div class="load-more-note">剩余 ${list.length - visibleCount} 条，滚动到底部也会自动加载。</div>
+                        <div class="load-more-sentinel" data-target="${containerId}"></div>
+                    </div>
+                ` : `<div class="load-more-note">已显示全部客户</div>`}
+            </div>
+        `;
+    }
+
+    function bindCustomerPanelControls() {
+        document.querySelectorAll(".list-expand-all").forEach(btn => {
+            btn.onclick = () => {
+                const root = document.getElementById(btn.dataset.target);
+                if (!root) return;
+                root.querySelectorAll("details.customer-card").forEach(item => { item.open = true; });
+            };
+        });
+        document.querySelectorAll(".list-collapse-all").forEach(btn => {
+            btn.onclick = () => {
+                const root = document.getElementById(btn.dataset.target);
+                if (!root) return;
+                root.querySelectorAll("details.customer-card").forEach(item => { item.open = false; });
+            };
+        });
+        document.querySelectorAll(".load-more-btn").forEach(btn => {
+            btn.onclick = () => loadMoreCustomers(btn.dataset.target);
+        });
+        document.querySelectorAll(".load-more-sentinel").forEach(el => {
+            const containerId = el.dataset.target;
+            if (!containerId || !("IntersectionObserver" in window)) return;
+            disconnectCustomerObserver(containerId);
+            const observer = new IntersectionObserver(entries => {
+                if (entries.some(entry => entry.isIntersecting)) {
+                    disconnectCustomerObserver(containerId);
+                    loadMoreCustomers(containerId);
+                }
+            }, { rootMargin: "160px 0px" });
+            observer.observe(el);
+            customerListObservers[containerId] = observer;
+        });
+    }
+
+    function renderOperator() {
+        const stats = calculateStats(currentUser.id);
+        const myCustomers = getMyPendingCustomers(currentUser.id);
+        const followupCustomers = getMyFollowupCustomers(currentUser.id);
+        const publicSeaCustomers = getPublicSeaCustomers();
+        const today = getTodayStr();
+        const dailyStats = getDailyStats(currentUser.id, today);
+        const totalWechat = getTotalWechat(currentUser.id);
+        const workbench = getOperatorWorkbenchData(currentUser.id);
+        const modeLabel = storageMode === "bmob" ? "在线模式" : "本地模式";
+        const filterSource = Array.from(new Map([...followupCustomers, ...myCustomers, ...publicSeaCustomers].map(item => [item.id, item])).values());
+        const dueTodayNames = workbench.dueToday.slice(0, 5).map(item => item.customerName).join("、");
+        const highIntentNames = workbench.highIntent.slice(0, 5).map(item => item.customerName).join("、");
+        const untouchedNames = workbench.untouched.slice(0, 5).map(item => item.customerName).join("、");
+        return `
+            <div class="container">
+                <div class="nav">
+                    <button class="logout-btn" id="logoutBtn">退出登录</button>
+                    <h2>业务员：${escapeHtml(currentUser.name)} <span class="version-tag">v${APP_VERSION}</span></h2>
+                </div>
+                <div class="card status-banner">
+                    <div>
+                        <div><strong>当前状态</strong> <span class="status-pill">${modeLabel}</span></div>
+                        <div class="status-meta">${escapeHtml(syncStatusText)}</div>
+                    </div>
+                    <div class="action-row">
+                        <button id="manualSyncBtn" class="outline">立即同步</button>
+                        <button id="exportLocalBackupBtn" class="secondary">导出本地备份</button>
+                    </div>
+                </div>
+                <div class="overview-grid">
+                    <div class="overview-card"><div class="overview-value">${workbench.dueToday.length}</div><div class="overview-label">今日待跟进</div></div>
+                    <div class="overview-card"><div class="overview-value">${workbench.highIntent.length}</div><div class="overview-label">深度意向</div></div>
+                    <div class="overview-card"><div class="overview-value">${workbench.untouched.length}</div><div class="overview-label">7天内可能掉公海</div></div>
+                    <div class="overview-card"><div class="overview-value">${workbench.publicSea.length}</div><div class="overview-label">公海客户池</div></div>
+                </div>
+                <div class="grid-2">
+                    <div class="card toolbar-card">
+                        <h3>新增客户沟通记录</h3>
+                        <form id="recordForm">
+                            <input type="text" id="customerName" placeholder="客户名称 *" required>
+                            <input type="text" id="contactPerson" placeholder="联系人">
+                            <input type="text" id="position" placeholder="客户职位">
+                            <input type="tel" id="contactPhone" placeholder="联系电话 *" required>
+                            <textarea id="content" rows="2" placeholder="沟通内容"></textarea>
+                            <select id="intentLevel">
+                                <option value="1">意向客户</option>
+                                <option value="2">深度意向</option>
+                                <option value="3">无效客户</option>
+                            </select>
+                            <button type="submit" style="width:100%">保存记录</button>
+                        </form>
+                        <div class="action-row" style="margin-top:12px;">
+                            <button id="mockOrderBtn" class="outline" style="flex:1;">模拟成交</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>个人业绩看板</h3>
+                        <div class="daily-stats-row">
+                            <div class="quick-card"><div class="quick-number">${stats.validIntents}</div><div class="quick-muted">意向客户</div></div>
+                            <div class="quick-card"><div class="quick-number">${stats.deepIntents}</div><div class="quick-muted">深度意向</div></div>
+                            <div class="quick-card"><div class="quick-number">${stats.orderCount}</div><div class="quick-muted">成交订单</div></div>
+                            <div class="quick-card"><div class="quick-number">¥${stats.totalBonus.toFixed(0)}</div><div class="quick-muted">当前奖金</div></div>
+                        </div>
+                        <div class="flex-between"><span>已加微信</span><strong>${stats.wechatCount}</strong></div>
+                        <div class="flex-between"><span>总积分</span><strong>${stats.totalPoints}</strong></div>
+                        <div class="flex-between"><span>约访成功</span><strong>${stats.visitCount}</strong></div>
+                        <div class="flex-between"><span>成交总额</span><strong>¥${stats.totalOrderAmount.toFixed(2)}</strong></div>
+                        <div class="flex-between"><span>无效客户</span><strong>${stats.invalidCount}</strong></div>
+                        <hr>
+                        <div class="flex-between"><span>意向奖励</span><strong>¥${stats.intentBonus.toFixed(2)}</strong></div>
+                        <div class="flex-between"><span>约访奖励</span><strong>¥${stats.visitBonus.toFixed(2)}</strong></div>
+                        <div class="flex-between"><span>成交提成</span><strong>¥${stats.orderCommission.toFixed(2)}</strong></div>
+                        <div class="flex-between"><span>预计总收入</span><strong>¥${(MONTHLY_SALARY + stats.totalBonus).toFixed(2)}</strong></div>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>我的工作台</h3>
+                        <div class="workbench-list">
+                            <div class="workbench-item"><strong>今天优先处理</strong><div class="mini-note">${escapeHtml(dueTodayNames || "今天没有到期跟进客户")}</div></div>
+                            <div class="workbench-item"><strong>深度意向名单</strong><div class="mini-note">${escapeHtml(highIntentNames || "当前没有深度意向客户")}</div></div>
+                            <div class="workbench-item"><strong>临近掉公海客户</strong><div class="mini-note">${escapeHtml(untouchedNames || "当前没有临近掉公海的客户")}</div></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>每日通话登记</h3>
+                        <div class="flex-between" style="gap:16px; flex-wrap:wrap;">
+                            <div><label>日期</label><input type="date" id="dailyDate" value="${today}" style="width:auto;"></div>
+                            <div><label>通话总数</label><input type="number" id="dailyCallCount" value="${dailyStats.callCount}" style="width:100px;"></div>
+                            <div><label>新增微信</label><input type="number" id="dailyWechatCount" value="${dailyStats.wechatCount}" style="width:100px;"></div>
+                            <button id="saveDailyBtn" class="outline">保存</button>
+                        </div>
+                        <div class="daily-stats-row">
+                            <div class="stat-item"><div class="stat-value">${dailyStats.callCount}</div><div class="stat-label">今日通话</div></div>
+                            <div class="stat-item"><div class="stat-value">${dailyStats.wechatCount}</div><div class="stat-label">今日新增微信</div></div>
+                            <div class="stat-item"><div class="stat-value">${totalWechat}</div><div class="stat-label">累计微信人数</div></div>
+                            <div class="stat-item"><div class="stat-value">${dailyStats.validIntents}</div><div class="stat-label">意向客户</div><div class="percent-value">${dailyStats.callCount ? ((dailyStats.validIntents / dailyStats.callCount) * 100).toFixed(1) : 0}%</div></div>
+                            <div class="stat-item"><div class="stat-value">${dailyStats.deepIntents}</div><div class="stat-label">深度意向</div><div class="percent-value">${dailyStats.callCount ? ((dailyStats.deepIntents / dailyStats.callCount) * 100).toFixed(1) : 0}%</div></div>
+                            <div class="stat-item"><div class="stat-value">${dailyStats.visitSuccess}</div><div class="stat-label">约访成功</div><div class="percent-value">${dailyStats.callCount ? ((dailyStats.visitSuccess / dailyStats.callCount) * 100).toFixed(1) : 0}%</div></div>
+                        </div>
+                        <button class="collapsible" id="weeklyCollapseBtn">近一周数据</button>
+                        <div class="collapsible-content" id="weeklyCollapseContent"><div id="weeklyCardsContainer" class="weekly-cards"></div></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>客户筛选</h3>
+                    ${renderCustomerFilterPanel(filterSource)}
+                    <div class="mini-note">支持按客户名、电话、标签、微信状态、约访状态快速过滤。客户列表已改成折叠卡片，信息多时会更好用。</div>
+                </div>
+                <div class="card">
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" data-tab="followup">待跟进客户 (${followupCustomers.length})</button>
+                        <button class="tab-btn" data-tab="my">我的客户 (${myCustomers.length})</button>
+                        <button class="tab-btn" data-tab="public">公海客户 (${publicSeaCustomers.length})</button>
+                    </div>
+                    <div class="tab-content active" id="tab-followup"><div id="followupRecordsList"></div></div>
+                    <div class="tab-content" id="tab-my"><div id="myRecordsList"></div></div>
+                    <div class="tab-content" id="tab-public"><div id="publicRecordsList"></div></div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderFollowupRecords() {
+        const followupCustomers = getFilteredCustomers(getMyFollowupCustomers(currentUser.id));
+        renderCustomerPanel("followupRecordsList", followupCustomers, "followup", "当前筛选条件下没有待跟进客户");
+        bindCustomerPanelControls();
+        attachTagClickEvents();
+        attachButtons();
+        bindEditCustomerButtons();
+    }
+
+    function renderMyRecords() {
+        const myCustomers = getFilteredCustomers(getMyPendingCustomers(currentUser.id));
+        renderCustomerPanel("myRecordsList", myCustomers, "my", "当前筛选条件下没有客户");
+        bindCustomerPanelControls();
+        attachTagClickEvents();
+        attachButtons();
+        bindEditCustomerButtons();
+    }
+
+    function renderPublicRecords() {
+        const publicCustomers = getFilteredCustomers(getPublicSeaCustomers());
+        renderCustomerPanel("publicRecordsList", publicCustomers, "public", "当前筛选条件下没有公海客户");
+        bindCustomerPanelControls();
+        attachTagClickEvents();
+        attachButtons();
+    }
+
+    async function apiFetch(path, options = {}) {
+        const response = await fetch(`${API_CONFIG.baseUrl}${path}`, {
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json",
+                ...(options.headers || {})
+            },
+            ...options
+        });
+        const text = await response.text();
+        let data = {};
+        try { data = text ? JSON.parse(text) : {}; } catch (err) { data = { message: text || "服务器返回了非 JSON 数据" }; }
+        if (!response.ok) {
+            const error = new Error(data.message || `请求失败：${response.status}`);
+            error.status = response.status;
+            error.payload = data;
+            throw error;
+        }
+        return data;
+    }
+
+    async function initApiStorage() {
+        try {
+            await apiFetch("/health", { method: "GET" });
+            apiReady = true;
+            storageMode = "api";
+            setSyncStatus("在线模式可用，请登录");
+            return true;
+        } catch (err) {
+            console.error("api health check failed", err);
+            apiReady = false;
+            storageMode = "local";
+            setSyncStatus("在线服务未连接，当前使用本地缓存");
+            return false;
+        }
+    }
+
+    async function loadRemoteData() {
+        const remote = await apiFetch("/bootstrap", { method: "GET" });
+        if (Array.isArray(remote.users)) users = normalizeRemoteUsers(remote.users);
+        if (Array.isArray(remote.customers)) records = normalizeRemoteRecords(remote.customers);
+        if (Array.isArray(remote.orders)) orders = normalizeRemoteOrders(remote.orders);
+        if (Array.isArray(remote.followups)) followups = normalizeRemoteFollowups(remote.followups);
+        if (Array.isArray(remote.dailyStats)) normalizeRemoteDailyStats(remote.dailyStats);
+        if (Array.isArray(remote.settings)) normalizeRemoteSettings(remote.settings);
+    }
+
+    async function loadData() {
+        loadLocalCache();
+        normalizeRecordShape();
+        captureLocalSnapshot();
+        saveLocalCache();
+        const onlineReady = await initApiStorage();
+        if (!onlineReady) return;
+        try {
+            await loadRemoteData();
+            normalizeRecordShape();
+            saveLocalCache();
+            setSyncStatus("在线模式已连接");
+        } catch (err) {
+            if (err.status === 401) {
+                setSyncStatus("在线模式可用，请登录后加载云端数据");
+                return;
+            }
+            console.error("load remote data failed", err);
+            storageMode = "local";
+            setSyncStatus("在线数据加载失败，当前使用本地缓存：" + formatErrorMessage(err));
+        }
+    }
+
+    function getApiSnapshot() {
+        return {
+            users: users.map(item => ({
+                crmId: item.id,
+                name: item.name,
+                role: item.role,
+                password: item.password,
+                active: item.active !== false
+            })),
+            records: records.map(toPlainCustomer),
+            followups: followups.map(toPlainFollowup),
+            orders: orders.map(toPlainOrder),
+            dailyStats: getDailyStatRows(),
+            settings: getManagedSettingsRows()
+        };
+    }
+
+    async function runRemoteSave() {
+        if (storageMode !== "api" || !apiReady) return;
+        if (saveInFlight) {
+            saveQueued = true;
+            return;
+        }
+        saveInFlight = true;
+        setSyncStatus("在线同步中...");
+        try {
+            await apiFetch("/sync", {
+                method: "POST",
+                body: JSON.stringify(getApiSnapshot())
+            });
+            setSyncStatus("在线同步成功 " + new Date().toLocaleTimeString());
+        } catch (err) {
+            console.error("remote sync failed", err);
+            if (err.status === 401) setSyncStatus("登录已过期，请重新登录");
+            else setSyncStatus("在线同步失败：" + formatErrorMessage(err));
+        } finally {
+            saveInFlight = false;
+            if (saveQueued) {
+                saveQueued = false;
+                queueRemoteSave();
+            }
+        }
+    }
+
+    async function uploadLocalSnapshotToCloud() {
+        if (!apiReady || storageMode !== "api") {
+            alert("当前还没有连接到在线服务，请先检查服务器配置。");
+            return;
+        }
+        if (!hasLocalSnapshotData()) {
+            alert("当前没有检测到可上传的本机缓存数据。");
+            return;
+        }
+        const ok = confirm(`${getLocalSnapshotSummaryText()}\n\n确认把这份本机缓存上传到服务器吗？\n本次会用本机缓存覆盖在线数据。`);
+        if (!ok) return;
+
+        const backup = {
+            users: deepClone(users),
+            records: deepClone(records),
+            orders: deepClone(orders),
+            dailyCalls: deepClone(dailyCalls),
+            dailyWechat: deepClone(dailyWechat),
+            followups: deepClone(followups),
+            globalRecommendations: deepClone(globalRecommendations),
+            operatorScripts: deepClone(operatorScripts)
+        };
+
+        try {
+            applySnapshot(localSnapshot);
+            normalizeRecordShape();
+            setSyncStatus("正在上传本机缓存到服务器...");
+            refreshUI();
+            await apiFetch("/sync", {
+                method: "POST",
+                body: JSON.stringify(getApiSnapshot())
+            });
+            await loadRemoteData();
+            normalizeRecordShape();
+            saveLocalCache();
+            captureLocalSnapshot();
+            setSyncStatus("本机缓存已上传到服务器");
+            refreshUI();
+            alert("本机缓存已经成功上传到在线数据库。");
+        } catch (err) {
+            console.error("upload local snapshot failed", err);
+            applySnapshot(backup);
+            normalizeRecordShape();
+            saveLocalCache();
+            setSyncStatus("本机缓存上传失败：" + formatErrorMessage(err));
+            refreshUI();
+            alert("上传失败：" + formatErrorMessage(err));
+        }
+    }
+
+    async function manualSyncNow() {
+        if (storageMode !== "api" || !apiReady) {
+            alert("当前不是在线模式，暂时无法立即同步。");
+            return;
+        }
+        await runRemoteSave();
+        recordLog("手动同步", "手动触发了一次在线同步");
+        saveLocalCache();
+        refreshUI();
+    }
+
+    function queueRemoteSave() {
+        if (storageMode !== "api" || !apiReady) return;
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+            runRemoteSave();
+        }, 500);
+    }
+
+    function saveData() {
+        saveLocalCache();
+        queueRemoteSave();
+    }
+
+    async function handleApiLogin() {
+        const name = document.getElementById("loginName").value.trim();
+        const pwd = document.getElementById("loginPwd").value;
+        if (!name || !pwd) {
+            alert("请输入用户名和密码");
+            return;
+        }
+        try {
+            const loginRes = await apiFetch("/auth/login", {
+                method: "POST",
+                body: JSON.stringify({ name, password: pwd })
+            });
+            await loadRemoteData();
+            normalizeRecordShape();
+            saveLocalCache();
+            resetCustomerVisibleCounts();
+            currentUser = users.find(u => u.id === loginRes.user.id) || {
+                id: loginRes.user.id,
+                name: loginRes.user.name,
+                role: loginRes.user.role,
+                active: loginRes.user.active
+            };
+            setSyncStatus("在线模式已连接");
+            refreshUI();
+            showReminder();
+        } catch (err) {
+            alert(formatErrorMessage(err));
+        }
+    }
+
+    async function handleLogout() {
+        if (storageMode === "api" && apiReady) {
+            try {
+                await apiFetch("/auth/logout", { method: "POST" });
+            } catch (err) {
+                console.warn("logout failed", err);
+            }
+        }
+        resetCustomerVisibleCounts();
+        currentUser = null;
+        refreshUI();
+    }
+
+    function refreshUI() {
+        if (!currentUser) {
+            const migrateHtml = hasLocalSnapshotData() && storageMode === "api"
+                ? `<div style="margin-top:12px; padding:12px; background:#f8fafc; border-radius:12px; text-align:left;"><div style="font-size:12px; color:#64748b; margin-bottom:8px;">${getLocalSnapshotSummaryText()}</div><button id="uploadLocalCacheBtn" class="outline" style="width:100%;">一键上传本机缓存到云端</button></div>`
+                : "";
+            document.getElementById("app").innerHTML = `<div class="login-card card"><h2>业务员 / 管理员登录</h2><p style="font-size:12px; color:#64748b;">${escapeHtml(syncStatusText)}</p><input type="text" id="loginName" placeholder="用户名"><input type="password" id="loginPwd" placeholder="密码"><button id="loginBtn">登录</button>${migrateHtml}</div>`;
+            document.getElementById("loginBtn").onclick = async () => {
+                if (storageMode === "api" && apiReady) await handleApiLogin();
+                else {
+                    const name = document.getElementById("loginName").value.trim();
+                    const pwd = document.getElementById("loginPwd").value;
+                    const user = users.find(u => u.name === name && u.password === pwd && u.active !== false);
+                    if (!user) { alert("用户名或密码错误"); return; }
+                    resetCustomerVisibleCounts();
+                    currentUser = user;
+                    refreshUI();
+                    showReminder();
+                }
+            };
+            const uploadBtn = document.getElementById("uploadLocalCacheBtn");
+            if (uploadBtn) uploadBtn.onclick = uploadLocalSnapshotToCloud;
+            return;
+        }
+
+        if (currentUser.role === "operator") {
+            document.getElementById("app").innerHTML = renderOperator();
+            document.getElementById("recordForm").addEventListener("submit", addRecord);
+            document.getElementById("mockOrderBtn").onclick = mockOrder;
+            document.getElementById("logoutBtn").onclick = handleLogout;
+            const manualSyncBtn = document.getElementById("manualSyncBtn");
+            if (manualSyncBtn) manualSyncBtn.onclick = manualSyncNow;
+            const exportBackupBtn = document.getElementById("exportLocalBackupBtn");
+            if (exportBackupBtn) exportBackupBtn.onclick = exportLocalBackupJson;
+            const saveBtn = document.getElementById("saveDailyBtn");
+            if (saveBtn) saveBtn.onclick = saveDailyCall;
+            const dateInput = document.getElementById("dailyDate");
+            if (dateInput) {
+                dateInput.onchange = () => {
+                    const stats = getDailyStats(currentUser.id, dateInput.value);
+                    document.getElementById("dailyCallCount").value = stats.callCount;
+                    document.getElementById("dailyWechatCount").value = stats.wechatCount;
+                };
+            }
+            const coll = document.getElementById("weeklyCollapseBtn");
+            const content = document.getElementById("weeklyCollapseContent");
+            if (coll && content) {
+                coll.onclick = function() {
+                    this.classList.toggle("active");
+                    if (content.style.maxHeight) content.style.maxHeight = null;
+                    else content.style.maxHeight = content.scrollHeight + "px";
+                };
+                content.style.maxHeight = null;
+            }
+            document.querySelectorAll(".tab-btn").forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+                    document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
+                    if (btn.dataset.tab === "followup") renderFollowupRecords();
+                    else if (btn.dataset.tab === "my") renderMyRecords();
+                    else if (btn.dataset.tab === "public") renderPublicRecords();
+                };
+            });
+            bindCustomerFilters();
+            renderFollowupRecords();
+            renderMyRecords();
+            renderPublicRecords();
+            renderWeeklyStats();
+            return;
+        }
+
+        document.getElementById("app").innerHTML = renderAdmin();
+        document.getElementById("logoutBtn").onclick = handleLogout;
+        document.getElementById("addOperatorBtn").onclick = addOperator;
+        document.getElementById("changeAdminPwdBtn").onclick = changeAdminPassword;
+        document.getElementById("exportDataBtn").onclick = exportAllData;
+        document.getElementById("loadStatsBtn").onclick = loadOperatorStats;
+        document.getElementById("manageRecommendBtn").onclick = showRecommendManager;
+        const importBtn = document.getElementById("importBtn");
+        if (importBtn) importBtn.onclick = () => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = ".xlsx, .xls, .csv";
+            input.onchange = e => importCustomers(e.target.files[0]);
+            input.click();
+        };
+        const manualSyncBtn = document.getElementById("manualSyncBtn");
+        if (manualSyncBtn) manualSyncBtn.onclick = manualSyncNow;
+        const exportBackupBtn = document.getElementById("exportLocalBackupBtn");
+        if (exportBackupBtn) exportBackupBtn.onclick = exportLocalBackupJson;
+        const downloadTemplateBtn = document.getElementById("downloadTemplateBtn");
+        if (downloadTemplateBtn) downloadTemplateBtn.onclick = downloadImportTemplate;
+        renderTeamStatsSimple();
+        renderOrderDetailSimple();
+        renderCooperatedSimple();
+        renderOperatorListSimple();
+        renderDailyNewCustomersAdmin();
+        renderOperationLogs();
+    }
+
     async function startApp() {
         await loadData();
         initDemoData();
