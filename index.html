@@ -441,6 +441,13 @@
 <div class="font-bold text-sm text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2"><i class="fas fa-list-ul"></i> 商品明细</div>
 <div class="text-[10px] font-bold text-slate-400 bg-white dark:bg-slate-800 px-2 py-1 rounded border border-slate-200">请添加至少一项</div>
 </div>
+<div class="bg-indigo-50/50 dark:bg-slate-900 px-6 py-4 border-b border-indigo-100 dark:border-slate-700">
+<label class="text-[10px] font-bold text-indigo-500 mb-2 block uppercase tracking-wider">粘贴报价单自动识别</label>
+<div class="flex flex-col md:flex-row gap-3">
+<textarea class="pro-input min-h-[76px] text-xs leading-relaxed bg-white" id="quoteImportText" placeholder="把复制的报价单粘贴到这里，可自动识别品名、尺寸、数量、总价"></textarea>
+<button class="btn btn-primary md:w-36 h-12 md:h-auto shrink-0 text-xs font-bold" data-action="import-quote-text"><i class="fas fa-wand-magic-sparkles"></i> 识别导入</button>
+</div>
+</div>
 <table class="w-full text-xs text-left modern-table">
 <thead class="bg-white dark:bg-slate-800">
 <tr><th class="pl-6">品名</th><th>尺寸</th><th class="w-24 text-center">数量</th><th class="w-32 text-right pr-6">总额</th><th class="w-16"></th></tr>
@@ -1061,8 +1068,8 @@
                 bottomLock: { name: "扣底盒", calc: (L, W, H) =>[{ name: "主盒", l: (L + W) * 2 + 20, w: W / 2 + 20 + H + W + 20 }] }, 
                 airplane: { name: "飞机盒", calc: (L, W, H) =>[{ name: "主盒", l: L + H * 4 + 20, w: W * 2 + H * 3 + 20 }] }, 
                 topBottom: { name: "天地盒", calc: (L, W, H) =>[{ name: "天盖", l: L + H * 4 + 40, w: W + H * 4 + 40 }, { name: "地盒", l: L + H * 4 + 40, w: W + H * 4 + 40 }] }, 
-                drawer: { name: "抽屉盒", calc: (L, W, H) =>[{ name: "外封", l: (H + W) * 2 + 20, w: L }, { name: "内盒", l: L + H * 2 + 20, w: W + H * 2 + 20 }] }, 
-                handle: { name: "手提盒", calc: (L, W, H) =>[{ name: "主盒", l: 2 * L + 2 * W + 20, w: W + H + 80 }] } 
+                drawer: { name: "抽屉盒", calc: (L, W, H) =>[{ name: "外封", l: (H + W) * 2 + 20, w: L }, { name: "内盒", l: L + H * 4 + 30, w: W + H * 4 + 30 }] }, 
+                handle: { name: "手提盒", calc: (L, W, H) =>[{ name: "主盒", l: 2 * L + 2 * W + 20, w: W + H + 90 }] } 
             },
             DOUBLE_GLUE_EXCLUDED: new Set(['topBottom', 'drawer']),
             canPieceFit: (partL, partW, paperOverride = null) => {
@@ -1239,6 +1246,51 @@
                 bestPlan = pickBetter(bestPlan, buildSplitPlan(variants[1], variants[0], 'horizontal'));
                 return bestPlan || createPlan('empty', '无法排版', []);
             },
+            buildFitWarning: (part, paper, reason, params = {}, partIndex = 0) => {
+                const paperSize = `${paper.w.toFixed(0)}×${paper.h.toFixed(0)}mm`;
+                const rotatedSize = `${paper.h.toFixed(0)}×${paper.w.toFixed(0)}mm`;
+                const rawSize = `${paper.rawW.toFixed(0)}×${paper.rawH.toFixed(0)}mm`;
+                const fitScale = Math.min(
+                    1,
+                    Math.max(
+                        Math.min(paper.w / part.l, paper.h / part.w),
+                        Math.min(paper.h / part.l, paper.w / part.w)
+                    )
+                );
+                const suggestedPartL = Math.max(1, Math.floor(part.l * fitScale));
+                const suggestedPartW = Math.max(1, Math.floor(part.w * fitScale));
+                const suggestions = [
+                    `单片成型需满足展开尺寸 ≤ ${paperSize}，或旋转后 ≤ ${rotatedSize}。`,
+                    `若保持当前展开比例，建议把 ${part.name} 展开尺寸改到约 ${suggestedPartL}×${suggestedPartW}mm 以内。`,
+                    '若成品尺寸不能缩小，可换更大纸张，或调整盒型结构后重新报价。'
+                ];
+                const dims = params.inputDims;
+                const boxType = params.boxType;
+                if (dims && boxType && CalcLogic.BOX_TYPES[boxType]) {
+                    let low = 0;
+                    let high = 1;
+                    for (let i = 0; i < 24; i++) {
+                        const mid = (low + high) / 2;
+                        const scaledParts = CalcLogic.BOX_TYPES[boxType].calc(dims.L * mid, dims.W * mid, dims.H * mid);
+                        const targetPart = scaledParts[partIndex] || scaledParts.find(p => p.name === part.name) || scaledParts[0];
+                        if (targetPart && CalcLogic.canPieceFit(targetPart.l, targetPart.w, paper)) low = mid;
+                        else high = mid;
+                    }
+                    if (low > 0 && low < 1) {
+                        suggestions.splice(2, 0, `按当前盒型公式估算，成品尺寸可先改到约 ${Math.floor(dims.L * low)}×${Math.floor(dims.W * low)}×${Math.floor(dims.H * low)}mm 后再重新计算。`);
+                    }
+                } else if (dims && boxType === 'custom') {
+                    suggestions.splice(2, 0, `自定义展开可先改为 ${suggestedPartL}×${suggestedPartW}mm，再点击计算确认。`);
+                }
+                if ((paper.marginTB || paper.marginLR) && (paper.rawW !== paper.w || paper.rawH !== paper.h)) {
+                    suggestions.unshift(`当前纸张原始尺寸 ${rawSize}，扣除咬口/借咬口后有效尺寸为 ${paperSize}。`);
+                }
+                return {
+                    title: `${part.name} ${reason}`,
+                    detail: `当前展开尺寸 ${part.l.toFixed(0)}×${part.w.toFixed(0)}mm，超过当前有效纸张限制。`,
+                    suggestions
+                };
+            },
             calcCost: (parts, params, totalQuantity) => {
                 let details = { material: 0, lamination: 0, dieCut: 0, extra: 0, corrugated: 0, doubleGlue: 0 }, layoutsInfo = [], hasError = false, errorMsgs = [], paper = CalcLogic.getEffectivePaper();
                 const corrugatedRate = params.isCorrugated ? 30 : 0;
@@ -1300,7 +1352,8 @@
                     });
                 };
 
-                for (const part of parts) {
+                for (let partIndex = 0; partIndex < parts.length; partIndex++) {
+                    const part = parts[partIndex];
                     if (CalcLogic.canPieceFit(part.l, part.w, paper)) {
                         processPiece(part, part, { productionLabel: '单片成型' });
                         continue;
@@ -1312,7 +1365,7 @@
                         const reason = params.allowDoubleGlue
                             ? (CalcLogic.canUseDoubleGlue(params.boxType) ? '尺寸超限，双粘后仍无法排版' : '尺寸超限，当前盒型不参与双粘')
                             : '尺寸超限';
-                        errorMsgs.push(`${part.name} ${reason}`);
+                        errorMsgs.push(CalcLogic.buildFitWarning(part, paper, reason, params, partIndex));
                         continue;
                     }
 
@@ -1441,8 +1494,44 @@
                 document.getElementById('resultCard').classList.add('hidden');
                 document.getElementById('warningCard').classList.add('hidden');
             },
+            renderWarnings(errors) {
+                const card = document.getElementById('warningCard');
+                const content = document.getElementById('warningContent');
+                content.innerHTML = '';
+                (errors || []).forEach((error) => {
+                    const item = document.createElement('div');
+                    item.className = 'mb-3 last:mb-0';
+
+                    const title = document.createElement('div');
+                    title.className = 'font-bold text-red-700';
+                    title.textContent = typeof error === 'string' ? error : (error.title || '无法排版');
+                    item.appendChild(title);
+
+                    if (error && typeof error === 'object' && error.detail) {
+                        const detail = document.createElement('div');
+                        detail.className = 'mt-1 text-red-600/90';
+                        detail.textContent = error.detail;
+                        item.appendChild(detail);
+                    }
+
+                    if (error && typeof error === 'object' && Array.isArray(error.suggestions) && error.suggestions.length) {
+                        const list = document.createElement('ul');
+                        list.className = 'mt-2 list-disc pl-5 space-y-1 text-slate-600';
+                        error.suggestions.forEach((suggestion) => {
+                            const li = document.createElement('li');
+                            li.textContent = suggestion;
+                            list.appendChild(li);
+                        });
+                        item.appendChild(list);
+                    }
+
+                    content.appendChild(item);
+                });
+                card.classList.remove('hidden');
+            },
             doCalc() {
                 const mode = this.currentTab;
+                let calcInput = { mode };
                 let parts=[], qty=1, params = {
                     unitPrice: parseFloat(document.getElementById('unitPrice').value)||100,
                     discount: parseFloat(document.getElementById('discount').value)||0,
@@ -1464,6 +1553,16 @@
                     parts = CalcLogic.BOX_TYPES[k].calc(L,W,H);
                     qty = parseInt(document.getElementById('quantity').value);
                     params.isCorrugated = document.getElementById('checkCorrugatedBasic').checked;
+                    params.inputDims = { L, W, H };
+                    calcInput = {
+                        mode,
+                        boxType: k,
+                        L,
+                        W,
+                        H,
+                        qty,
+                        isCorrugated: params.isCorrugated
+                    };
                     this.updateUnfoldedView(L,W,H,k);
                 } else {
                     const L=parseFloat(document.getElementById('unfoldedL').value), W=parseFloat(document.getElementById('unfoldedW').value);
@@ -1471,6 +1570,14 @@
                     parts = [{name:'自定义', l:L, w:W}];
                     qty = parseInt(document.getElementById('quantityUnfolded').value);
                     params.isCorrugated = document.getElementById('checkCorrugatedUnfolded').checked;
+                    params.inputDims = { L, W };
+                    calcInput = {
+                        mode,
+                        unfoldedL: L,
+                        unfoldedW: W,
+                        qty,
+                        isCorrugated: params.isCorrugated
+                    };
                     const svgContainer = document.getElementById('svgContainer');
                     svgContainer.innerHTML = '';
                     const note = document.createElement('div');
@@ -1481,8 +1588,7 @@
 
                 const res = CalcLogic.calcCost(parts, params, qty);
                 if(!res.success) { 
-                    document.getElementById('warningCard').classList.remove('hidden'); 
-                    document.getElementById('warningContent').innerText = res.errors.join(', '); 
+                    this.renderWarnings(res.errors); 
                     document.getElementById('resultCard').classList.add('hidden'); return; 
                 }
                 
@@ -1501,11 +1607,27 @@
                 this.renderLayoutVisuals(res.layouts, params.useMixedLayoutForPricing);
                 
                 const sizeStr = mode==='basic'?`${document.getElementById('length').value}x${document.getElementById('width').value}x${document.getElementById('height').value}`:`展开 ${document.getElementById('unfoldedL').value}x${document.getElementById('unfoldedW').value}`;
+                calcInput.pricing = {
+                    paperW: parseFloat(document.getElementById('paperW').value) || OrderState.globalConfig.defaults.paperW,
+                    paperH: parseFloat(document.getElementById('paperH').value) || OrderState.globalConfig.defaults.paperH,
+                    marginTB: parseFloat(document.getElementById('marginTB').value) || 0,
+                    marginLR: parseFloat(document.getElementById('marginLR').value) || 0,
+                    unitPrice: params.unitPrice,
+                    discount: params.discount,
+                    laminationFee: params.laminationFee,
+                    dieCutFee: params.dieCutFee,
+                    additionalFee: params.additionalFee,
+                    useMixedLayoutForPricing: params.useMixedLayoutForPricing,
+                    allowDoubleGlue: params.allowDoubleGlue,
+                    doubleGlueOverlap: params.doubleGlueOverlap,
+                    doubleGlueFee: params.doubleGlueFee
+                };
                 
                 this.currentQuote = { 
                     name: mode==='basic'?CalcLogic.BOX_TYPES[document.getElementById('boxType').value].name:'自定义', 
                     qty, total: parseFloat(res.finalTotal.toFixed(2)), unitPrice: (res.finalTotal/qty).toFixed(3),
                     size: sizeStr, date: new Date().toLocaleString(),
+                    calcInput,
                     layoutMode: params.useMixedLayoutForPricing ? '双区混拼参与报价' : '混拼仅参考',
                     productionMode: res.usedDoubleGlue ? '含双粘方案' : '单片成型'
                 };
@@ -1709,8 +1831,8 @@
                 const list = document.getElementById('calcHistoryList');
                 if(this.history.length === 0) { list.innerHTML = '<div class="text-xs text-center text-slate-300 py-6">暂无历史记录</div>'; return; }
                 list.innerHTML = this.history.map((h, i) => `
-                    <div class="flex items-center p-3 bg-white dark:bg-slate-800 border-b border-slate-50 dark:border-slate-700 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                        <input type="checkbox" class="hist-chk mr-3 custom-checkbox" data-idx="${i}">
+                    <div class="flex items-center p-3 bg-white dark:bg-slate-800 border-b border-slate-50 dark:border-slate-700 text-xs hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer" data-action="restore-calc-history" data-index="${i}" title="点击回填算价数据">
+                        <input type="checkbox" class="hist-chk mr-3 custom-checkbox" data-idx="${i}" onclick="event.stopPropagation()">
                         <div class="flex-1">
                             <div class="font-bold text-slate-700 dark:text-slate-200">${h.name} <span class="text-slate-400 font-normal">x${h.qty}</span></div>
                             <div class="text-[10px] text-slate-400 font-mono mt-0.5">${h.size}</div>
@@ -1720,6 +1842,62 @@
                             <div class="text-[9px] text-slate-300">${h.date.split(' ')[1]||''}</div>
                         </div>
                     </div>`).join('');
+            },
+            restoreHistory(index) {
+                const item = this.history[Number(index)];
+                if(!item) return UI.showToast('未找到该计算记录', 'error');
+                const input = item.calcInput;
+                if(!input) return UI.showToast('旧记录缺少算价参数，请重新计算一次后再回填', 'error');
+                if(input.pricing) {
+                    const pricingIds = ['paperW', 'paperH', 'marginTB', 'marginLR', 'unitPrice', 'discount', 'laminationFee', 'dieCutFee', 'additionalFee'];
+                    pricingIds.forEach(id => {
+                        if(input.pricing[id] !== undefined && document.getElementById(id)) document.getElementById(id).value = input.pricing[id];
+                    });
+                    this.useMixedLayoutForPricing = Boolean(input.pricing.useMixedLayoutForPricing);
+                    this.allowDoubleGlue = input.pricing.allowDoubleGlue !== false;
+                    this.doubleGlueOverlap = parseFloat(input.pricing.doubleGlueOverlap || this.doubleGlueOverlap) || 15;
+                    this.doubleGlueFee = parseFloat(input.pricing.doubleGlueFee || 0) || 0;
+                    const mixedToggle = document.getElementById('checkMixedPricing');
+                    if(mixedToggle) mixedToggle.checked = this.useMixedLayoutForPricing;
+                    const doubleGlueToggle = document.getElementById('checkDoubleGlue');
+                    if(doubleGlueToggle) doubleGlueToggle.checked = this.allowDoubleGlue;
+                    const overlapInput = document.getElementById('doubleGlueOverlap');
+                    if(overlapInput) overlapInput.value = this.doubleGlueOverlap;
+                    const feeInput = document.getElementById('doubleGlueFee');
+                    if(feeInput) feeInput.value = this.doubleGlueFee;
+                    this.updateStatusBar();
+                }
+
+                if(input.mode === 'basic') {
+                    this.currentTab = 'basic';
+                    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.target === 'basic'));
+                    document.getElementById('panel-basic').classList.remove('hidden');
+                    document.getElementById('panel-unfolded').classList.add('hidden');
+                    const boxType = document.getElementById('boxType');
+                    if(boxType) boxType.value = input.boxType || boxType.value;
+                    document.getElementById('length').value = input.L || '';
+                    document.getElementById('width').value = input.W || '';
+                    document.getElementById('height').value = input.H || '';
+                    document.getElementById('quantity').value = input.qty || 1;
+                    document.getElementById('checkCorrugatedBasic').checked = Boolean(input.isCorrugated);
+                    const indicator = document.getElementById('tabIndicator');
+                    if(indicator) indicator.style.transform = 'translateX(0)';
+                } else {
+                    this.currentTab = 'unfolded';
+                    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.target === 'unfolded'));
+                    document.getElementById('panel-basic').classList.add('hidden');
+                    document.getElementById('panel-unfolded').classList.remove('hidden');
+                    document.getElementById('unfoldedL').value = input.unfoldedL || '';
+                    document.getElementById('unfoldedW').value = input.unfoldedW || '';
+                    document.getElementById('quantityUnfolded').value = input.qty || 1;
+                    document.getElementById('checkCorrugatedUnfolded').checked = Boolean(input.isCorrugated);
+                    const indicator = document.getElementById('tabIndicator');
+                    if(indicator) indicator.style.transform = 'translateX(100%)';
+                }
+
+                this.doCalc();
+                switchApp('calculator');
+                UI.showToast('已回填计算记录，可继续调整后重新计算', 'success');
             },
             batchCopyQuote() {
                 const chks = document.querySelectorAll('.hist-chk:checked');
@@ -2005,6 +2183,96 @@
                     }
                 }
             },
+            parseQuoteText(text) {
+                const raw = String(text || '').replace(/\r/g, '').trim();
+                if(!raw) return [];
+
+                const toNumber = (value) => parseFloat(String(value || '').replace(/,/g, '').replace(/[^\d.]/g, '')) || 0;
+                const normalizeSize = (value) => String(value || '').replace(/\s*mm\s*$/i, '').trim();
+                const items = [];
+
+                raw.split('\n').forEach((line) => {
+                    const match = line.trim().match(/^[-•]\s*(.+?)(?:\s*[（(]([^)）]+)[）)])?\s*x\s*(\d+(?:\.\d+)?)\s*=\s*¥?\s*([\d,.]+)/i);
+                    if(match) {
+                        const qty = toNumber(match[3]);
+                        const total = toNumber(match[4]);
+                        items.push({
+                            name: match[1].trim(),
+                            size: normalizeSize(match[2] || ''),
+                            qty,
+                            total,
+                            unitPrice: qty ? (total / qty).toFixed(3) : 0
+                        });
+                    }
+                });
+                if(items.length) return items;
+
+                const blocks = raw.split(/(?=(?:品名|商品|盒型)\s*[:：])/).map(b => b.trim()).filter(Boolean);
+                const field = (block, names) => {
+                    const pattern = new RegExp(`(?:${names.join('|')})\\s*[:：]\\s*([^\\n]+)`, 'i');
+                    const match = block.match(pattern);
+                    return match ? match[1].trim() : '';
+                };
+
+                blocks.forEach((block) => {
+                    const name = field(block, ['品名', '商品', '盒型']);
+                    const size = normalizeSize(field(block, ['规格', '尺寸']));
+                    const qty = toNumber(field(block, ['数量']));
+                    const total = toNumber(field(block, ['总价', '总额', '金额', '合计']));
+                    const unitPrice = toNumber(field(block, ['单价']));
+                    if(name && (qty || total || size)) {
+                        const finalQty = qty || 1;
+                        const finalTotal = total || (unitPrice * finalQty);
+                        items.push({
+                            name,
+                            size,
+                            qty: finalQty,
+                            total: finalTotal,
+                            unitPrice: finalQty ? (finalTotal / finalQty).toFixed(3) : unitPrice
+                        });
+                    }
+                });
+
+                if(items.length) return items;
+
+                const compact = raw.replace(/\s+/g, ' ');
+                const name = (compact.match(/(?:品名|商品|盒型)\s*[:：]\s*([^:：]+?)(?=\s*(?:规格|尺寸|数量|总价|单价)\s*[:：]|$)/) || [])[1];
+                const size = (compact.match(/(?:规格|尺寸)\s*[:：]\s*([^:：]+?)(?=\s*(?:数量|总价|单价)\s*[:：]|$)/) || [])[1];
+                const qty = toNumber((compact.match(/数量\s*[:：]\s*([\d.]+)/) || [])[1]);
+                const total = toNumber((compact.match(/(?:总价|总额|金额|合计)\s*[:：]\s*¥?\s*([\d,.]+)/) || [])[1]);
+                if(name && (qty || total || size)) {
+                    const finalQty = qty || 1;
+                    items.push({
+                        name: name.trim(),
+                        size: normalizeSize(size || ''),
+                        qty: finalQty,
+                        total,
+                        unitPrice: finalQty ? (total / finalQty).toFixed(3) : 0
+                    });
+                }
+                return items;
+            },
+            importQuoteText(text, { clearInput = false } = {}) {
+                const parsed = this.parseQuoteText(text);
+                if(!parsed.length) {
+                    UI.showToast('没有识别到报价单里的商品、尺寸、数量或价格', 'error');
+                    return 0;
+                }
+                OrderState.currentItems.push(...parsed.map(item => ({
+                    name: item.name,
+                    size: item.size,
+                    qty: item.qty,
+                    total: Math.round(parseFloat(item.total) || 0),
+                    unitPrice: item.unitPrice || (item.qty ? ((item.total || 0) / item.qty).toFixed(3) : 0)
+                })));
+                this.renderTempTable();
+                if(clearInput) {
+                    const input = document.getElementById('quoteImportText');
+                    if(input) input.value = '';
+                }
+                UI.showToast(`已识别并导入 ${parsed.length} 条商品明细`, 'success');
+                return parsed.length;
+            },
             handleFileSelect(input) { 
                 Array.from(input.files).forEach(f => this.processImageFile(f)); 
                 input.value = ''; 
@@ -2135,6 +2403,8 @@
                 document.getElementById('paymentMethod').value=''; 
                 document.getElementById('fileLink').value=''; 
                 document.getElementById('remarks').value=''; 
+                const quoteImport = document.getElementById('quoteImportText');
+                if(quoteImport) quoteImport.value = '';
                 document.getElementById('inputOrderId').value = ''; 
                 OrderState.currentItems=[]; this.renderTempTable(); 
                 OrderState.currentImages=[]; OrderState.pendingUploadFiles=[]; this.renderImgGallery();
@@ -2694,20 +2964,6 @@
             }
         };
 
-        // 初始化
-        document.addEventListener('DOMContentLoaded', () => {
-            CloudService.init();
-            Auth.init();
-            CalcUI.init();
-            OrderForm.init();
-            if(window.AV) OrderList.refreshList();
-            switchApp('calculator');
-
-            // 监听定稿图上传
-            document.getElementById('finalImageInput').onchange = (e) => {
-                if(e.target.files[0]) OrderList.handleFinalImagePaste(e.target.files[0]);
-            };
-        });
     </script>
 <script>
 (() => {
@@ -3787,12 +4043,17 @@
                 case 'logout': return Auth.logout();
                 case 'batch-copy-quote': return CalcUI.batchCopyQuote();
                 case 'batch-add-order': return CalcUI.batchAddToOrder();
+                case 'restore-calc-history': return CalcUI.restoreHistory(index);
                 case 'reset-order-form': return OrderForm.reset();
                 case 'cancel-edit': return OrderForm.cancelEdit();
                 case 'generate-order-id':
                     $('inputOrderId').value = `ORD-${Date.now().toString().slice(-8)}`;
                     return;
                 case 'add-item': return OrderForm.addItem();
+                case 'import-quote-text': {
+                    const input = $('quoteImportText');
+                    return OrderForm.importQuoteText(input?.value || '', { clearInput: true });
+                }
                 case 'submit-order': return OrderForm.submit();
                 case 'quick-filter': return OrderList.quickFilter(status || '');
                 case 'refresh-list': return OrderList.refreshList();
@@ -3842,6 +4103,15 @@
             $(id)?.addEventListener('change', () => OrderList.refreshList());
         });
         $('fileInput')?.addEventListener('change', (event) => OrderForm.handleFileSelect(event.target));
+        $('quoteImportText')?.addEventListener('paste', (event) => {
+            setTimeout(() => {
+                const input = event.target;
+                if (input?.value) OrderForm.importQuoteText(input.value, { clearInput: true });
+            }, 0);
+        });
+        $('finalImageInput')?.addEventListener('change', (event) => {
+            if (event.target.files[0]) OrderList.handleFinalImagePaste(event.target.files[0]);
+        });
         $('lightboxImg')?.addEventListener('click', (event) => event.stopPropagation());
         $('lightbox')?.addEventListener('click', (event) => {
             if (event.target === $('lightbox')) UI.closeLightbox();
@@ -3852,8 +4122,14 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+        CloudService.init();
+        Auth.init();
+        CalcUI.init();
+        OrderForm.init();
         bindStaticListeners();
         setSubmitButtonHTML('create');
+        if (window.AV) OrderList.refreshList();
+        switchApp('calculator');
     });
 })();
 </script></body>
