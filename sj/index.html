@@ -114,6 +114,19 @@
         
         #box-system .size-row { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 15px; padding: 15px; background: #fdfdfd; border: 1px solid #e5e5ea; border-radius: 12px; }
         #box-system .size-row .input-group { flex: 1; margin-bottom: 0; }
+        #box-system .size-row .size-mode-group { flex: 0 0 190px; }
+        #box-system .size-row select { appearance: none; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 38px 12px 14px; font-size: 15px; outline: none; cursor: pointer; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2386868b' d='M2.2 4.2 6 8l3.8-3.8.8.8L6 9.6 1.4 5z'/%3E%3C/svg%3E") no-repeat right 14px center; }
+        #box-system .size-row select:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.2); }
+        #box-system .size-mode-note { min-height: 17px; margin-top: 6px; color: var(--text-muted); font-size: 11px; line-height: 1.35; }
+        #box-system .size-row.flat-mode { border-left: 4px solid var(--warning-color); }
+        #box-system .size-row.flat-mode .size-mode-note { color: #a86300; }
+
+        @media (max-width: 760px) {
+            #box-system .size-row { flex-wrap: wrap; align-items: stretch; }
+            #box-system .size-row .size-mode-group { flex: 1 1 100%; }
+            #box-system .size-row .input-group { min-width: calc(50% - 8px); }
+            #box-system .size-row .btn-danger { margin-left: auto; }
+        }
         
         #box-system table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
         #box-system th, #box-system td { text-align: left; padding: 14px; border-bottom: 1px solid var(--border-color); }
@@ -312,11 +325,11 @@
                 <div class="input-group"><label>需求套装数 (套)</label><input type="number" id="global-qty" placeholder="每款各需要多少个" value="1000"></div>
                 <div class="input-group"><label>期望利润率 (%)</label><input type="number" id="global-profit" value="10"></div>
             </div>
-            <p style="font-size:12px; color:var(--text-muted); margin-top:-10px;">注：1套 = 下方录入的所有产品各1个。录入单款自动触发"插拼"算法，多款自动触发"合拼"算法。</p>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:-10px;">注：1套 = 下方录入的所有产品各1个。每行可选择盒子净尺寸或展开尺寸；盒子尺寸允许借纸，展开尺寸按实际长宽拼版且不借纸。</p>
         </div>
 
         <div class="card">
-            <h2>录入盒子净尺寸 (mm)</h2>
+            <h2>录入产品尺寸 (mm)</h2>
             <div id="size-list"></div>
             <button class="btn-add" onclick="addSizeRow()">+ 添加需合拼的产品</button>
             <button class="btn-primary" style="width: 100%;" onclick="calculateComboQuote()">智能拼版并计算报价</button>
@@ -804,29 +817,109 @@
 
 
     // ================== 系统 1：白瓦包装拼版引擎 ==================
+    // 支持“盒型借纸”和“展开尺寸实占”的混拼排版器。
+    // 盒型的借纸区只允许与另一个盒型借纸区重叠，展开尺寸不会被借纸侵入。
     class Packer {
-        constructor(w, h) { this.root = { x: 0, y: 0, w: w, h: h }; }
+        constructor(w, h) {
+            this.width = w;
+            this.height = h;
+            this.root = { x: 0, y: 0, w: w, h: h };
+            this.placed = [];
+        }
+
         fit(blocks) {
-            let n, node, block;
-            for (n = 0; n < blocks.length; n++) {
-                block = blocks[n];
-                if (node = this.findNode(this.root, block.w, block.h)) {
-                    block.fit = this.splitNode(node, block.w, block.h);
-                } else if (node = this.findNode(this.root, block.h, block.w)) {
-                    let temp = block.w; block.w = block.h; block.h = temp;
-                    block.fit = this.splitNode(node, block.w, block.h);
-                } else { return false; }
+            for (const block of blocks) {
+                const orientations = this.getOrientations(block);
+                let placement = null;
+
+                for (const orientation of orientations) {
+                    const node = this.findNode(
+                        this.root,
+                        orientation.packW,
+                        orientation.packH,
+                        orientation.actualW,
+                        orientation.actualH,
+                        orientation.borrowAxis,
+                        block
+                    );
+                    if (node) {
+                        placement = { node, orientation };
+                        break;
+                    }
+                }
+
+                if (!placement) return false;
+
+                const { node, orientation } = placement;
+                block.w = orientation.actualW;
+                block.h = orientation.actualH;
+                block.fit = this.splitNode(node, orientation.packW, orientation.packH);
+                block.fit.packW = orientation.packW;
+                block.fit.packH = orientation.packH;
+                block.fit.rotated = orientation.rotated;
+                block.fit.borrowAxis = orientation.borrowAxis;
+                this.placed.push(block);
             }
             return true;
         }
-        findNode(root, w, h) {
-            if (root.used) return this.findNode(root.right, w, h) || this.findNode(root.down, w, h);
-            else if ((w <= root.w) && (h <= root.h)) return root;
-            else return null;
+
+        getOrientations(block) {
+            const actualW = block.origW;
+            const actualH = block.origH;
+            const borrow = block.kind === 'box' ? Math.min(block.borrow || 0, actualH) : 0;
+            const orientations = [{
+                actualW,
+                actualH,
+                packW: actualW,
+                packH: actualH - borrow,
+                borrowAxis: borrow > 0 ? 'y' : null,
+                rotated: false
+            }];
+
+            if (actualW !== actualH) {
+                orientations.push({
+                    actualW: actualH,
+                    actualH: actualW,
+                    packW: actualH - borrow,
+                    packH: actualW,
+                    borrowAxis: borrow > 0 ? 'x' : null,
+                    rotated: true
+                });
+            }
+            return orientations;
         }
+
+        findNode(root, packW, packH, actualW, actualH, borrowAxis, block) {
+            if (root.used) {
+                return this.findNode(root.right, packW, packH, actualW, actualH, borrowAxis, block)
+                    || this.findNode(root.down, packW, packH, actualW, actualH, borrowAxis, block);
+            }
+
+            const fitsPackingSlot = packW <= root.w && packH <= root.h;
+            const fitsActualPaper = root.x + actualW <= this.width && root.y + actualH <= this.height;
+            const overlapsFlat = this.placed.some(placed => {
+                if (block.kind === 'box' && placed.kind === 'box') {
+                    // 只有同向盒型才允许借纸区发生重叠；展开块始终不能被侵入。
+                    const sameBorrowAxis = borrowAxis && placed.fit.borrowAxis === borrowAxis;
+                    if (sameBorrowAxis) return false;
+                }
+                return this.rectsOverlap(
+                    { x: root.x, y: root.y, w: actualW, h: actualH },
+                    { x: placed.fit.x, y: placed.fit.y, w: placed.w, h: placed.h }
+                );
+            });
+
+            return fitsPackingSlot && fitsActualPaper && !overlapsFlat ? root : null;
+        }
+
+        rectsOverlap(a, b) {
+            return a.x < b.x + b.w && a.x + a.w > b.x
+                && a.y < b.y + b.h && a.y + a.h > b.y;
+        }
+
         splitNode(node, w, h) {
             node.used = true;
-            node.down  = { x: node.x, y: node.y + h, w: node.w, h: node.h - h };
+            node.down = { x: node.x, y: node.y + h, w: node.w, h: node.h - h };
             node.right = { x: node.x + w, y: node.y, w: node.w - w, h: h };
             return node;
         }
@@ -864,12 +957,33 @@
         const row = document.createElement('div');
         row.className = 'size-row';
         row.innerHTML = `
-            <div class="input-group"><label>长(L)</label><input type="number" class="val-l" placeholder="mm"></div>
-            <div class="input-group"><label>宽(W)</label><input type="number" class="val-w" placeholder="mm"></div>
-            <div class="input-group"><label>高(H)</label><input type="number" class="val-h" placeholder="mm"></div>
+            <div class="input-group size-mode-group">
+                <label>录入方式</label>
+                <select class="size-mode" onchange="updateSizeRowMode(this)" aria-label="选择尺寸录入方式">
+                    <option value="box" selected>盒子净尺寸</option>
+                    <option value="flat">展开尺寸</option>
+                </select>
+                <div class="size-mode-note">自动换算展开并允许盒型借纸</div>
+            </div>
+            <div class="input-group"><label class="label-l">盒长(L)</label><input type="number" class="val-l" placeholder="mm"></div>
+            <div class="input-group"><label class="label-w">盒宽(W)</label><input type="number" class="val-w" placeholder="mm"></div>
+            <div class="input-group input-h-group"><label class="label-h">盒高(H)</label><input type="number" class="val-h" placeholder="mm"></div>
             <button class="btn-danger" style="margin-bottom: 5px;" onclick="this.parentElement.remove()">移除</button>
         `;
         list.appendChild(row);
+    }
+
+    function updateSizeRowMode(select) {
+        const row = select.closest('.size-row');
+        const isFlat = select.value === 'flat';
+        row.classList.toggle('flat-mode', isFlat);
+        row.querySelector('.input-h-group').style.display = isFlat ? 'none' : '';
+        row.querySelector('.label-l').innerText = isFlat ? '展开长(L)' : '盒长(L)';
+        row.querySelector('.label-w').innerText = isFlat ? '展开宽(W)' : '盒宽(W)';
+        row.querySelector('.label-h').innerText = '盒高(H)';
+        row.querySelector('.size-mode-note').innerText = isFlat
+            ? '按实际展开尺寸拼版，不借纸'
+            : '自动换算展开并允许盒型借纸';
     }
 
     function calculateComboQuote() {
@@ -878,25 +992,55 @@
         if(!qty || qty <= 0) { alert("请填写正确的套装数量！"); return; }
 
         const rows = document.querySelectorAll('#box-system .size-row');
-        let setBlocks = []; let setAreaM2 = 0; 
-        let singleBoxW = 0; 
+        let setBlocks = [];
+        let setPackingAreaM2 = 0;
 
         rows.forEach((row, index) => {
+            const mode = row.querySelector('.size-mode')?.value || 'box';
             const L = parseFloat(row.querySelector('.val-l').value);
             const W = parseFloat(row.querySelector('.val-w').value);
             const H = parseFloat(row.querySelector('.val-h').value);
-            if(L && W && H) {
+
+            if (mode === 'flat' && L && W) {
+                setBlocks.push({
+                    id: index + 1,
+                    kind: 'flat',
+                    borrow: 0,
+                    w: L,
+                    h: W,
+                    origW: L,
+                    origH: W,
+                    inputSize: `${L} x ${W}`,
+                    label: `展开${index + 1}`,
+                    modeLabel: '展开尺寸'
+                });
+                setPackingAreaM2 += (L / 1000) * (W / 1000);
+            } else if (mode === 'box' && L && W && H) {
                 const expL = L * 2 + W * 2;
                 const expW = H + W * 2;
-                setBlocks.push({ id: index + 1, w: expL, h: expW, origW: expL, origH: expW, inputSize: `${L} x ${W} x ${H}`, label: `款${index+1}` });
-                setAreaM2 += (expL / 1000) * (expW / 1000);
-                singleBoxW = W;
+                setBlocks.push({
+                    id: index + 1,
+                    kind: 'box',
+                    borrow: W,
+                    w: expL,
+                    h: expW,
+                    origW: expL,
+                    origH: expW,
+                    inputSize: `${L} x ${W} x ${H}`,
+                    label: `盒${index + 1}`,
+                    modeLabel: '盒子尺寸'
+                });
+                // 盒型按“展开高 - 借纸宽度”计入排版占位；展开尺寸按实际面积计入。
+                setPackingAreaM2 += (expL / 1000) * ((expW - W) / 1000);
             }
         });
 
         if(setBlocks.length === 0) { alert("请至少录入一个产品的尺寸！"); return; }
 
-        const isSingleBox = setBlocks.length === 1;
+        const isSingleBox = setBlocks.length === 1 && setBlocks[0].kind === 'box';
+        const isSingleFlat = setBlocks.length === 1 && setBlocks[0].kind === 'flat';
+        const hasBorrowing = setBlocks.some(block => block.kind === 'box' && block.borrow > 0);
+        const hasFlatBlocks = setBlocks.some(block => block.kind === 'flat');
         let results = [];
         
         const marginL = parseFloat(document.getElementById('set-margin-l').value) || 0;
@@ -910,7 +1054,7 @@
             if (usableL <= 0 || usableW <= 0) return;
 
             const usableAreaM2 = (usableL / 1000) * (usableW / 1000);
-            if (setAreaM2 > usableAreaM2) return;
+            if (setPackingAreaM2 > usableAreaM2) return;
 
             let bestSets = 0; 
             let bestPackedBlocks = null;
@@ -919,7 +1063,7 @@
                 const b = setBlocks[0];
                 const eL = b.origW; 
                 const eW = b.origH; 
-                const sW = singleBoxW; 
+                const sW = b.borrow; 
 
                 let m1 = Math.floor(usableL / eL);
                 let n1 = usableW >= eW ? Math.floor((usableW - sW) / (eW - sW)) : 0;
@@ -937,8 +1081,8 @@
                             for(let j=0; j<n1; j++){
                                 bestPackedBlocks.push({
                                     ...b, id: i*n1+j+1,
-                                    fit: {x: i * eL, y: j * (eW - sW)},
-                                    w: eL, h: eW
+                                    w: eL, h: eW,
+                                    fit: { x: i * eL, y: j * (eW - sW), packW: eL, packH: eW - sW, borrowAxis: 'y' }
                                 });
                             }
                         }
@@ -949,7 +1093,7 @@
                             for(let j=0; j<n2; j++){
                                 bestPackedBlocks.push({
                                     ...b, id: i*n2+j+1,
-                                    fit: {x: j * (eW - sW), y: i * eL},
+                                    fit: { x: j * (eW - sW), y: i * eL, packW: eW - sW, packH: eL, borrowAxis: 'x' },
                                     w: eW, h: eL,
                                     origW: eW, origH: eL
                                 });
@@ -957,13 +1101,67 @@
                         }
                     }
                 }
+            } else if (isSingleFlat) {
+                const b = setBlocks[0];
+                const eL = b.origW;
+                const eW = b.origH;
+                const m1 = Math.floor(usableL / eL);
+                const n1 = Math.floor(usableW / eW);
+                const total1 = m1 * n1;
+                const m2 = Math.floor(usableL / eW);
+                const n2 = Math.floor(usableW / eL);
+                const total2 = m2 * n2;
+
+                if (total1 > 0 || total2 > 0) {
+                    if (total1 >= total2) {
+                        bestSets = total1;
+                        bestPackedBlocks = [];
+                        for (let i = 0; i < m1; i++) {
+                            for (let j = 0; j < n1; j++) {
+                                bestPackedBlocks.push({
+                                    ...b,
+                                    id: i * n1 + j + 1,
+                                    fit: { x: i * eL, y: j * eW, packW: eL, packH: eW, borrowAxis: null },
+                                    w: eL,
+                                    h: eW
+                                });
+                            }
+                        }
+                    } else {
+                        bestSets = total2;
+                        bestPackedBlocks = [];
+                        for (let i = 0; i < m2; i++) {
+                            for (let j = 0; j < n2; j++) {
+                                bestPackedBlocks.push({
+                                    ...b,
+                                    id: i * n2 + j + 1,
+                                    fit: { x: i * eW, y: j * eL, packW: eW, packH: eL, borrowAxis: null },
+                                    w: eW,
+                                    h: eL,
+                                    origW: eW,
+                                    origH: eL
+                                });
+                            }
+                        }
+                    }
+                }
             } else {
-                const maxSetsPossible = Math.floor(usableAreaM2 / setAreaM2);
+                const maxSetsPossible = Math.floor(usableAreaM2 / setPackingAreaM2);
                 if (maxSetsPossible > 0) {
                     for(let M = maxSetsPossible; M >= 1; M--) {
                         let blocksToPack = [];
-                        for(let i=0; i<M; i++) setBlocks.forEach(b => blocksToPack.push({ ...b }));
-                        blocksToPack.sort((a, b) => Math.max(b.w, b.h) - Math.max(a.w, a.h));
+                        for(let i=0; i<M; i++) {
+                            setBlocks.forEach((b, blockIndex) => blocksToPack.push({
+                                ...b,
+                                id: i * setBlocks.length + blockIndex + 1
+                            }));
+                        }
+                        // 展开块优先占用完整空间，避免后续盒型借纸区侵入展开块。
+                        blocksToPack.sort((a, b) => {
+                            const kindOrder = (a.kind === 'flat' ? 0 : 1) - (b.kind === 'flat' ? 0 : 1);
+                            if (kindOrder !== 0) return kindOrder;
+                            return Math.max(b.origW, b.origH) - Math.max(a.origW, a.origH);
+                        });
                         const packer = new Packer(usableL, usableW);
                         if(packer.fit(blocksToPack)) { bestSets = M; bestPackedBlocks = blocksToPack; break; }
                     }
@@ -981,7 +1179,7 @@
 
                 const totalCost = paperCost + dieCutCost + dieBoardCost;
                 const finalQuote = totalCost * (1 + profitMargin / 100);
-                const utilization = ((setAreaM2 * bestSets) / paperAreaM2) * 100;
+                const utilization = ((setPackingAreaM2 * bestSets) / paperAreaM2) * 100;
 
                 results.push({
                     spec: `${mat.l} x ${mat.w}`, matL: mat.l, matW: mat.w,
@@ -989,7 +1187,7 @@
                     setsPerSheet: bestSets, packedBlocks: bestPackedBlocks, totalUps: totalUps,
                     sheets: sheetsNeeded, paperCost: paperCost, dieCutCost: dieCutCost, dieBoardCost: dieBoardCost,
                     totalCost: totalCost, finalQuote: finalQuote, unitPrice: finalQuote / qty, utilization: utilization,
-                    isNested: isSingleBox
+                    isNested: isSingleBox, hasBorrowing: hasBorrowing, hasFlatBlocks: hasFlatBlocks
                 });
             }
         });
@@ -1012,8 +1210,14 @@
         if (!currentBoxQuoteData) return;
         const { qty, blocks, best } = currentBoxQuoteData;
         let text = `【包装定制排版报价单】\n产品明细：\n`;
-        blocks.forEach(b => { text += ` - ${b.label}：${b.inputSize} mm\n`; });
-        text += `定制数量：${qty} 套 (${best.isNested ? '单款插拼' : '多款合拼'})\n----------------------\n`;
+        blocks.forEach(b => {
+            const modeText = b.kind === 'flat' ? '展开尺寸，不借纸' : '盒子尺寸，允许借纸';
+            text += ` - ${b.label}：${b.inputSize} mm（${modeText}）\n`;
+        });
+        const layoutText = best.isNested
+            ? '单款盒型插拼'
+            : (best.hasBorrowing && best.hasFlatBlocks ? '多款混拼（盒型借纸＋展开实拼）' : (best.hasBorrowing ? '多款盒型借纸混拼' : '多款展开实拼'));
+        text += `定制数量：${qty} 套 (${layoutText})\n----------------------\n`;
         text += `整单总价：¥ ${best.finalQuote.toFixed(2)}\n单套均价：¥ ${best.unitPrice.toFixed(4)}\n----------------------\n* 报价已含材料费、模切加工及刀版费。`;
 
         navigator.clipboard.writeText(text).then(() => {
@@ -1037,6 +1241,11 @@
         const best = results[0];
         const mL = parseFloat(document.getElementById('set-margin-l').value) || 0;
         const mW = parseFloat(document.getElementById('set-margin-w').value) || 0;
+        const layoutBadge = best.isNested
+            ? '<span class="badge badge-orange" style="margin-left: 5px;">盒型插拼</span>'
+            : (best.hasBorrowing && best.hasFlatBlocks
+                ? '<span class="badge badge-orange" style="margin-left: 5px;">盒型借纸 + 展开实拼</span>'
+                : (best.hasBorrowing ? '<span class="badge badge-orange" style="margin-left: 5px;">盒型借纸</span>' : ''));
 
         let html = `<h2>最佳方案推荐</h2>
             <div id="best-scheme" class="result-highlight">
@@ -1046,7 +1255,7 @@
                     <div style="display: flex; gap: 20px; margin-bottom: 20px;">
                         <div>
                             <div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">单张排版</div>
-                            <div style="font-size:16px; font-weight:600;">${best.setsPerSheet} 套 ${best.isNested ? '<span class="badge badge-orange" style="margin-left: 5px;">智能插拼</span>' : ''}</div>
+                            <div style="font-size:16px; font-weight:600;">${best.setsPerSheet} 套 ${layoutBadge}</div>
                         </div>
                         <div><div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">纸张利用率</div><div>${getUtilizationBadge(best.utilization)}</div></div>
                     </div>
@@ -1081,7 +1290,8 @@
                         <tbody>`;
             for(let i=1; i<results.length; i++) {
                 const res = results[i];
-                html += `<tr><td style="font-weight:600;">${res.spec}</td><td>${getUtilizationBadge(res.utilization)}</td><td style="color:var(--accent-blue);">拼 ${res.setsPerSheet} 套 ${res.isNested ? '<span style="color:#ff9500; font-size:12px;">(插拼)</span>' : ''}<br><span style="font-size:12px; color:#86868b;">(${res.sheets}张大纸)</span></td><td><strong style="font-size: 15px;">¥${res.totalCost.toFixed(2)}</strong><div class="mini-breakdown">纸:¥${res.paperCost.toFixed(2)} | 模:¥${res.dieCutCost.toFixed(2)} | 刀:¥${res.dieBoardCost.toFixed(2)}</div></td><td style="font-weight:600; font-size: 16px; color:var(--text-main);">¥${res.finalQuote.toFixed(2)}</td></tr>`;
+                const resLayout = res.isNested ? '(盒型插拼)' : (res.hasBorrowing && res.hasFlatBlocks ? '(盒型借纸+展开实拼)' : (res.hasBorrowing ? '(盒型借纸)' : '(展开实拼)'));
+                html += `<tr><td style="font-weight:600;">${res.spec}</td><td>${getUtilizationBadge(res.utilization)}</td><td style="color:var(--accent-blue);">拼 ${res.setsPerSheet} 套 <span style="color:#ff9500; font-size:12px;">${resLayout}</span><br><span style="font-size:12px; color:#86868b;">(${res.sheets}张大纸)</span></td><td><strong style="font-size: 15px;">¥${res.totalCost.toFixed(2)}</strong><div class="mini-breakdown">纸:¥${res.paperCost.toFixed(2)} | 模:¥${res.dieCutCost.toFixed(2)} | 刀:¥${res.dieBoardCost.toFixed(2)}</div></td><td style="font-weight:600; font-size: 16px; color:var(--text-main);">¥${res.finalQuote.toFixed(2)}</td></tr>`;
             }
             html += `</tbody></table></div></details>`;
         }
